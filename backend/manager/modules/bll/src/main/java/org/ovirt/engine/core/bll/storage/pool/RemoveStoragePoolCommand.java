@@ -1,6 +1,5 @@
 package org.ovirt.engine.core.bll.storage.pool;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.LockMessagesMatchUtil;
 import org.ovirt.engine.core.bll.NonTransactiveCommandAttribute;
 import org.ovirt.engine.core.bll.context.CommandContext;
@@ -39,10 +37,8 @@ import org.ovirt.engine.core.common.vdscommands.FormatStorageDomainVDSCommandPar
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.StorageDomainDao;
-import org.ovirt.engine.core.dao.StorageDomainStaticDao;
 import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VdsDao;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.dao.network.VmNicDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
@@ -65,11 +61,7 @@ public class RemoveStoragePoolCommand<T extends StoragePoolParametersBase> exten
     @Inject
     private VmNicDao vmNicDao;
     @Inject
-    private StorageDomainStaticDao storageDomainStaticDao;
-    @Inject
     private VdsDao vdsDao;
-    @Inject
-    private VmDao vmDao;
 
     private Map<String, Pair<String, String>> sharedLocks;
 
@@ -90,10 +82,10 @@ public class RemoveStoragePoolCommand<T extends StoragePoolParametersBase> exten
 
         // Detach master storage domain last.
         List<StorageDomain> storageDomains = storageDomainDao.getAllForStoragePool(getStoragePool().getId());
-        Collections.sort(storageDomains, Comparator.comparing(StorageDomain::getStorageDomainType));
+        storageDomains.sort(Comparator.comparing(StorageDomain::getStorageDomainType));
 
-        if (storageDomains.size() > 0) {
-            if (!getParameters().isForceDelete() && getAllRunningVdssInPool().size() > 0) {
+        if (!storageDomains.isEmpty()) {
+            if (!getParameters().isForceDelete() && !getAllRunningVdssInPool().isEmpty()) {
                 if(!regularRemoveStorageDomains(storageDomains)) {
                     setSucceeded(false);
                     return;
@@ -236,7 +228,7 @@ public class RemoveStoragePoolCommand<T extends StoragePoolParametersBase> exten
             tempVar.setDestroyingPool(true);
             // Compensation context is not passed, as we do not want to compensate in case of failure
             // in detach of one of storage domains
-            if (!Backend.getInstance()
+            if (!backend
                     .runInternalAction(ActionType.DetachStorageDomainFromPool,
                             tempVar,
                             cloneContext().withoutCompensationContext().withoutExecutionContext())

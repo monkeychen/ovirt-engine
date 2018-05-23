@@ -1,6 +1,6 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
@@ -8,37 +8,34 @@ import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isVal
 
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.MacPool;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.ClusterDao;
 import org.ovirt.engine.core.dao.MacPoolDao;
+import org.ovirt.engine.core.utils.InjectedMock;
 
-@RunWith(MockitoJUnitRunner.class)
-public class MacPoolValidatorTest extends DbDependentTestBase {
+public class MacPoolValidatorTest extends BaseCommandTest {
 
     private final MacPool macPool = new MacPool();
 
     private MacPoolValidator macPoolValidator;
 
     @Mock
-    private MacPoolDao macPoolDaoMock;
+    @InjectedMock
+    public MacPoolDao macPoolDaoMock;
 
     @Mock
-    private ClusterDao clusterDao;
+    @InjectedMock
+    public ClusterDao clusterDao;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         this.macPoolValidator = createMacPoolValidator(macPool);
-        when(DbFacade.getInstance().getMacPoolDao()).thenReturn(macPoolDaoMock);
-        when(DbFacade.getInstance().getClusterDao()).thenReturn(clusterDao);
     }
 
     private MacPoolValidator createMacPoolValidator(MacPool macPool) {
@@ -47,21 +44,21 @@ public class MacPoolValidatorTest extends DbDependentTestBase {
     }
 
     @Test
-    public void testDefaultPoolFlagIsNotSetValidUsage() throws Exception {
+    public void testDefaultPoolFlagIsNotSetValidUsage() {
         macPool.setDefaultPool(false);
         assertThat(macPoolValidator.defaultPoolFlagIsNotSet(),
                 isValid());
     }
 
     @Test
-    public void testDefaultPoolFlagIsNotSetInvalidUsage() throws Exception {
+    public void testDefaultPoolFlagIsNotSetInvalidUsage() {
         macPool.setDefaultPool(true);
         assertThat(macPoolValidator.defaultPoolFlagIsNotSet(),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_SETTING_DEFAULT_MAC_POOL_IS_NOT_SUPPORTED));
     }
 
     @Test
-    public void testHasUniqueNameUpdateNotChangingName() throws Exception {
+    public void testHasUniqueNameUpdateNotChangingName() {
         final Guid macPoolId = Guid.newGuid();
         final String poolName = "macPool1";
 
@@ -70,7 +67,7 @@ public class MacPoolValidatorTest extends DbDependentTestBase {
     }
 
     @Test
-    public void testHasUniqueNameRenamingPool() throws Exception {
+    public void testHasUniqueNameRenamingPool() {
         final Guid macPoolId = Guid.newGuid();
 
         assertThat(callHasUniqueName(macPoolId, macPoolId, "macPool1", "macPool2"),
@@ -78,7 +75,7 @@ public class MacPoolValidatorTest extends DbDependentTestBase {
     }
 
     @Test
-    public void testHasUniqueNameUsingExistingName() throws Exception {
+    public void testHasUniqueNameUsingExistingName() {
         final String macPoolName = "macPool1";
 
         assertThat(callHasUniqueName(Guid.newGuid(), Guid.newGuid(), macPoolName, macPoolName),
@@ -86,19 +83,19 @@ public class MacPoolValidatorTest extends DbDependentTestBase {
     }
 
     @Test
-    public void testHasUniqueNamePersistingNewRecord() throws Exception {
+    public void testHasUniqueNamePersistingNewRecord() {
         assertThat(callHasUniqueName(Guid.newGuid(), Guid.newGuid(), "macPool1", "macPool2"),
                 isValid());
     }
 
     @Test
-    public void testHasUniqueNamePersistingNewRecordWithNullId() throws Exception {
+    public void testHasUniqueNamePersistingNewRecordWithNullId() {
         assertThat(callHasUniqueName(Guid.newGuid(), null, "macPool1", "whatever"),
                 isValid());
     }
 
     @Test
-    public void testHasUniqueNamePersistingNewRecordWithNullIdAndSameName() throws Exception {
+    public void testHasUniqueNamePersistingNewRecordWithNullIdAndSameName() {
         final String macPoolName = "macPool1";
 
         assertThat(callHasUniqueName(Guid.newGuid(), null, macPoolName, macPoolName),
@@ -121,19 +118,19 @@ public class MacPoolValidatorTest extends DbDependentTestBase {
     }
 
     @Test
-    public void testNotRemovingDefaultPool() throws Exception {
+    public void testNotRemovingDefaultPool() {
         macPool.setDefaultPool(true);
         assertThat(macPoolValidator.notRemovingDefaultPool(),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_CANNOT_REMOVE_DEFAULT_MAC_POOL));
     }
 
     @Test
-    public void testNotRemovingDefaultPoolNonDefaultIsRemoved() throws Exception {
+    public void testNotRemovingDefaultPoolNonDefaultIsRemoved() {
         assertThat(macPoolValidator.notRemovingDefaultPool(), isValid());
     }
 
     @Test
-    public void testNotRemovingUsedPoolRecordIsUsed() throws Exception {
+    public void testNotRemovingUsedPoolRecordIsUsed() {
         macPool.setId(Guid.newGuid());
         final Cluster cluster = new Cluster();
         cluster.setName("cluster");
@@ -145,20 +142,20 @@ public class MacPoolValidatorTest extends DbDependentTestBase {
     }
 
     @Test
-    public void testNotRemovingUsedPoolRecordNotUsed() throws Exception {
+    public void testNotRemovingUsedPoolRecordNotUsed() {
         macPool.setId(Guid.newGuid());
 
         assertThat(macPoolValidator.notRemovingUsedPool(), isValid());
     }
 
     @Test
-    public void testMacPoolExistsEntityNotExist() throws Exception {
+    public void testMacPoolExistsEntityNotExist() {
         assertThat(createMacPoolValidator(null).macPoolExists(),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_MAC_POOL_DOES_NOT_EXIST));
     }
 
     @Test
-    public void testMacPoolExistsEntityDoesExist() throws Exception {
+    public void testMacPoolExistsEntityDoesExist() {
         assertThat(macPoolValidator.macPoolExists(), isValid());
     }
 }

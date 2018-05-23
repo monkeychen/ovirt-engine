@@ -1,14 +1,15 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.VmNic;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseGenericDaoTestCase;
@@ -21,6 +22,7 @@ public class VmNicDaoTest extends BaseGenericDaoTestCase<Guid, VmNic, VmNicDao> 
 
     private VmNic existingTemplateNic;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -83,25 +85,25 @@ public class VmNicDaoTest extends BaseGenericDaoTestCase<Guid, VmNic, VmNicDao> 
     }
 
     @Test
-    public void testGetAllForTemplatesByNetwork() throws Exception {
+    public void testGetAllForTemplatesByNetwork() {
         List<VmNic> result = dao.getAllForTemplatesByNetwork(FixturesTool.NETWORK_ENGINE);
         assertEquals(existingTemplateNic, result.get(0));
     }
 
     @Test
-    public void testGetAllForNetwork() throws Exception {
+    public void testGetAllForNetwork() {
         List<VmNic> result = dao.getAllForNetwork(FixturesTool.NETWORK_ENGINE);
         assertEquals(existingEntity, result.get(0));
     }
 
     @Test
-    public void testGetAllMacsByStoragePool() throws Exception {
+    public void testGetAllMacsByStoragePool() {
         List<String> result = dao.getAllMacsByDataCenter(FixturesTool.STORAGE_POOL_MIXED_TYPES);
         assertEquals(FixturesTool.MAC_ADDRESS, result.get(0));
     }
 
     @Test
-    public void testGetPluggedForMac() throws Exception {
+    public void testGetPluggedForMac() {
         List<VmNic> result = dao.getPluggedForMac(FixturesTool.MAC_ADDRESS);
         for (VmNic vmNetworkInterface : result) {
             assertEquals(FixturesTool.MAC_ADDRESS, vmNetworkInterface.getMacAddress());
@@ -130,11 +132,6 @@ public class VmNicDaoTest extends BaseGenericDaoTestCase<Guid, VmNic, VmNicDao> 
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.VM_NETWORK_INTERFACE;
-    }
-
-    @Override
-    protected VmNicDao prepareDao() {
-        return dbFacade.getVmNicDao();
     }
 
     @Override

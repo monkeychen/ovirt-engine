@@ -1,6 +1,6 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
@@ -25,7 +25,7 @@ public class GetVmsByStorageDomainQueryTest extends AbstractQueryTest<IdQueryPar
     GetVmsByStorageDomainQuery<IdQueryParameters> query;
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         params = getQueryParameters();
@@ -90,14 +90,12 @@ public class GetVmsByStorageDomainQueryTest extends AbstractQueryTest<IdQueryPar
         returnValue.setSucceeded(true);
         List<DiskImage> diskImages = new ArrayList<>();
         DiskImage d1 = mock(DiskImage.class);
-        when(d1.isShareable()).thenReturn(true);
         ArrayList<String> vmNames = new ArrayList<>();
         vmNames.add("vm1");
         vmNames.add("vm2");
         when(d1.getVmNames()).thenReturn(vmNames);
         //floating disk
         DiskImage d2 = mock(DiskImage.class);
-        when(d2.isShareable()).thenReturn(false);
 
         diskImages.add(d1);
         diskImages.add(d2);

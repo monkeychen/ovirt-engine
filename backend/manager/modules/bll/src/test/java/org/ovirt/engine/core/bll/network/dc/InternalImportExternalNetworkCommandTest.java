@@ -1,9 +1,8 @@
 package org.ovirt.engine.core.bll.network.dc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -13,10 +12,12 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.verification.VerificationMode;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
@@ -33,6 +34,7 @@ import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class InternalImportExternalNetworkCommandTest extends BaseCommandTest {
     private final Guid DATACENTER_ID = new Guid("000000000000-0000-0000-0000-00000003");
     private final Guid CLUSTER_ID = new Guid("000000000000-0000-0000-0000-00000004");
@@ -57,7 +59,7 @@ public class InternalImportExternalNetworkCommandTest extends BaseCommandTest {
                     new Network(), DATACENTER_ID, true, true),
                     CommandContext.createContext("context"));
 
-    @Before
+    @BeforeEach
     public void setUp() {
         prepareNetwork(commandNoCluster.getParameters().getExternalNetwork());
         prepareNetwork(commandCluster.getParameters().getExternalNetwork());
@@ -69,7 +71,6 @@ public class InternalImportExternalNetworkCommandTest extends BaseCommandTest {
 
         ActionReturnValue returnValue = new ActionReturnValue();
         returnValue.setSucceeded(true);
-        when(networkHelper.addVnicProfileWithoutFilter(any(), anyBoolean())).thenReturn(returnValue);
         when(networkHelper.attachNetworkToClusters(eq(NETWORK_ID), any())).thenReturn(returnValue);
 
         QueryReturnValue queryReturnValue = new QueryReturnValue();
@@ -117,7 +118,6 @@ public class InternalImportExternalNetworkCommandTest extends BaseCommandTest {
 
     private void verifyCalls(boolean attachToAllClusters) {
         verify(backend).runInternalAction(eq(ActionType.AddNetwork), any(), any());
-        verify(networkHelper).addVnicProfileWithoutFilter(any(), anyBoolean());
 
         VerificationMode expectedNumberOfCalls = attachToAllClusters ? times(1) : never();
         verify(backend, expectedNumberOfCalls).runInternalQuery(eq(QueryType.GetClustersByStoragePoolId), any(), any());

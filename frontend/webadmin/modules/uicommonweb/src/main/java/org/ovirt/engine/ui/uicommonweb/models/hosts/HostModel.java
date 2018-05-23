@@ -823,8 +823,7 @@ public abstract class HostModel extends Model implements HasValidatedTabs {
             if (fingerprint != null && fingerprint.length() > 0) {
                 getFetchSshFingerprint().setEntity(fingerprint);
                 getFetchResult().setEntity(ConstantsManager.getInstance().getConstants().successLoadingFingerprint());
-            }
-            else {
+            } else {
                 getFetchResult().setEntity(ConstantsManager.getInstance().getConstants().errorLoadingFingerprint());
             }
         });
@@ -836,8 +835,7 @@ public abstract class HostModel extends Model implements HasValidatedTabs {
         if (!getHost().getIsValid()) {
             getFetchResult().setEntity(ConstantsManager.getInstance().getConstants().fingerprintAddressError()
                     + getHost().getInvalidityReasons().get(0));
-        }
-        else {
+        } else {
             getFetchResult().setEntity(ConstantsManager.getInstance().getConstants().loadingFingerprint());
             AsyncDataProvider.getInstance().getHostFingerprint(
                     aQuery,
@@ -1058,8 +1056,7 @@ public abstract class HostModel extends Model implements HasValidatedTabs {
             });
             getExternalComputeResource().setIsValid(getExternalComputeResource().getSelectedItem() != null);
             getExternalHostGroups().setIsValid(getExternalHostGroups().getSelectedItem() != null);
-        }
-        else {
+        } else {
             getExternalComputeResource().setIsValid(true);
             getExternalHostGroups().setIsValid(true);
         }
@@ -1122,7 +1119,7 @@ public abstract class HostModel extends Model implements HasValidatedTabs {
         getUserName().setEntity(vds.getSshUsername());
         getAuthSshPort().setEntity(vds.getSshPort());
         if (StringHelper.isNotNullOrEmpty(vds.getKernelArgs())) {
-            getCurrentKernelCmdLine().setEntity(constants.currentKernelCmdLine() + vds.getKernelArgs());
+            getCurrentKernelCmdLine().setEntity(constants.currentKernelCmdLine() + " " + vds.getKernelArgs()); //$NON-NLS-1$
         }
         setPort(vds);
         boolean consoleAddressEnabled = vds.getConsoleAddress() != null;

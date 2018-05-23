@@ -1,6 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Quota;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.IdParameters;
@@ -9,6 +11,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendQuotaResourceTest extends AbstractBackendSubResourceTest<Quota, org.ovirt.engine.core.common.businessentities.Quota, BackendQuotaResource> {
 
     static final Guid QUOTA_ID = GUIDS[0];
@@ -19,7 +22,7 @@ public class BackendQuotaResourceTest extends AbstractBackendSubResourceTest<Quo
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations();
         Quota model = resource.get();
@@ -27,7 +30,7 @@ public class BackendQuotaResourceTest extends AbstractBackendSubResourceTest<Quo
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(2);
         setUriInfo(setUpActionExpectations(ActionType.UpdateQuota,
                 QuotaCRUDParameters.class,
@@ -40,7 +43,7 @@ public class BackendQuotaResourceTest extends AbstractBackendSubResourceTest<Quo
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations();
         setUriInfo(setUpActionExpectations(
                 ActionType.RemoveQuota,
@@ -53,7 +56,7 @@ public class BackendQuotaResourceTest extends AbstractBackendSubResourceTest<Quo
 
     }
 
-    private void setUpGetEntityExpectations() throws Exception {
+    private void setUpGetEntityExpectations() {
         setUpGetEntityExpectations(QueryType.GetQuotaByQuotaId,
                 IdQueryParameters.class,
                 new String[] { "Id" },
@@ -69,7 +72,7 @@ public class BackendQuotaResourceTest extends AbstractBackendSubResourceTest<Quo
         return quota;
     }
 
-    private void setUpGetEntityExpectations(int times) throws Exception {
+    private void setUpGetEntityExpectations(int times) {
         while (times-- > 0) {
             setUpGetEntityExpectations();
         }

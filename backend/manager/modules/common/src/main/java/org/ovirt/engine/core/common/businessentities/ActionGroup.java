@@ -1,6 +1,7 @@
 package org.ovirt.engine.core.common.businessentities;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.ovirt.engine.core.common.mode.ApplicationMode;
 
@@ -112,6 +113,7 @@ public enum ActionGroup {
     ACCESS_IMAGE_STORAGE(1106, RoleType.USER, false, ApplicationMode.VirtOnly),
     DISK_LIVE_STORAGE_MIGRATION(1107, RoleType.USER, true, ApplicationMode.VirtOnly),
     SPARSIFY_DISK(1108, RoleType.USER, true, ApplicationMode.VirtOnly),
+    REDUCE_DISK(1109, RoleType.ADMIN, true, ApplicationMode.VirtOnly),
 
     // VNIC Profiles
     CONFIGURE_NETWORK_VNIC_PROFILE(1203, RoleType.ADMIN, true, ApplicationMode.VirtOnly),
@@ -164,7 +166,7 @@ public enum ActionGroup {
     private RoleType roleType;
     private boolean allowsViewingChildren;
     private int applicationMode;
-    private static final HashMap<Integer, ActionGroup> map = new HashMap<>(ActionGroup.values().length);
+    private static final Map<Integer, ActionGroup> map = new HashMap<>(ActionGroup.values().length);
 
     static {
         for (ActionGroup t : ActionGroup.values()) {

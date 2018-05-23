@@ -1,37 +1,32 @@
 package org.ovirt.engine.core.bll.scheduling.policyunits;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.ovirt.engine.core.bll.DbDependentTestBase;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.scheduling.PolicyUnitParameter;
 import org.ovirt.engine.core.bll.scheduling.pending.PendingResourceManager;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.OriginType;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.scheduling.PerHostMessages;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.VmDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
-public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDependentTestBase {
-
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule(mockConfig(ConfigValues.MaxSchedulerWeight, 1000));
-
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class HostedEngineMemoryReservationFilterPolicyUnitTest extends BaseCommandTest {
     private Cluster cluster;
     private Guid clusterId;
     private List<VDS> hosts;
@@ -49,8 +44,8 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
     @Mock
     private VmDao vmDao;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         Cluster cluster = new Cluster();
         clusterId = Guid.newGuid();
         cluster.setId(clusterId);
@@ -82,19 +77,19 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
     }
 
     @Test
-    public void testNoHosts() throws Exception {
+    public void testNoHosts() {
         List<VDS> result = policyUnit.filter(cluster, new ArrayList<VDS>(), vm, parameters, messages);
         assertEquals(0, result.size());
     }
 
     @Test
-    public void testWithNoRequiredSpares() throws Exception {
+    public void testWithNoRequiredSpares() {
         List<VDS> result = policyUnit.filter(cluster, hosts, vm, parameters, messages);
         assertEquals(5, result.size());
     }
 
     @Test
-    public void testWithEnoughSpares() throws Exception {
+    public void testWithEnoughSpares() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "5");
         List<VDS> result = policyUnit.filter(cluster, hosts, vm, parameters, messages);
         assertEquals(5, result.size());
@@ -108,7 +103,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * and so all should be available for further evaluation.
      */
     @Test
-    public void testWithoutEnoughSpares() throws Exception {
+    public void testWithoutEnoughSpares() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "6");
         List<VDS> result = policyUnit.filter(cluster, hosts, vm, parameters, messages);
         assertEquals(5, result.size());
@@ -122,7 +117,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * a good enough host for another VM.
      */
     @Test
-    public void testWithoutEnoughSparesFullMemory() throws Exception {
+    public void testWithoutEnoughSparesFullMemory() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "5");
         hostedEngine.setVmMemSizeMb(7000);
         List<VDS> result = policyUnit.filter(cluster, hosts, vm, parameters, messages);
@@ -137,7 +132,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * All hosts should be returned.
      */
     @Test
-    public void testNoHostedEngine() throws Exception {
+    public void testNoHostedEngine() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "5");
         hostedEngine.setVmMemSizeMb(7000);
         hostedEngine.setOrigin(OriginType.OVIRT);
@@ -155,7 +150,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * All hosts should be returned.
      */
     @Test
-    public void testDifferentCluster() throws Exception {
+    public void testDifferentCluster() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "5");
         hostedEngine.setVmMemSizeMb(7000);
         hostedEngine.setClusterId(Guid.SYSTEM);
@@ -177,7 +172,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * All hosts should be returned.
      */
     @Test
-    public void testWithEnoughSparesMemory() throws Exception {
+    public void testWithEnoughSparesMemory() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "1");
         hostedEngine.setVmMemSizeMb(7000);
 
@@ -195,7 +190,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * Three hosts (2 + the current host for HE VM) should be returned
      */
     @Test
-    public void testExactSparesMemory() throws Exception {
+    public void testExactSparesMemory() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "2");
         hostedEngine.setVmMemSizeMb(7000);
 
@@ -213,7 +208,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * Three hosts (2 + the current host for HE VM) should be returned
      */
     @Test
-    public void testWithoutEnoughSparesMemory() throws Exception {
+    public void testWithoutEnoughSparesMemory() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(7000);
 
@@ -232,7 +227,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * Four hosts (3 + the current host for HE VM) should be returned
      */
     @Test
-    public void testWithNonHEHost() throws Exception {
+    public void testWithNonHEHost() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(7000);
 
@@ -252,7 +247,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * Four hosts (3 + the current host for HE VM) should be returned
      */
     @Test
-    public void testWith0ScoreHost() throws Exception {
+    public void testWith0ScoreHost() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(7000);
 
@@ -274,7 +269,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * All hosts should be returned
      */
     @Test
-    public void testWith0ScoreHostAndEnoughMemoryForTwo() throws Exception {
+    public void testWith0ScoreHostAndEnoughMemoryForTwo() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(5000);
 
@@ -298,7 +293,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * for the additional VM).
      */
     @Test
-    public void testWith0ScoreHostAndSomeHaveEnoughMemoryForTwo() throws Exception {
+    public void testWith0ScoreHostAndSomeHaveEnoughMemoryForTwo() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(5000);
 
@@ -322,7 +317,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * for the additional VM).
      */
     @Test
-    public void testWithMaintenancedHostAndSomeHaveEnoughMemoryForTwo() throws Exception {
+    public void testWithMaintenancedHostAndSomeHaveEnoughMemoryForTwo() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(5000);
 
@@ -345,7 +340,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * All hosts should be returned.
      */
     @Test
-    public void testStartingTheEngineWithNotEnoughSpares() throws Exception {
+    public void testStartingTheEngineWithNotEnoughSpares() {
         parameters.put(PolicyUnitParameter.HE_SPARES_COUNT.getDbName(), "3");
         hostedEngine.setVmMemSizeMb(5000);
 
@@ -363,7 +358,7 @@ public class HostedEngineMemoryReservationFilterPolicyUnitTest extends DbDepende
      * arbitrary VMs.
      */
     @Test
-    public void testHostInMaintenance() throws Exception {
+    public void testHostInMaintenance() {
         hosts.get(0).setHighlyAvailableLocalMaintenance(true);
         List<VDS> result = policyUnit.filter(cluster, hosts, vm, parameters, messages);
         assertEquals(5, result.size());

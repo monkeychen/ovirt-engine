@@ -1,14 +1,17 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.ActionGroup;
 import org.ovirt.engine.core.common.businessentities.OriginType;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
@@ -32,19 +35,35 @@ import org.ovirt.engine.core.common.utils.VmDeviceType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-public class StorageDomainDaoTest extends BaseDaoTestCase {
+public class StorageDomainDaoTest extends BaseDaoTestCase<StorageDomainDao> {
     private static final int NUMBER_OF_STORAGE_DOMAINS_FOR_PRIVELEGED_USER = 1;
     private static final String EXISTING_CONNECTION = "10.35.64.25:/export/share";
     private static final long NUMBER_OF_IMAGES_ON_EXISTING_DOMAIN = 5;
 
-    private StorageDomainDao dao;
+    @Inject
+    private VmDao vmDao;
+    @Inject
+    private VmTemplateDao vmTemplateDao;
+    @Inject
+    private BaseDiskDao baseDiskDao;
+    @Inject
+    private ImageDao imageDao;
+    @Inject
+    private ImageStorageDomainMapDao imageStorageDomainMapDao;
+    @Inject
+    private VmDeviceDao vmDeviceDao;
+    @Inject
+    private DiskVmElementDao diskVmElementDao;
+    @Inject
+    private VmStaticDao vmStaticDao;
+
     private StorageDomain existingDomain;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        dao = dbFacade.getStorageDomainDao();
         existingDomain = dao.get(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
     }
 
@@ -88,8 +107,8 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
 
         StorageDomain domain = result.get(0);
         assertEquals(FixturesTool.STORAGE_DOMAIN_NFS_INACTIVE_ISO, domain.getId());
-        assertEquals("Wrong committed disk size", 0, domain.getCommittedDiskSize());
-        assertEquals("Wrong actual disk size", 0, domain.getActualImagesSize());
+        assertEquals(0, domain.getCommittedDiskSize(), "Wrong committed disk size");
+        assertEquals(0, domain.getActualImagesSize(), "Wrong actual disk size");
     }
 
     @Test
@@ -107,9 +126,9 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
 
         StorageDomain domain = result.get(0);
         assertEquals(FixturesTool.STORAGE_DOMAIN_NFS_INACTIVE_ISO, domain.getId());
-        assertEquals("Wrong committed disk size", 0, domain.getCommittedDiskSize());
-        assertEquals("Wrong actual disk size", 0, domain.getActualImagesSize());
-        assertEquals("Wrong shared status", StorageDomainSharedStatus.Inactive, domain.getStorageDomainSharedStatus());
+        assertEquals(0, domain.getCommittedDiskSize(), "Wrong committed disk size");
+        assertEquals(0, domain.getActualImagesSize(), "Wrong actual disk size");
+        assertEquals(StorageDomainSharedStatus.Inactive, domain.getStorageDomainSharedStatus(), "Wrong shared status");
     }
 
     @Test
@@ -187,9 +206,9 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         assertEquals(1, result.size());
         StorageDomain domain = result.get(0);
         assertEquals(FixturesTool.STORAGE_DOMAIN_SCALE_SD5, domain.getId());
-        assertEquals("Wrong committed disk size", 8, domain.getCommittedDiskSize());
-        assertEquals("Wrong actual disk size", 4, domain.getActualImagesSize());
-        assertEquals("Wrong shared status", StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus());
+        assertEquals(8, domain.getCommittedDiskSize(), "Wrong committed disk size");
+        assertEquals(4, domain.getActualImagesSize(), "Wrong actual disk size");
+        assertEquals(StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus(), "Wrong shared status");
     }
 
     /**
@@ -207,13 +226,13 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
     private void assertGetResult(StorageDomain result) {
         assertNotNull(result);
         assertEquals(existingDomain, result);
-        assertEquals("Wrong committed disk size", 8, result.getCommittedDiskSize());
-        assertEquals("Wrong actual disk size", 4, result.getActualImagesSize());
-        assertEquals("Wrong first metadata device", FixturesTool.LUN_ID_OF_DOMAIN_METADATA,
-                result.getFirstMetadataDevice());
-        assertEquals("Wrong vg metadata device", FixturesTool.LUN_ID_OF_DOMAIN_VG_METADATA, result.getVgMetadataDevice());
-        assertEquals("Wrong shared status", StorageDomainSharedStatus.Active, result.getStorageDomainSharedStatus());
-        assertEquals("Wrong backup flag status", false, result.isBackup());
+        assertEquals(8, result.getCommittedDiskSize(), "Wrong committed disk size");
+        assertEquals(4, result.getActualImagesSize(), "Wrong actual disk size");
+        assertEquals(FixturesTool.LUN_ID_OF_DOMAIN_METADATA, result.getFirstMetadataDevice(),
+                "Wrong first metadata device");
+        assertEquals(FixturesTool.LUN_ID_OF_DOMAIN_VG_METADATA, result.getVgMetadataDevice(), "Wrong vg metadata device");
+        assertEquals(StorageDomainSharedStatus.Active, result.getStorageDomainSharedStatus(), "Wrong shared status");
+        assertFalse(result.isBackup(), "Wrong backup flag status");
     }
 
     /**
@@ -253,9 +272,9 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         assertEquals(NUMBER_OF_STORAGE_DOMAINS_FOR_PRIVELEGED_USER, result.size());
         StorageDomain domain = result.get(0);
         assertEquals(existingDomain, domain);
-        assertEquals("Wrong committed disk size", 8, domain.getCommittedDiskSize());
-        assertEquals("Wrong actual disk size", 4, domain.getActualImagesSize());
-        assertEquals("Wrong shared status", StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus());
+        assertEquals(8, domain.getCommittedDiskSize(), "Wrong committed disk size");
+        assertEquals(4, domain.getActualImagesSize(), "Wrong actual disk size");
+        assertEquals(StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus(), "Wrong shared status");
     }
 
     /**
@@ -411,7 +430,7 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         assertFalse(result.isEmpty());
         for (StorageDomain domain : result) {
             assertEquals(expectedStoragePoolId, domain.getStoragePoolId());
-            assertEquals("Wrong shared status", StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus());
+            assertEquals(StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus(), "Wrong shared status");
         }
     }
 
@@ -424,9 +443,9 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         assertFalse(result.isEmpty());
         StorageDomain domain = result.get(0);
         assertEquals(existingDomain.getId(), domain.getId());
-        assertEquals("Wrong committed disk size", 8, domain.getCommittedDiskSize());
-        assertEquals("Wrong actual disk size", 4, domain.getActualImagesSize());
-        assertEquals("Wrong shared status", StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus());
+        assertEquals(8, domain.getCommittedDiskSize(), "Wrong committed disk size");
+        assertEquals(4, domain.getActualImagesSize(), "Wrong actual disk size");
+        assertEquals(StorageDomainSharedStatus.Active, domain.getStorageDomainSharedStatus(), "Wrong shared status");
     }
 
     @Test
@@ -444,10 +463,9 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testRemove() {
-        List<VM> vms = getDbFacade().getVmDao().getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
-        List<VmTemplate> templates =
-                getDbFacade().getVmTemplateDao().getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
-        BaseDisk diskImage = getDbFacade().getBaseDiskDao().get(FixturesTool.DISK_ID);
+        List<VM> vms = vmDao.getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
+        List<VmTemplate> templates = vmTemplateDao.getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
+        BaseDisk diskImage = baseDiskDao.get(FixturesTool.DISK_ID);
 
         assertNotNull(diskImage);
         assertFalse(vms.isEmpty());
@@ -460,25 +478,25 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         assertNull(dao.get(FixturesTool.STORAGE_DOMAIN_SCALE_SD5));
 
         for (VM vm : vms) {
-            assertNull(getDbFacade().getVmDao().get(vm.getId()));
+            assertNull(vmDao.get(vm.getId()));
         }
 
         for (VmTemplate template : templates) {
-            assertNull(getDbFacade().getVmTemplateDao().get(template.getId()));
+            assertNull(vmTemplateDao.get(template.getId()));
         }
-        assertNull(getDbFacade().getBaseDiskDao().get(FixturesTool.DISK_ID));
+        assertNull(baseDiskDao.get(FixturesTool.DISK_ID));
     }
 
     @Test
     public void testGetNumberOfImagesInExistingDomain() {
         long numOfImages = dao.getNumberOfImagesInStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
-        assertEquals("Number of images on storage domain different than expected", NUMBER_OF_IMAGES_ON_EXISTING_DOMAIN, numOfImages);
+        assertEquals(NUMBER_OF_IMAGES_ON_EXISTING_DOMAIN, numOfImages, "Number of images on storage domain different than expected");
     }
 
     @Test
     public void testGetNumberOfImagesInNonExistingDomain() {
         long numOfImages = dao.getNumberOfImagesInStorageDomain(Guid.newGuid());
-        assertEquals("Number of images on a non existing domain should be 0", 0, numOfImages);
+        assertEquals(0, numOfImages, "Number of images on a non existing domain should be 0");
     }
 
     /**
@@ -487,10 +505,9 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testRemoveEntitesFromStorageDomain() {
-        List<VM> vms = getDbFacade().getVmDao().getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
-        List<VmTemplate> templates =
-                getDbFacade().getVmTemplateDao().getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
-        BaseDisk diskImage = getDbFacade().getBaseDiskDao().get(FixturesTool.DISK_ID);
+        List<VM> vms = vmDao.getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
+        List<VmTemplate> templates = vmTemplateDao.getAllForStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
+        BaseDisk diskImage = baseDiskDao.get(FixturesTool.DISK_ID);
 
         assertNotNull(diskImage);
         assertFalse(vms.isEmpty());
@@ -501,22 +518,21 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         dao.removeEntitesFromStorageDomain(existingDomain.getId());
 
         for (VM vm : vms) {
-            assertNull(getDbFacade().getVmDao().get(vm.getId()));
+            assertNull(vmDao.get(vm.getId()));
         }
 
         for (VmTemplate template : templates) {
-            assertNull(getDbFacade().getVmTemplateDao().get(template.getId()));
+            assertNull(vmTemplateDao.get(template.getId()));
         }
-        assertNull(getDbFacade().getBaseDiskDao().get(FixturesTool.DISK_ID));
+        assertNull(baseDiskDao.get(FixturesTool.DISK_ID));
     }
 
     @Test
     public void testAllByConnectionId() {
         List<StorageDomain> domains = dao.getAllByConnectionId(new Guid("0cc146e8-e5ed-482c-8814-270bc48c297f"));
-        assertEquals("Unexpected number of storage domains by connection id", 1, domains.size());
-        assertEquals("Wrong storage domain id for search by connection id",
-                FixturesTool.STORAGE_DOMAIN_NFS_MASTER,
-                domains.get(0).getId());
+        assertEquals(1, domains.size(), "Unexpected number of storage domains by connection id");
+        assertEquals(FixturesTool.STORAGE_DOMAIN_NFS_MASTER, domains.get(0).getId(),
+                "Wrong storage domain id for search by connection id");
     }
 
     @Test
@@ -537,7 +553,7 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         VmStatic vm = new VmStatic();
         vm.setId(Guid.newGuid());
         vm.setOrigin(OriginType.HOSTED_ENGINE);
-        dbFacade.getVmStaticDao().save(vm);
+        vmStaticDao.save(vm);
 
         // create disk for HE
         DiskImage disk = new DiskImage();
@@ -547,13 +563,13 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
         disk.setVolumeType(VolumeType.Preallocated);
         disk.setVolumeFormat(VolumeFormat.RAW);
 
-        dbFacade.getImageDao().save(disk.getImage());
-        dbFacade.getBaseDiskDao().save(disk);
+        imageDao.save(disk.getImage());
+        baseDiskDao.save(disk);
 
         ImageStorageDomainMap map = new ImageStorageDomainMap(
                 disk.getImageId(), existingDomain.getId(), null, null);
 
-        dbFacade.getImageStorageDomainMapDao().save(map);
+        imageStorageDomainMapDao.save(map);
 
         // attach disk
         VmDevice device = new VmDevice(
@@ -570,11 +586,11 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
                 null,
                 null);
 
-        dbFacade.getVmDeviceDao().save(device);
+        vmDeviceDao.save(device);
 
         DiskVmElement diskVmElement = new DiskVmElement(device.getId());
         diskVmElement.setDiskInterface(DiskInterface.IDE);
-        dbFacade.getDiskVmElementDao().save(diskVmElement);
+        diskVmElementDao.save(diskVmElement);
 
         // run test
         StorageDomain domain = dao.get(existingDomain.getId());
@@ -582,7 +598,7 @@ public class StorageDomainDaoTest extends BaseDaoTestCase {
 
         // change origin
         vm.setOrigin(OriginType.MANAGED_HOSTED_ENGINE);
-        dbFacade.getVmStaticDao().update(vm);
+        vmStaticDao.update(vm);
 
         // run test again
         domain = dao.get(existingDomain.getId());

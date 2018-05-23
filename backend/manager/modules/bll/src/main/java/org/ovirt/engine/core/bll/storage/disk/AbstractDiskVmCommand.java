@@ -1,6 +1,5 @@
 package org.ovirt.engine.core.bll.storage.disk;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -122,7 +121,7 @@ public abstract class AbstractDiskVmCommand<T extends VmDiskOperationParameterBa
      *            - The lun we set the connection at.
      */
     private void updateLUNConnectionsInfo(LUNs lun) {
-        lun.setLunConnections(new ArrayList<>(storageServerConnectionDao.getAllForLun(lun.getLUNId())));
+        lun.setLunConnections(storageServerConnectionDao.getAllForLun(lun.getLUNId()));
     }
 
     protected boolean isDiskPassPciAndIdeLimit() {
@@ -263,10 +262,10 @@ public abstract class AbstractDiskVmCommand<T extends VmDiskOperationParameterBa
 
                 if (diskInterface == DiskInterface.VirtIO_SCSI) {
                     Map<Integer, Map<VmDevice, Integer>>  vmDeviceUnitMap = vmInfoBuildUtils.getVmDeviceUnitMapForVirtioScsiDisks(getVm());
-                    return getAddressMapForScsiDisk(address, vmDeviceUnitMapForController(vmDevice, vmDeviceUnitMap), vmDevice, virtioScsiIndex, false, false);
+                    return getAddressMapForScsiDisk(address, vmDeviceUnitMapForController(vmDevice, vmDeviceUnitMap, diskInterface), vmDevice, virtioScsiIndex, false, false);
                 } else if (diskInterface == DiskInterface.SPAPR_VSCSI) {
                     Map<Integer, Map<VmDevice, Integer>> vmDeviceUnitMap = vmInfoBuildUtils.getVmDeviceUnitMapForSpaprScsiDisks(getVm());
-                    return getAddressMapForScsiDisk(address, vmDeviceUnitMapForController(vmDevice, vmDeviceUnitMap), vmDevice, sPaprVscsiIndex, true, true);
+                    return getAddressMapForScsiDisk(address, vmDeviceUnitMapForController(vmDevice, vmDeviceUnitMap, diskInterface), vmDevice, sPaprVscsiIndex, true, true);
                 }
             } finally {
                 lockManager.releaseLock(vmDiskHotPlugEngineLock);
@@ -276,9 +275,10 @@ public abstract class AbstractDiskVmCommand<T extends VmDiskOperationParameterBa
     }
 
     private Map<VmDevice, Integer> vmDeviceUnitMapForController(VmDevice vmDevice,
-                                                                Map<Integer, Map<VmDevice, Integer>> vmDeviceUnitMap) {
+            Map<Integer, Map<VmDevice, Integer>> vmDeviceUnitMap,
+            DiskInterface diskInterface) {
         int numOfDisks = getVm().getDiskMap().values().size();
-        int controllerId = vmInfoBuildUtils.getControllerForScsiDisk(vmDevice, getVm(), numOfDisks);
+        int controllerId = vmInfoBuildUtils.getControllerForScsiDisk(vmDevice, getVm(), diskInterface, numOfDisks);
         if (!vmDeviceUnitMap.containsKey(controllerId)) {
             return new HashMap<>();
         }

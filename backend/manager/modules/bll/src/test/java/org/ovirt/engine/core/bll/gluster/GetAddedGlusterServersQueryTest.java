@@ -1,20 +1,19 @@
 package org.ovirt.engine.core.bll.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.ovirt.engine.core.bll.AbstractQueryTest;
 import org.ovirt.engine.core.bll.interfaces.BackendInternal;
@@ -100,7 +99,7 @@ public class GetAddedGlusterServersQueryTest extends AbstractQueryTest<AddedGlus
         expectedServers.add(server);
     }
 
-    private void setupMock() throws Exception {
+    private void setupMock() {
         doReturn(getVds(VDSStatus.Up)).when(glusterUtils).getUpServer(CLUSTER_ID);
 
         VDSReturnValue returnValue = getVDSReturnValue();
@@ -132,7 +131,7 @@ public class GetAddedGlusterServersQueryTest extends AbstractQueryTest<AddedGlus
         return servers;
     }
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -144,7 +143,7 @@ public class GetAddedGlusterServersQueryTest extends AbstractQueryTest<AddedGlus
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testExecuteQueryCommand() throws IOException {
+    public void testExecuteQueryCommand() {
         getQuery().executeQueryCommand();
         Map<String, String> servers = getQuery().getQueryReturnValue().getReturnValue();
 

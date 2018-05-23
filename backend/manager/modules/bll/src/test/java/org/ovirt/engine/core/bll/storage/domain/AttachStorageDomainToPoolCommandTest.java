@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.bll.storage.domain;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -12,14 +12,17 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.context.CommandContext;
 import org.ovirt.engine.core.bll.context.CompensationContext;
 import org.ovirt.engine.core.bll.interfaces.BackendInternal;
+import org.ovirt.engine.core.bll.storage.pool.StoragePoolStatusHandler;
 import org.ovirt.engine.core.common.action.ActionReturnValue;
 import org.ovirt.engine.core.common.action.AttachStorageDomainToPoolParameters;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
@@ -42,6 +45,7 @@ import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.StoragePoolIsoMapDao;
 import org.ovirt.engine.core.dao.VdsDao;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AttachStorageDomainToPoolCommandTest extends BaseCommandTest {
     @Mock
     private StoragePoolIsoMapDao isoMapDao;
@@ -61,6 +65,8 @@ public class AttachStorageDomainToPoolCommandTest extends BaseCommandTest {
     private VDSBrokerFrontend vdsBrokerFrontend;
     @Mock
     private VDS vds;
+    @Mock
+    private StoragePoolStatusHandler storagePoolStatusHandler;
     private StoragePoolIsoMap map;
 
     @Spy

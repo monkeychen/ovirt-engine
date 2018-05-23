@@ -1,12 +1,19 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.Image;
 import org.ovirt.engine.core.common.businessentities.storage.ImageFileType;
@@ -14,6 +21,7 @@ import org.ovirt.engine.core.common.businessentities.storage.RepoImage;
 import org.ovirt.engine.core.common.queries.GetImagesListParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageDomainImagesResourceTest extends AbstractBackendCollectionResourceTest<Image, RepoImage, BackendStorageDomainImagesResource> {
 
     public BackendStorageDomainImagesResourceTest() {
@@ -36,8 +44,8 @@ public class BackendStorageDomainImagesResourceTest extends AbstractBackendColle
 
     @Test
     @Override
-    @Ignore
-    public void testQuery() throws Exception {
+    @Disabled
+    public void testQuery() {
     }
 
     @Test
@@ -52,54 +60,40 @@ public class BackendStorageDomainImagesResourceTest extends AbstractBackendColle
 
     @Test
     @Override
-    public void testListFailure() throws Exception {
+    public void testListFailure() {
         collection.setUriInfo(setUpUriExpectations(null));
 
         setUpEntityQueryExpectations(FAILURE);
 
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Test
     @Override
-    public void testListCrash() throws Exception {
+    public void testListCrash() {
         collection.setUriInfo(setUpUriExpectations(null));
 
         setUpEntityQueryExpectations(FAILURE);
 
-
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, new RuntimeException(FAILURE));
-        }
+        verifyFault(
+                assertThrows(WebApplicationException.class, this::getCollection),
+                BACKEND_FAILED_SERVER_LOCALE,
+                new RuntimeException(FAILURE));
     }
 
     @Test
     @Override
-    public void testListCrashClientLocale() throws Exception {
+    public void testListCrashClientLocale() {
         locales.add(CLIENT_LOCALE);
         collection.setUriInfo(setUpUriExpectations(null));
 
         setUpEntityQueryExpectations(FAILURE);
 
-
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, new RuntimeException(FAILURE));
-        } finally {
-            locales.clear();
-        }
+        verifyFault(
+                assertThrows(WebApplicationException.class, this::getCollection),
+                BACKEND_FAILED_CLIENT_LOCALE,
+                new RuntimeException(FAILURE));
     }
 
     @Override
@@ -109,7 +103,7 @@ public class BackendStorageDomainImagesResourceTest extends AbstractBackendColle
         Fault fault = (Fault) wae.getResponse().getEntity();
         assertEquals(reason, fault.getReason());
         assertNotNull(fault.getDetail());
-        assertTrue("expected detail to include: " + t.getMessage(), fault.getDetail().contains(t.getMessage()));
+        assertTrue(fault.getDetail().contains(t.getMessage()), "expected detail to include: " + t.getMessage());
     }
 
     protected void setUpEntityQueryExpectations(String failure) {

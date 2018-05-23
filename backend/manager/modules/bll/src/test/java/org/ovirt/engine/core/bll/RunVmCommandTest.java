@@ -1,11 +1,11 @@
 package org.ovirt.engine.core.bll;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -18,23 +18,24 @@ import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.common.vdscommands.VDSCommandType.ConnectStorageServer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.ovirt.engine.core.bll.snapshots.SnapshotsValidator;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.storage.domain.IsoDomainListSynchronizer;
 import org.ovirt.engine.core.bll.validator.RunVmValidator;
 import org.ovirt.engine.core.common.AuditLogType;
@@ -42,8 +43,6 @@ import org.ovirt.engine.core.common.action.RunVmParams;
 import org.ovirt.engine.core.common.action.RunVmParams.RunVmFlow;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.Snapshot.SnapshotStatus;
-import org.ovirt.engine.core.common.businessentities.StorageDomain;
-import org.ovirt.engine.core.common.businessentities.StorageDomainStatic;
 import org.ovirt.engine.core.common.businessentities.StoragePool;
 import org.ovirt.engine.core.common.businessentities.StorageServerConnections;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -63,18 +62,13 @@ import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.SnapshotDao;
-import org.ovirt.engine.core.dao.StorageDomainStaticDao;
 import org.ovirt.engine.core.dao.StorageServerConnectionDao;
 import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmDeviceDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.InjectedMock;
 
-@RunWith(Theories.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RunVmCommandTest extends BaseCommandTest {
-
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule();
-
     /**
      * The command under test.
      */
@@ -101,13 +95,8 @@ public class RunVmCommandTest extends BaseCommandTest {
     OsRepository osRepository;
 
     @Mock
-    CpuFlagsManagerHandler cpuFlagsManagerHandler;
-
-    @Mock
-    private SnapshotsValidator snapshotsValidator;
-
-    @Mock
-    private StorageDomainStaticDao storageDomainStaticDao;
+    @InjectedMock
+    public CpuFlagsManagerHandler cpuFlagsManagerHandler;
 
     @Mock
     private StorageServerConnectionDao storageServerConnectionDao;
@@ -153,7 +142,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateSimpleInitrdAndKernelName() throws Exception {
+    public void validateSimpleInitrdAndKernelName() {
         String Initrd = "/boot/initrd.initrd";
         String Kernel = "/boot/kernel.image";
         VM vm = createVmForTesting(Initrd, Kernel);
@@ -162,7 +151,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefix() throws Exception {
+    public void validateIsoPrefix() {
         String initrd = "initrd";
         String kernel = "kernel";
         VM vm = createVmForTesting(RunVmCommand.ISO_PREFIX + initrd, RunVmCommand.ISO_PREFIX + kernel);
@@ -171,7 +160,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixForKernelAndNoPrefixForInitrd() throws Exception {
+    public void validateIsoPrefixForKernelAndNoPrefixForInitrd() {
         String initrd = "initrd";
         String kernel = "kernel";
         VM vm = createVmForTesting(initrd, RunVmCommand.ISO_PREFIX + kernel);
@@ -180,7 +169,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixForInitrdAndNoPrefixForKernel() throws Exception {
+    public void validateIsoPrefixForInitrdAndNoPrefixForKernel() {
         String initrd = "initrd";
         String kernel = "kernel";
         VM vm = createVmForTesting(RunVmCommand.ISO_PREFIX + initrd, kernel);
@@ -189,7 +178,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixNameForKernelAndNullForInitrd() throws Exception {
+    public void validateIsoPrefixNameForKernelAndNullForInitrd() {
         String kernel = "kernel";
         VM vm = createVmForTesting(null, RunVmCommand.ISO_PREFIX + kernel);
         assertNull(vm.getInitrdUrl());
@@ -197,14 +186,14 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixCaseSensitive() throws Exception {
+    public void validateIsoPrefixCaseSensitive() {
         String initrd = "ISO://";
         VM vm = createVmForTesting(initrd, null);
         assertEquals("", vm.getInitrdUrl());
     }
 
     @Test
-    public void validateIsoPrefixForOnlyIsoPrefixInKernelAndInitrd() throws Exception {
+    public void validateIsoPrefixForOnlyIsoPrefixInKernelAndInitrd() {
         String initrd = RunVmCommand.ISO_PREFIX;
         String kernelUrl = RunVmCommand.ISO_PREFIX;
         VM vm = createVmForTesting(initrd, kernelUrl);
@@ -213,7 +202,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void checkIsoPrefixForNastyCharacters() throws Exception {
+    public void checkIsoPrefixForNastyCharacters() {
         String initrd = "@#$!";
         String kernelUrl = "    ";
         VM vm = createVmForTesting(initrd, kernelUrl);
@@ -222,7 +211,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixNameForInitrdAndNullForKernel() throws Exception {
+    public void validateIsoPrefixNameForInitrdAndNullForKernel() {
         String initrd = "initrd";
         VM vm = createVmForTesting(RunVmCommand.ISO_PREFIX + initrd, null);
         assertEquals(ACTIVE_ISO_PREFIX + "/" + initrd, vm.getInitrdUrl());
@@ -230,7 +219,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixWhenNoActiveIso() throws Exception {
+    public void validateIsoPrefixWhenNoActiveIso() {
         // Set Valid Iso Prefix
         setIsoPrefixVDSMethod(INACTIVE_ISO_PREFIX);
 
@@ -240,14 +229,14 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateIsoPrefixWithTrippleSlash() throws Exception {
+    public void validateIsoPrefixWithTrippleSlash() {
         String initrd = RunVmCommand.ISO_PREFIX + "/";
         VM vm = createVmForTesting(initrd, null);
         assertEquals(ACTIVE_ISO_PREFIX + "/", vm.getInitrdUrl());
     }
 
     @Test
-    public void validateIsoPrefixInTheMiddleOfTheInitrdAndKerenelName() throws Exception {
+    public void validateIsoPrefixInTheMiddleOfTheInitrdAndKerenelName() {
         String initrd = "initrd " + RunVmCommand.ISO_PREFIX;
         String kernelUrl = "kernelUrl " + RunVmCommand.ISO_PREFIX;
         VM vm = createVmForTesting(initrd, kernelUrl);
@@ -256,21 +245,21 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateInitrdWithSlashOnly() throws Exception {
+    public void validateInitrdWithSlashOnly() {
         String initrd = "/";
         VM vm = createVmForTesting(initrd, null);
         assertEquals("/", vm.getInitrdUrl());
     }
 
     @Test
-    public void validateIsoPrefixWithBackSlash() throws Exception {
+    public void validateIsoPrefixWithBackSlash() {
         String initrd = "iso:\\";
         VM vm = createVmForTesting(initrd, null);
         assertEquals("iso:\\", vm.getInitrdUrl());
     }
 
     @Test
-    public void validateBootPrefixForInitrdAndKernelImage() throws Exception {
+    public void validateBootPrefixForInitrdAndKernelImage() {
         String initrd = "/boot";
         String kernelImage = "/boot";
         VM vm = createVmForTesting(initrd, kernelImage);
@@ -279,7 +268,7 @@ public class RunVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateInitrdAndKernelImageWithOneCharacter() throws Exception {
+    public void validateInitrdAndKernelImageWithOneCharacter() {
         String initrd = "i";
         String kernelImage = "k";
         VM vm = createVmForTesting(initrd, kernelImage);
@@ -313,12 +302,11 @@ public class RunVmCommandTest extends BaseCommandTest {
         return vm;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mockCpuFlagsManagerHandler();
         when(osRepository.isWindows(anyInt())).thenReturn(false);
         when(osRepository.isCpuSupported(anyInt(), any(), any())).thenReturn(true);
-        injectorRule.bind(CpuFlagsManagerHandler.class, cpuFlagsManagerHandler);
         vmHandler.init();
 
         mockSuccessfulRunVmValidator();
@@ -344,26 +332,25 @@ public class RunVmCommandTest extends BaseCommandTest {
         ValidateTestUtils.runAndAssertValidateSuccess(command);
     }
 
-    @DataPoints
-    public static VmRngDevice.Source[] rngSources = VmRngDevice.Source.values();
-    @DataPoints
-    public static Set<VmRngDevice.Source>[] rngSourcesSubsets;
-
-    static {
-        HashSet<VmRngDevice.Source> sourcesEmpty = new HashSet<>();
-        HashSet<VmRngDevice.Source> sourcesRandom = new HashSet<>();
+    public static Stream<Arguments> validateUnsupportedRng() {
+        Set<VmRngDevice.Source> sourcesEmpty = new HashSet<>();
+        Set<VmRngDevice.Source> sourcesRandom = new HashSet<>();
         sourcesRandom.add(VmRngDevice.Source.RANDOM);
-        HashSet<VmRngDevice.Source> sourcesHwRng = new HashSet<>();
+        Set<VmRngDevice.Source> sourcesHwRng = new HashSet<>();
         sourcesHwRng.add(VmRngDevice.Source.HWRNG);
-        HashSet<VmRngDevice.Source> sourcesAll = new HashSet<>();
+        Set<VmRngDevice.Source> sourcesAll = new HashSet<>();
         sourcesAll.add(VmRngDevice.Source.RANDOM);
         sourcesAll.add(VmRngDevice.Source.HWRNG);
 
-        rngSourcesSubsets = new Set[] { sourcesEmpty, sourcesRandom, sourcesHwRng, sourcesAll };
+        // Create a stream of all the permutations of each VmRngDevice.Source with each set:
+        return Stream.of(sourcesEmpty, sourcesRandom, sourcesHwRng, sourcesAll)
+                .flatMap(v -> Arrays.stream(VmRngDevice.Source.values())
+                        .map(c -> Arguments.of(c, v)));
     }
 
-    @Theory
-    public void testValidateUnsupportedRng(VmRngDevice.Source vmRngSource, Set<VmRngDevice.Source> clusterReqSources) {
+    @ParameterizedTest
+    @MethodSource
+    public void validateUnsupportedRng(VmRngDevice.Source vmRngSource, Set<VmRngDevice.Source> clusterReqSources) {
         final VM vm = new VM();
         vm.setStatus(VMStatus.Down);
         vm.setId(command.getVmId());
@@ -595,7 +582,7 @@ public class RunVmCommandTest extends BaseCommandTest {
                 eq(ConnectStorageServer),
                 captor.capture());
         assertThat(captor.getValue().getConnectionList().size(), is(1));
-        assertEquals(captor.getValue().getStorageType(), StorageType.ISCSI);
+        assertEquals(StorageType.ISCSI, captor.getValue().getStorageType());
         assertTrue(connectSucceeded);
     }
 
@@ -629,20 +616,5 @@ public class RunVmCommandTest extends BaseCommandTest {
         assertThat(captor.getValue().getConnectionList().size(), is(1));
         assertFalse(connectSucceeded);
 
-    }
-
-    private StorageDomainStatic backupStorageDomain(boolean isBackup) {
-        StorageDomain mockStorage = new StorageDomain();
-        mockStorage.setBackup(isBackup);
-        return mockStorage.getStorageStaticData();
-    }
-
-    private Guid initDiskImage(VM vm) {
-        DiskImage image = new DiskImage();
-        Guid storageDomainId = Guid.newGuid();
-        image.setId(Guid.newGuid());
-        image.setStorageIds(new ArrayList<>(Collections.singletonList(storageDomainId)));
-        vm.getDiskMap().put(image.getId(), image);
-        return storageDomainId;
     }
 }

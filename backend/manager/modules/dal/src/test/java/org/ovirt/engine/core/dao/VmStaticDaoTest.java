@@ -1,12 +1,12 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,10 +14,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
 
 import org.hamcrest.Matchers;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.common.businessentities.ConsoleDisconnectAction;
 import org.ovirt.engine.core.common.businessentities.MigrationSupport;
 import org.ovirt.engine.core.common.businessentities.OriginType;
@@ -30,15 +33,31 @@ import org.ovirt.engine.core.common.businessentities.VmStatic;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.utils.VmDeviceType;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
+@ExtendWith(MockConfigExtension.class)
 public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmStaticDao> {
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(mockConfig(ConfigValues.ApplicationMode, 255));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.ApplicationMode, 255));
+    }
 
     protected static final Guid[] HOST_GUIDS = { FixturesTool.HOST_WITH_NO_VFS_CONFIGS_ID,
             FixturesTool.HOST_ID,
             FixturesTool.GLUSTER_BRICK_SERVER1};
+
+    @Inject
+    private SnapshotDao snapshotDao;
+    @Inject
+    private PermissionDao permissionsDao;
+    @Inject
+    private DiskDao diskDao;
+    @Inject
+    private VmDao vmDao;
+    @Inject
+    private VmTemplateDao vmTemplateDao;
+    @Inject
+    private VmDeviceDao vmDeviceDao;
 
     @Override
     protected VmStatic generateNewEntity() {
@@ -69,11 +88,6 @@ public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmSt
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.VM_RHEL5_POOL_57;
-    }
-
-    @Override
-    protected VmStaticDao prepareDao() {
-        return dbFacade.getVmStaticDao();
     }
 
     @Override
@@ -154,55 +168,53 @@ public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmSt
         }
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testGetAll() {
-        dao.getAll();
+        assertThrows(UnsupportedOperationException.class, () -> dao.getAll());
     }
 
     @Test
     @Override
     public void testRemove() {
-        for (Snapshot s : dbFacade.getSnapshotDao().getAll()) {
-            dbFacade.getSnapshotDao().remove(s.getId());
+        for (Snapshot s : snapshotDao.getAll()) {
+            snapshotDao.remove(s.getId());
         }
 
         dao.remove(getExistingEntityId());
         VmStatic result = dao.get(getExistingEntityId());
         assertNull(result);
-        PermissionDao permissionsDao = dbFacade.getPermissionDao();
-        assertEquals("vm permissions wasn't removed", 0, permissionsDao.getAllForEntity(getExistingEntityId()).size());
+        assertEquals(0, permissionsDao.getAllForEntity(getExistingEntityId()).size(), "vm permissions wasn't removed");
     }
 
     @Test
     public void testRemoveWithoutPermissions() {
-        for (Snapshot s : dbFacade.getSnapshotDao().getAll()) {
-            dbFacade.getSnapshotDao().remove(s.getId());
+        for (Snapshot s : snapshotDao.getAll()) {
+            snapshotDao.remove(s.getId());
         }
 
-        PermissionDao permissionsDao = dbFacade.getPermissionDao();
         int numberOfPermissionsBeforeRemove = permissionsDao.getAllForEntity(getExistingEntityId()).size();
 
         dao.remove(getExistingEntityId(), false);
         VmStatic result = dao.get(getExistingEntityId());
         assertNull(result);
 
-        assertEquals("vm permissions changed during remove although shouldnt have.", numberOfPermissionsBeforeRemove, permissionsDao.getAllForEntity(getExistingEntityId()).size());
+        assertEquals(numberOfPermissionsBeforeRemove, permissionsDao.getAllForEntity(getExistingEntityId()).size(), "vm permissions changed during remove although shouldnt have.");
     }
 
     private void checkDisks(Guid id, boolean hasDisks) {
-        assertEquals(hasDisks, !dbFacade.getDiskDao().getAllForVm(id).isEmpty());
+        assertEquals(hasDisks, !diskDao.getAllForVm(id).isEmpty());
     }
 
     private void checkVmsDcAndDisks(List<Guid> vmIds, Guid storagePoolId, boolean hasDisks) {
         for (Guid vmId : vmIds) {
-            assertEquals(storagePoolId, dbFacade.getVmDao().get(vmId).getStoragePoolId());
+            assertEquals(storagePoolId, vmDao.get(vmId).getStoragePoolId());
             checkDisks(vmId, hasDisks);
         }
     }
 
     private void checkTemplatesDcAndDisks(List<Guid> templateIds, Guid storagePoolId, boolean hasDisks) {
         for (Guid templateId : templateIds) {
-            assertEquals(storagePoolId, dbFacade.getVmTemplateDao().get(templateId).getStoragePoolId());
+            assertEquals(storagePoolId, vmTemplateDao.get(templateId).getStoragePoolId());
             checkDisks(templateId, hasDisks);
         }
     }
@@ -249,11 +261,11 @@ public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmSt
                 null,
                 snapshotId,
                 null);
-        dbFacade.getVmDeviceDao().save(device);
+        vmDeviceDao.save(device);
     }
 
     @Test
-    public void testGetAllNamesPinnedToHostReturnsNothingForRandomHost() throws Exception {
+    public void testGetAllNamesPinnedToHostReturnsNothingForRandomHost() {
         assertTrue(dao.getAllNamesPinnedToHost(Guid.newGuid()).isEmpty());
     }
 
@@ -261,8 +273,8 @@ public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmSt
     @Test
     public void testGetDbGeneration() {
         Long version = dao.getDbGeneration(FixturesTool.VM_RHEL5_POOL_50);
-        assertNotNull("db generation shouldn't be null", version);
-        assertEquals("db generation should be 1 by default for vm", 1, version.longValue());
+        assertNotNull(version, "db generation shouldn't be null");
+        assertEquals(1, version.longValue(), "db generation should be 1 by default for vm");
     }
 
     @Test
@@ -270,27 +282,27 @@ public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmSt
         dao.incrementDbGenerationForAllInStoragePool(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER);
 
         Long version = dao.getDbGeneration(FixturesTool.VM_RHEL5_POOL_50);
-        assertEquals("db geneeration wasn't incremented to all vms in pool", 2, version.longValue());
+        assertEquals(2, version.longValue(), "db geneeration wasn't incremented to all vms in pool");
         version = dao.getDbGeneration(FixturesTool.VM_RHEL5_POOL_51);
-        assertEquals("db generation wasn't incremented to all vms in pool", 2, version.longValue());
+        assertEquals(2, version.longValue(), "db generation wasn't incremented to all vms in pool");
         version = dao.getDbGeneration(FixturesTool.VM_RHEL5_POOL_60);
-        assertEquals("db generation was incremented for vm in different pool", 1, version.longValue());
+        assertEquals(1, version.longValue(), "db generation was incremented for vm in different pool");
     }
 
     @Test
     public void testIncrementDbGeneration() {
         dao.incrementDbGeneration(FixturesTool.VM_RHEL5_POOL_50);
         Long version = dao.getDbGeneration(FixturesTool.VM_RHEL5_POOL_50);
-        assertEquals("db generation wasn't incremented as expected", 2, version.longValue());
+        assertEquals(2, version.longValue(), "db generation wasn't incremented as expected");
     }
 
     @Test
-    public void testGetAllNamesPinnedToHostReturnsNothingForHostButNotPinned() throws Exception {
+    public void testGetAllNamesPinnedToHostReturnsNothingForHostButNotPinned() {
         assertTrue(dao.getAllNamesPinnedToHost(FixturesTool.HOST_ID).isEmpty());
     }
 
     @Test
-    public void testGetAllNamesPinnedToHostReturnsVmNameForHostPinned() throws Exception {
+    public void testGetAllNamesPinnedToHostReturnsVmNameForHostPinned() {
         List<String> namesPinnedToHost = dao.getAllNamesPinnedToHost(FixturesTool.VDS_RHEL6_NFS_SPM);
 
         assertFalse(namesPinnedToHost.isEmpty());
@@ -498,7 +510,7 @@ public class VmStaticDaoTest extends BaseGenericDaoTestCase<Guid, VmStatic, VmSt
     @Test
     public void testGetAllRunningForVds() {
         List<VmStatic> vms = dao.getAllRunningForVds(FixturesTool.VDS_RHEL6_NFS_SPM);
-        assertEquals(vms.size(), 3);
+        assertEquals(3, vms.size());
         List<Guid> vmIds = vms.stream().map(VmStatic::getId).collect(Collectors.toList());
         assertTrue(vmIds.contains(FixturesTool.VM_RHEL5_POOL_57));
         assertFalse(vmIds.contains(FixturesTool.VM_RHEL5_POOL_52));

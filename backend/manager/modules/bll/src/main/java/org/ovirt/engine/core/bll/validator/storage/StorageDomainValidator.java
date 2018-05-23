@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.VmHandler;
 import org.ovirt.engine.core.bll.interfaces.BackendInternal;
@@ -41,7 +40,6 @@ import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmDynamicDao;
 import org.ovirt.engine.core.di.Injector;
@@ -514,14 +512,14 @@ public class StorageDomainValidator {
     }
 
     private BackendInternal getBackend() {
-        return Backend.getInstance();
+        return Injector.get(BackendInternal.class);
     }
 
     protected VmDao getVmDao() {
-        return DbFacade.getInstance().getVmDao();
+        return Injector.get(VmDao.class);
     }
 
     protected VmDynamicDao getVmDynamicDao() {
-        return DbFacade.getInstance().getVmDynamicDao();
+        return Injector.get(VmDynamicDao.class);
     }
 }

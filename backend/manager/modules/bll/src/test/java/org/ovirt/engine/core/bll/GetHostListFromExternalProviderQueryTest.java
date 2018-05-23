@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.Provider;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.queries.GetHostListFromExternalProviderParameters;
@@ -21,7 +21,7 @@ public class GetHostListFromExternalProviderQueryTest extends AbstractQueryTest<
     private final VDS existingHost2 = new VDS();
     private final Provider<?> hostProvider = new Provider();
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -69,11 +69,7 @@ public class GetHostListFromExternalProviderQueryTest extends AbstractQueryTest<
         List<VDS> allHosts = new ArrayList<>();
         allHosts.add(host1);
         allHosts.add(host2);
-        List<VDS> existingHosts = new ArrayList<>();
-        existingHosts.add(existingHost1);
-        existingHosts.add(existingHost2);
         doReturn(allHosts).when(getQuery()).getProviderHosts(hostProvider, null);
-        doReturn(existingHosts).when(getQuery()).getExistingHosts();
         getQuery().executeQueryCommand();
         assertEquals(allHosts, getQuery().getQueryReturnValue().getReturnValue());
     }
@@ -85,10 +81,7 @@ public class GetHostListFromExternalProviderQueryTest extends AbstractQueryTest<
         List<VDS> allHosts = new ArrayList<>();
         allHosts.add(host1);
         allHosts.add(host2);
-        List<VDS> existingHosts = new ArrayList<>();
-        existingHosts.add(host1);
         doReturn(allHosts).when(getQuery()).getProviderHosts(hostProvider, null);
-        doReturn(existingHosts).when(getQuery()).getExistingHosts();
         getQuery().executeQueryCommand();
         assertEquals(2, ((List<VDS>) getQuery().getQueryReturnValue().getReturnValue()).size());
     }

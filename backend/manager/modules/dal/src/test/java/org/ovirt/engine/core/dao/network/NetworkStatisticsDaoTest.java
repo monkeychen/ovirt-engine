@@ -1,15 +1,16 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
 import org.ovirt.engine.core.common.businessentities.network.NetworkInterface;
 import org.ovirt.engine.core.common.businessentities.network.NetworkStatistics;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
+import org.ovirt.engine.core.dao.Dao;
 
-public abstract class NetworkStatisticsDaoTest<T extends NetworkStatistics> extends BaseDaoTestCase  {
+public abstract class NetworkStatisticsDaoTest<D extends Dao, T extends NetworkStatistics> extends BaseDaoTestCase<D> {
 
     protected abstract List<? extends NetworkInterface<T>> getAllInterfaces();
 

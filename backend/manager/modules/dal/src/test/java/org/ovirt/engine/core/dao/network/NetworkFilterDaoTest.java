@@ -1,28 +1,23 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.NetworkFilter;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class NetworkFilterDaoTest extends BaseDaoTestCase {
+public class NetworkFilterDaoTest extends BaseDaoTestCase<NetworkFilterDao> {
 
     private static final String INVALID_NETWORK_FILTER_NAME = "invalid-network-filter-name";
     private static final String INVALID_VERSION = "1.0";
-
-    @Inject
-    private NetworkFilterDao dao;
 
     @Test
     public void testGetAllNetworkFilters() {

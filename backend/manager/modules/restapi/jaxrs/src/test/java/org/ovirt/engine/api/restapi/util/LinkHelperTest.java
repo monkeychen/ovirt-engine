@@ -16,10 +16,12 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.util;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Cdrom;
 import org.ovirt.engine.api.model.Cluster;
 import org.ovirt.engine.api.model.DataCenter;
@@ -40,7 +42,7 @@ import org.ovirt.engine.api.model.VmPool;
 import org.ovirt.engine.api.restapi.invocation.Current;
 import org.ovirt.engine.api.restapi.invocation.CurrentManager;
 
-public class LinkHelperTest extends Assert {
+public class LinkHelperTest {
 
     private static final String VM_ID = "awesome";
     private static final String CLUSTER_ID = "alarming";
@@ -88,7 +90,7 @@ public class LinkHelperTest extends Assert {
     private static final String EVENT_HREF = BASE_PATH + "/events/" + EVENT_ID;
     private static final String STATISTIC_HREF = VM_HREF + "/statistics/" + STATISTIC_ID;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Current current = new Current();
         current.setRoot(URI_ROOT);
@@ -97,13 +99,13 @@ public class LinkHelperTest extends Assert {
         CurrentManager.put(current);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         CurrentManager.remove();
     }
 
     @Test
-    public void testEventLinks() throws Exception {
+    public void testEventLinks() {
         Event event = new Event();
         event.setId(EVENT_ID);
 
@@ -113,16 +115,16 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testVmLinks() throws Exception {
+    public void testVmLinks() {
         doTestVmLinks(false);
     }
 
     @Test
-    public void testVmLinksSuggestedParent() throws Exception {
+    public void testVmLinksSuggestedParent() {
         doTestVmLinks(true);
     }
 
-    private void doTestVmLinks(boolean suggestParent) throws Exception {
+    private void doTestVmLinks(boolean suggestParent) {
         Vm vm = new Vm();
         vm.setId(VM_ID);
         vm.setCluster(new Cluster());
@@ -145,7 +147,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testClusterLinks() throws Exception {
+    public void testClusterLinks() {
         Cluster cluster = new Cluster();
         cluster.setId(CLUSTER_ID);
         cluster.setDataCenter(new DataCenter());
@@ -158,7 +160,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testHostLinks() throws Exception {
+    public void testHostLinks() {
         Host host = new Host();
         host.setId(HOST_ID);
 
@@ -168,7 +170,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testStorageDomainLinks() throws Exception {
+    public void testStorageDomainLinks() {
         StorageDomain storageDomain = new StorageDomain();
         storageDomain.setId(STORAGE_DOMAIN_ID);
 
@@ -182,7 +184,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testAttachedStorageDomainLinks() throws Exception {
+    public void testAttachedStorageDomainLinks() {
         StorageDomain storageDomain = new StorageDomain();
         storageDomain.setId(STORAGE_DOMAIN_ID);
 
@@ -195,7 +197,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testStorageDomainVmLinks() throws Exception {
+    public void testStorageDomainVmLinks() {
         Vm vm = new Vm();
         vm.setId(VM_ID);
 
@@ -209,7 +211,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testStorageDomainTemplateLinks() throws Exception {
+    public void testStorageDomainTemplateLinks() {
         Template template = new Template();
         template.setId(TEMPLATE_ID);
 
@@ -223,7 +225,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testDataCenterLinks() throws Exception {
+    public void testDataCenterLinks() {
         DataCenter dataCenter = new DataCenter();
         dataCenter.setId(DATA_CENTER_ID);
 
@@ -233,7 +235,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testNetworkLinks() throws Exception {
+    public void testNetworkLinks() {
         Network network = new Network();
         network.setId(NETWORK_ID);
 
@@ -243,7 +245,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testClusterNetworkLinks() throws Exception {
+    public void testClusterNetworkLinks() {
         Network network = new Network();
         network.setId(NETWORK_ID);
         network.setCluster(new Cluster());
@@ -255,7 +257,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testTagLinks() throws Exception {
+    public void testTagLinks() {
         Tag tag = new Tag();
         tag.setId(TAG_ID);
 
@@ -265,7 +267,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testVmTagLinks() throws Exception {
+    public void testVmTagLinks() {
         Tag tag = new Tag();
         tag.setId(TAG_ID);
         tag.setVm(new Vm());
@@ -277,7 +279,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testHostTagLinks() throws Exception {
+    public void testHostTagLinks() {
         Tag tag = new Tag();
         tag.setId(TAG_ID);
         tag.setHost(new Host());
@@ -289,7 +291,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testTemplateTagLinks() throws Exception {
+    public void testTemplateTagLinks() {
         Tag tag = new Tag();
         tag.setId(TAG_ID);
         tag.setTemplate(new Template());
@@ -301,7 +303,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testUserTagLinks() throws Exception {
+    public void testUserTagLinks() {
         Tag tag = new Tag();
         tag.setId(TAG_ID);
         tag.setUser(new User());
@@ -313,7 +315,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testFileLinks() throws Exception {
+    public void testFileLinks() {
         File file = new File();
         file.setId(FILE_ID);
 
@@ -326,7 +328,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testCdRomLinks() throws Exception {
+    public void testCdRomLinks() {
         Cdrom cdrom = new Cdrom();
         cdrom.setId(CDROM_ID);
 
@@ -339,7 +341,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testNicLinks() throws Exception {
+    public void testNicLinks() {
         Nic nic = new Nic();
         nic.setId(NIC_ID);
 
@@ -352,7 +354,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testStorageLinks() throws Exception {
+    public void testStorageLinks() {
         HostStorage storage = new HostStorage();
         storage.setId(STORAGE_ID);
 
@@ -366,7 +368,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testGroupLinks() throws Exception {
+    public void testGroupLinks() {
         Group group = new Group();
         group.setId(GROUP_ID);
 
@@ -376,7 +378,7 @@ public class LinkHelperTest extends Assert {
     }
 
     @Test
-    public void testStatisticLinks() throws Exception {
+    public void testStatisticLinks() {
         Statistic statistic = new Statistic();
         statistic.setId(STATISTIC_ID);
 

@@ -1,18 +1,24 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.ovirt.engine.api.restapi.resource.BackendTemplatesResourceTest.setUpEntityExpectations;
 import static org.ovirt.engine.api.restapi.resource.BackendTemplatesResourceTest.verifyModelSpecific;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Template;
 import org.ovirt.engine.core.common.businessentities.StorageDomainType;
 import org.ovirt.engine.core.common.businessentities.StoragePool;
@@ -24,6 +30,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageDomainTemplatesResourceTest
     extends AbstractBackendCollectionResourceTest<Template, VmTemplate, BackendStorageDomainTemplatesResource> {
 
@@ -36,34 +43,34 @@ public class BackendStorageDomainTemplatesResourceTest
 
     @Override
     @Test
-    @Ignore
-    public void testQuery() throws Exception {
+    @Disabled
+    public void testQuery() {
     }
 
     @Test
     @Override
-    @Ignore
+    @Disabled
     public void testList() throws Exception {
     }
 
     @Test
     @Override
-    @Ignore
-    public void testListFailure() throws Exception {
+    @Disabled
+    public void testListFailure() {
 
     }
 
     @Test
     @Override
-    @Ignore
-    public void testListCrash() throws Exception {
+    @Disabled
+    public void testListCrash() {
 
     }
 
     @Test
     @Override
-    @Ignore
-    public void testListCrashClientLocale() throws Exception {
+    @Disabled
+    public void testListCrashClientLocale() {
 
     }
 
@@ -78,11 +85,11 @@ public class BackendStorageDomainTemplatesResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpQueryExpectations(query, failure, StorageDomainType.Data);
     }
 
-    protected void setUpQueryExpectations(String query, Object failure, StorageDomainType domainType) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure, StorageDomainType domainType) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetStorageDomainById,
@@ -119,19 +126,15 @@ public class BackendStorageDomainTemplatesResourceTest
     }
 
     protected List<VmTemplate> setUpTemplates() {
-        List<VmTemplate> ret = new ArrayList<>();
-        for (int i = 0; i < NAMES.length; i++) {
-            ret.add(getEntity(i));
-        }
-        return ret;
+        return IntStream.range(0, NAMES.length).mapToObj(this::getEntity).collect(Collectors.toList());
     }
 
-    protected HashMap<VmTemplate, List<DiskImage>> setUpExportTemplates() {
-        HashMap<VmTemplate, List<DiskImage>> ret = new LinkedHashMap<>();
-        for (int i = 0; i < NAMES.length; i++) {
-            ret.put(getEntity(i), new ArrayList<>());
-        }
-        return ret;
+    protected Map<VmTemplate, List<DiskImage>> setUpExportTemplates() {
+        return IntStream.range(0, NAMES.length).boxed().collect(
+                Collectors.toMap(this::getEntity,
+                        x -> new ArrayList<>(),
+                        (u, v) -> null, // Should never happen, we have distinct entities
+                        LinkedHashMap::new));
     }
 
     public static org.ovirt.engine.core.common.businessentities.StorageDomain setUpStorageDomain(StorageDomainType domainType) {
@@ -144,11 +147,7 @@ public class BackendStorageDomainTemplatesResourceTest
     public static List<StoragePool> setUpStoragePool() {
         final StoragePool entity = new StoragePool();
         entity.setId(DATA_CENTER_ID);
-        return new ArrayList<StoragePool>(){
-            private static final long serialVersionUID = 6544998068993726769L;
-        {
-            add(entity);}
-        };
+        return Collections.singletonList(entity);
     }
 
     @Override

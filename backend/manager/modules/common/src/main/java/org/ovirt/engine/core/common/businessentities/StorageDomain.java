@@ -195,11 +195,18 @@ public class StorageDomain implements Queryable, BusinessEntityWithStatus<Guid, 
         updateOverCommitPercent();
     }
 
+    public Integer getConfirmedAvailableDiskSize() {
+        return getStorageDynamicData().getConfirmedAvailableDiskSize();
+    }
+
+    public void setConfirmedAvailableDiskSize(Integer confirmedAvailableDiskSize) {
+        getStorageDynamicData().setConfirmedAvailableDiskSize(confirmedAvailableDiskSize);
+    }
+
     private void updateOverCommitPercent() {
         if (getAvailableDiskSize() == null || getAvailableDiskSize() == 0) {
             setStorageDomainOverCommitPercent(0);
-        }
-        else {
+        } else {
             setStorageDomainOverCommitPercent((getCommittedDiskSize() - getActualImagesSize()) * 100
                     / getAvailableDiskSize());
         }

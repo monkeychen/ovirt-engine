@@ -1,5 +1,9 @@
 package org.ovirt.engine.api.restapi.types;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.hamcrest.text.IsEqualIgnoringCase;
 import org.ovirt.engine.api.model.Nic;
 import org.ovirt.engine.api.model.NicInterface;

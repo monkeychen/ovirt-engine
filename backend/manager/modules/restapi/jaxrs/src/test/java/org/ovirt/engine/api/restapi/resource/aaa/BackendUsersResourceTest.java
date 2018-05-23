@@ -1,5 +1,10 @@
 package org.ovirt.engine.api.restapi.resource.aaa;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -11,9 +16,10 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Domain;
-import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.Group;
 import org.ovirt.engine.api.model.User;
 import org.ovirt.engine.api.restapi.resource.AbstractBackendCollectionResourceTest;
@@ -27,6 +33,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendUsersResourceTest
     extends AbstractBackendCollectionResourceTest<User, DbUser, BackendUsersResource> {
 
@@ -51,7 +58,7 @@ public class BackendUsersResourceTest
     }
 
     @Test
-    public void testAddUser2() throws Exception {
+    public void testAddUser2() {
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
                 new String[] {},
@@ -69,7 +76,7 @@ public class BackendUsersResourceTest
     }
 
     @Test
-    public void testAddUser3() throws Exception {
+    public void testAddUser3() {
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
                 new String[] {},
@@ -84,7 +91,7 @@ public class BackendUsersResourceTest
     }
 
     @Test
-    public void testAddUser4() throws Exception {
+    public void testAddUser4() {
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
                 new String[] { },
@@ -114,7 +121,7 @@ public class BackendUsersResourceTest
         verifyModel((User) response.getEntity(), 0);
     }
 
-    private void setUpAddUserExpectations(String query) throws Exception {
+    private void setUpAddUserExpectations(String query) {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(
             query,
@@ -196,14 +203,7 @@ public class BackendUsersResourceTest
         UriInfo uriInfo = setUpUriExpectations(null);
         setUpQueryExpectations(QUERY, FAILURE);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Override
@@ -213,13 +213,7 @@ public class BackendUsersResourceTest
         Throwable t = new RuntimeException(FAILURE);
         setUpQueryExpectations(QUERY, t);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     @Override
@@ -230,15 +224,6 @@ public class BackendUsersResourceTest
         Throwable t = new RuntimeException(FAILURE);
         setUpQueryExpectations(QUERY, t);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        }
-        finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 }

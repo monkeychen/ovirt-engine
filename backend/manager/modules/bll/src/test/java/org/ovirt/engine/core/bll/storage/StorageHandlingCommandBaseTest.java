@@ -1,14 +1,16 @@
 package org.ovirt.engine.core.bll.storage;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -18,9 +20,10 @@ import org.ovirt.engine.core.common.businessentities.StoragePool;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.StoragePoolDao;
-import org.ovirt.engine.core.dao.StoragePoolIsoMapDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
+@ExtendWith(MockConfigExtension.class)
 public class StorageHandlingCommandBaseTest extends BaseCommandTest {
 
     @InjectMocks
@@ -32,15 +35,13 @@ public class StorageHandlingCommandBaseTest extends BaseCommandTest {
     @Mock
     private StoragePoolDao storagePoolDao;
 
-    @Mock
-    private StoragePoolIsoMapDao storagePoolIsoMapDao;
-
     private StoragePool storagePool;
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule();
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.StoragePoolNameSizeLimit, 10));
+    }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         storagePool = cmd.getParameters().getStoragePool();
         cmd.init();
@@ -50,13 +51,13 @@ public class StorageHandlingCommandBaseTest extends BaseCommandTest {
 
     @Test
     public void nameTooLong() {
-        setAcceptableNameLength(10);
+        storagePool.setName("123456789 - this is too long");
         checkStoragePoolNameLengthSucceeds();
     }
 
     @Test
     public void nameAcceptableLength() {
-        setAcceptableNameLength(255);
+        storagePool.setName("123456789");
         checkStoragePoolNameLengthFails();
     }
 
@@ -66,16 +67,6 @@ public class StorageHandlingCommandBaseTest extends BaseCommandTest {
         pool.setId(Guid.newGuid());
         pool.setIsLocal(false);
         return pool;
-    }
-
-    private void createCommandWithNullPool() {
-        cmd = mock(StorageHandlingCommandBase.class,
-                withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS)
-                        .useConstructor(new StoragePoolManagementParameter(), null));
-    }
-
-    private static void setAcceptableNameLength(final int length) {
-        mcr.mockConfigValue(ConfigValues.StoragePoolNameSizeLimit, length);
     }
 
     private void checkStoragePoolNameLengthSucceeds() {

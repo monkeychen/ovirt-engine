@@ -1,18 +1,21 @@
 package org.ovirt.engine.core.bll.gluster;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
+import org.ovirt.engine.core.bll.validator.gluster.GlusterBrickValidator;
 import org.ovirt.engine.core.common.action.gluster.GlusterVolumeRebalanceParameters;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -26,9 +29,14 @@ import org.ovirt.engine.core.common.businessentities.gluster.TransportType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.gluster.GlusterVolumeDao;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StartRebalanceGlusterVolumeCommandTest extends BaseCommandTest {
     @Mock
     GlusterVolumeDao volumeDao;
+
+    @Spy
+    @InjectMocks
+    private GlusterBrickValidator brickValidator;
 
     private final Guid volumeId1 = new Guid("8bc6f108-c0ef-43ab-ba20-ec41107220f5");
     private final Guid volumeId2 = new Guid("b2cb2f73-fab3-4a42-93f0-d5e4c069a43e");
@@ -47,7 +55,7 @@ public class StartRebalanceGlusterVolumeCommandTest extends BaseCommandTest {
     private StartRebalanceGlusterVolumeCommand cmd =
             new StartRebalanceGlusterVolumeCommand(new GlusterVolumeRebalanceParameters(), null);
 
-    @Before
+    @BeforeEach
     public void prepareMocks() {
         doReturn(getVds(VDSStatus.Up)).when(cmd).getUpServer();
         doReturn(getDistributedVolume(volumeId1)).when(volumeDao).getById(volumeId1);

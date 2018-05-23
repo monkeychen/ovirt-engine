@@ -25,6 +25,10 @@ public class BrickProperties implements Serializable {
 
     private double freeSize;
 
+    private Double confirmedFreeSize;
+
+    private Double confirmedTotalSize;
+
     private String device;
 
     private int blockSize;
@@ -81,6 +85,22 @@ public class BrickProperties implements Serializable {
 
     public void setFreeSize(double freeSize) {
         this.freeSize = freeSize;
+    }
+
+    public Double getConfirmedFreeSize() {
+        return confirmedFreeSize;
+    }
+
+    public void setConfirmedFreeSize(Double confirmedFreeSize) {
+        this.confirmedFreeSize = confirmedFreeSize;
+    }
+
+    public Double getConfirmedTotalSize() {
+        return confirmedTotalSize;
+    }
+
+    public void setConfirmedTotalSize(Double confirmedTotalSize) {
+        this.confirmedTotalSize = confirmedTotalSize;
     }
 
     public String getDevice() {

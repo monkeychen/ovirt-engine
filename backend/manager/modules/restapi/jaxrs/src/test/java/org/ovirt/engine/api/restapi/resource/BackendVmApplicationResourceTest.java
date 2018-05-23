@@ -1,12 +1,16 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Application;
 import org.ovirt.engine.api.model.Applications;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -15,6 +19,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmApplicationResourceTest
         extends AbstractBackendSubResourceTest<Application, Applications, BackendVmApplicationResource> {
 
@@ -65,20 +70,15 @@ public class BackendVmApplicationResourceTest
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         BackendVmApplicationResource resource = getNotFoundResource();
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations();
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations();
 
@@ -87,7 +87,7 @@ public class BackendVmApplicationResourceTest
         verifyLinks(application);
     }
 
-    protected void setUpEntityQueryExpectations() throws Exception {
+    protected void setUpEntityQueryExpectations() {
         setUpEntityQueryExpectations(QueryType.GetVmByVmId,
                 IdQueryParameters.class,
                 new String[]{"Id"},

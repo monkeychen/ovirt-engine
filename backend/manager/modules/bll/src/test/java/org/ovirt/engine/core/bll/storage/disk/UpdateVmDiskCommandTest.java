@@ -1,10 +1,10 @@
 package org.ovirt.engine.core.bll.storage.disk;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -16,18 +16,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
 import org.ovirt.engine.core.bll.ValidationResult;
@@ -78,10 +79,13 @@ import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmDeviceDao;
 import org.ovirt.engine.core.dao.VmStaticDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
-import org.ovirt.engine.core.utils.RandomUtilsSeedingRule;
+import org.ovirt.engine.core.utils.RandomUtilsSeedingExtension;
 
+@ExtendWith({MockConfigExtension.class, RandomUtilsSeedingExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class UpdateVmDiskCommandTest extends BaseCommandTest {
 
     private Guid diskImageGuid = Guid.newGuid();
@@ -128,13 +132,13 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
     @Mock
     private BackendInternal backend;
 
-    @Rule
-    public RandomUtilsSeedingRule rusr = new RandomUtilsSeedingRule();
-
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.PassDiscardSupported, Version.v4_0, false),
-            mockConfig(ConfigValues.MaxBlockDiskSize, 8));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.PassDiscardSupported, Version.v4_0, false),
+                MockConfigDescriptor.of(ConfigValues.PassDiscardSupported, Version.v4_1, true),
+                MockConfigDescriptor.of(ConfigValues.MaxBlockDiskSize, 8)
+        );
+    }
 
     /**
      * The command under test.
@@ -145,14 +149,14 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
             new UpdateVmDiskCommand<>(createParameters(), CommandContext.createContext(""));
 
     @Test
-    public void validateFailedVMNotFound() throws Exception {
+    public void validateFailedVMNotFound() {
         initializeCommand();
         mockNullVm();
         ValidateTestUtils.runAndAssertValidateFailure(command, EngineMessage.ACTION_TYPE_FAILED_VM_NOT_FOUND);
     }
 
     @Test
-    public void validateFailedVMHasNotDisk() throws Exception {
+    public void validateFailedVMHasNotDisk() {
         initializeCommand();
         createNullDisk();
         doReturn(new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_NOT_EXIST)).
@@ -161,7 +165,7 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateFailedShareableDiskVolumeFormatUnsupported() throws Exception {
+    public void validateFailedShareableDiskVolumeFormatUnsupported() {
         DiskImage disk = createShareableDisk(VolumeFormat.COW);
         StorageDomain storage = addNewStorageDomainToDisk(disk, StorageType.NFS);
         command.getParameters().setDiskInfo(disk);
@@ -221,7 +225,7 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateFailedShareableDiskOnGlusterDomain() throws Exception {
+    public void validateFailedShareableDiskOnGlusterDomain() {
         DiskImage disk = createShareableDisk(VolumeFormat.RAW);
         StorageDomain storage = addNewStorageDomainToDisk(disk, StorageType.GLUSTERFS);
         command.getParameters().setDiskInfo(disk);
@@ -249,7 +253,6 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
 
         initializeCommand();
         mockVdsCommandSetVolumeDescription();
-        mockDefaultDiscardSupported();
 
         ValidateTestUtils.runAndAssertValidateSuccess(command);
         command.executeVmCommand();
@@ -812,6 +815,7 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
         Guid storagePoolId = Guid.newGuid();
         StoragePool storagePool = new StoragePool();
         storagePool.setId(storagePoolId);
+        storagePool.setCompatibilityVersion(Version.v4_1);
         when(storagePoolDao.get(storagePoolId)).thenReturn(storagePool);
 
         return storagePool;
@@ -884,9 +888,5 @@ public class UpdateVmDiskCommandTest extends BaseCommandTest {
         VmDevice vmDevice = createVmDevice(diskId, vmId);
         doReturn(vmDevice).when(command).getVmDeviceForVm();
         return vmDevice;
-    }
-
-    private void mockDefaultDiscardSupported() {
-        mcr.mockConfigValue(ConfigValues.PassDiscardSupported, command.getStoragePool().getCompatibilityVersion(), true);
     }
 }

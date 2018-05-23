@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import java.net.URLEncoder;
@@ -9,7 +12,9 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Creation;
 import org.ovirt.engine.api.model.CreationStatus;
 import org.ovirt.engine.core.common.businessentities.AsyncTaskResultEnum;
@@ -18,6 +23,7 @@ import org.ovirt.engine.core.common.businessentities.AsyncTaskStatusEnum;
 import org.ovirt.engine.core.common.queries.GetTasksStatusesByTasksIDsParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendCreationResourceTest
     extends AbstractBackendSubResourceTest<Creation, List/*<AsyncTaskStatus>*/, BackendCreationResource> {
 
@@ -28,13 +34,8 @@ public class BackendCreationResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendCreationResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> new BackendCreationResource("foo")));
     }
 
     @Test
@@ -51,7 +52,7 @@ public class BackendCreationResourceTest
         return uriInfo;
     }
 
-    protected void setUpGetEntityExpectations() throws Exception {
+    protected void setUpGetEntityExpectations() {
         setUpGetEntityExpectations(QueryType.GetTasksStatusesByTasksIDs,
                                    GetTasksStatusesByTasksIDsParameters.class,
                                    new String[] {},

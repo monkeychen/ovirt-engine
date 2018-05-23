@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,8 +12,10 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.NetworkLabel;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.LabelNicParameters;
@@ -18,6 +23,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendHostNicLabelsResourceTest
     extends AbstractBackendCollectionResourceTest<NetworkLabel, org.ovirt.engine.core.common.businessentities.network.pseudo.NetworkLabel, BackendHostNicLabelsResource> {
 
@@ -30,7 +36,7 @@ public class BackendHostNicLabelsResourceTest
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.LabelNic,
                 LabelNicParameters.class,
@@ -51,40 +57,32 @@ public class BackendHostNicLabelsResourceTest
     }
 
     @Test
-    public void testAddCantDo() throws Exception {
+    public void testAddCantDo() {
         doTestBadAdd(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddFailure() throws Exception {
+    public void testAddFailure() {
         doTestBadAdd(true, false, FAILURE);
     }
 
-    private void doTestBadAdd(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAdd(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(ActionType.LabelNic,
                 LabelNicParameters.class,
                 new String[] { "NicId", "Label" },
                 new Object[] { nicId, LABELS[0] },
                 valid,
                 success));
-        try {
-            collection.add(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(getModel(0))), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         NetworkLabel model = new NetworkLabel();
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "NetworkLabel", "add", "id");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "NetworkLabel", "add", "id");
     }
 
     @Override
@@ -94,13 +92,13 @@ public class BackendHostNicLabelsResourceTest
 
     // No searching support for network labels
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetNetworkLabelsByHostNicId,

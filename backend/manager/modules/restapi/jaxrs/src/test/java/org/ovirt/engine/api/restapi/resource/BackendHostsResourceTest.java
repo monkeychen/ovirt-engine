@@ -1,18 +1,23 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cluster;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.HostStatus;
@@ -26,13 +31,17 @@ import org.ovirt.engine.core.common.interfaces.SearchType;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
+@ExtendWith(MockConfigExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendHostsResourceTest
         extends AbstractBackendCollectionResourceTest<Host, VDS, BackendHostsResource> {
 
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule(mockConfig(ConfigValues.OrganizationName, "oVirt"));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.OrganizationName, "oVirt"));
+    }
 
     protected static final String[] ADDRESSES = { "10.11.12.13", "13.12.11.10", "10.01.10.01" };
     protected static final VDSStatus[] VDS_STATUS = { VDSStatus.Up, VDSStatus.Down, VDSStatus.Up };
@@ -64,7 +73,7 @@ public class BackendHostsResourceTest
     }
 
     @Test
-    public void testAddHost() throws Exception {
+    public void testAddHost() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetClusterByName,
@@ -95,7 +104,7 @@ public class BackendHostsResourceTest
     }
 
     @Test
-    public void testAddHostClusterByName() throws Exception {
+    public void testAddHostClusterByName() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetClusterByName,
@@ -128,7 +137,7 @@ public class BackendHostsResourceTest
     }
 
     @Test
-    public void testAddHostClusterById() throws Exception {
+    public void testAddHostClusterById() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddVds,
                                   AddVdsActionParameters.class,
@@ -154,29 +163,25 @@ public class BackendHostsResourceTest
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         Host model = new Host();
         model.setName(NAMES[0]);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Host", "add", "address");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Host", "add", "address");
     }
 
     @Test
-    public void testAddHostCantDo() throws Exception {
+    public void testAddHostCantDo() {
         doTestBadAddHost(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddHostFailure() throws Exception {
+    public void testAddHostFailure() {
         doTestBadAddHost(true, false, FAILURE);
     }
 
-    private void doTestBadAddHost(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddHost(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(QueryType.GetClusterByName,
                 NameQueryParameters.class,
                 new String[] { "Name" },
@@ -191,12 +196,7 @@ public class BackendHostsResourceTest
                                            success));
         Host model = getModel(0);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Override

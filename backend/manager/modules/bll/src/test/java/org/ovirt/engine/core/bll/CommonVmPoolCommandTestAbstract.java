@@ -1,14 +1,13 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,9 +16,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -39,7 +37,6 @@ import org.ovirt.engine.core.common.businessentities.VmPool;
 import org.ovirt.engine.core.common.businessentities.VmStatic;
 import org.ovirt.engine.core.common.businessentities.VmTemplate;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.osinfo.OsRepository;
 import org.ovirt.engine.core.compat.Guid;
@@ -50,14 +47,9 @@ import org.ovirt.engine.core.dao.StorageDomainDao;
 import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VmPoolDao;
 import org.ovirt.engine.core.dao.VmTemplateDao;
-import org.ovirt.engine.core.dao.network.VmNetworkInterfaceDao;
 import org.ovirt.engine.core.dao.network.VmNicDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
 public abstract class CommonVmPoolCommandTestAbstract extends BaseCommandTest {
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule(mockConfig(ConfigValues.MaxIoThreadsPerVm, 127));
-
     private final Guid clusterId = Guid.newGuid();
     protected final Guid firstStorageDomainId = Guid.newGuid();
     private final Guid secondStorageDomainId = Guid.newGuid();
@@ -87,9 +79,6 @@ public abstract class CommonVmPoolCommandTestAbstract extends BaseCommandTest {
 
     @Mock
     protected VmTemplateDao vmTemplateDao;
-
-    @Mock
-    protected VmNetworkInterfaceDao vmNetworkInterfaceDao;
 
     @Mock
     protected StorageDomainDao storageDomainDao;
@@ -150,7 +139,7 @@ public abstract class CommonVmPoolCommandTestAbstract extends BaseCommandTest {
         verify(multipleSdValidator, never()).allDomainsHaveSpaceForNewDisks(any());
     }
 
-    @Before
+    @BeforeEach
     public void setupMocks() {
         setUpCommand();
         mockGetStorageDomainList();

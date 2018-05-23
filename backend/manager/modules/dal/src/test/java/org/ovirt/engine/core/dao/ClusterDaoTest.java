@@ -1,15 +1,15 @@
 package org.ovirt.engine.core.dao;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,11 +17,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.ArchitectureType;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.MigrationBandwidthLimitType;
-import org.ovirt.engine.core.common.businessentities.StoragePool;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VMStatus;
 import org.ovirt.engine.core.common.network.FirewallType;
@@ -29,29 +31,29 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.scheduling.ClusterPolicyDao;
 
-public class ClusterDaoTest extends BaseDaoTestCase {
+public class ClusterDaoTest extends BaseDaoTestCase<ClusterDao> {
     private static final int NUMBER_OF_GROUPS = 9;
     private static final int NUMBER_OF_TRUSTED_GROUPS = 4;
     private static final int NUMBER_OF_GROUPS_FOR_PRIVELEGED_USER = 2;
 
-    private ClusterDao dao;
+    @Inject
+    private ClusterPolicyDao clusterPolicyDao;
+    @Inject
+    private VmDao vmDao;
+    @Inject
+    private VmDynamicDao vmDynamicDao;
+
     private Cluster existingCluster;
     private Cluster newGroup;
     private Cluster groupWithNoRunningVms;
-    private StoragePool storagePool;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        StoragePoolDao storagePoolDao = dbFacade.getStoragePoolDao();
-
-        storagePool = storagePoolDao.get(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER);
-
-        dao = dbFacade.getClusterDao();
-
         existingCluster = dao.get(FixturesTool.CLUSTER_RHEL6_ISCSI);
-        groupWithNoRunningVms = dbFacade.getClusterDao().get(FixturesTool.CLUSTER_NO_RUNNING_VMS);
+        groupWithNoRunningVms = dao.get(FixturesTool.CLUSTER_NO_RUNNING_VMS);
 
         newGroup = new Cluster();
         newGroup.setName("New VDS Group");
@@ -59,7 +61,6 @@ public class ClusterDaoTest extends BaseDaoTestCase {
         newGroup.setVirtService(true);
         newGroup.setGlusterService(false);
         newGroup.setClusterPolicyId(existingCluster.getClusterPolicyId());
-        ClusterPolicyDao clusterPolicyDao = dbFacade.getClusterPolicyDao();
         // set cluster policy name to allow equals method to succeed
         newGroup.setClusterPolicyName(clusterPolicyDao.get(existingCluster.getClusterPolicyId(),
                 Collections.emptyMap()).getName());
@@ -202,7 +203,7 @@ public class ClusterDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testGetAllForStoragePool() {
-        List<Cluster> result = dao.getAllForStoragePool(storagePool.getId());
+        List<Cluster> result = dao.getAllForStoragePool(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER);
         assertGetAllForStoragePoolValidResult(result);
     }
 
@@ -211,7 +212,8 @@ public class ClusterDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testGetAllForStoragePoolFilteredWithNoPermissions() {
-        List<Cluster> result = dao.getAllForStoragePool(storagePool.getId(), UNPRIVILEGED_USER_ID, true);
+        List<Cluster> result =
+                dao.getAllForStoragePool(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER, UNPRIVILEGED_USER_ID, true);
         assertGetAllForStoragePoolInvalidResult(result);
     }
 
@@ -220,7 +222,8 @@ public class ClusterDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testGetAllForStoragePoolFilteredWithNoPermissionsAndNoFilter() {
-        List<Cluster> result = dao.getAllForStoragePool(storagePool.getId(), UNPRIVILEGED_USER_ID, false);
+        List<Cluster> result =
+                dao.getAllForStoragePool(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER, UNPRIVILEGED_USER_ID, false);
         assertGetAllForStoragePoolValidResult(result);
     }
 
@@ -229,7 +232,8 @@ public class ClusterDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testGetAllForStoragePoolFilteredWithPermissions() {
-        List<Cluster> result = dao.getAllForStoragePool(storagePool.getId(), PRIVILEGED_USER_ID, true);
+        List<Cluster> result =
+                dao.getAllForStoragePool(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER, PRIVILEGED_USER_ID, true);
         assertGetAllForStoragePoolValidResult(result);
     }
 
@@ -238,11 +242,11 @@ public class ClusterDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testClusterCorrectStoragePoolName() {
-        List<Cluster> result = dao.getAllForStoragePool(storagePool.getId());
+        List<Cluster> result = dao.getAllForStoragePool(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER);
         assertNotNull(result);
         assertFalse(result.isEmpty());
         for (Cluster group : result) {
-            assertEquals(storagePool.getName(), group.getStoragePoolName());
+            assertEquals(FixturesTool.DATA_CENTER_NAME, group.getStoragePoolName());
         }
     }
 
@@ -261,7 +265,7 @@ public class ClusterDaoTest extends BaseDaoTestCase {
         assertNotNull(result);
         assertFalse(result.isEmpty());
         for (Cluster group : result) {
-            assertEquals(storagePool.getId(), group.getStoragePoolId());
+            assertEquals(FixturesTool.STORAGE_POOL_RHEL6_ISCSI_OTHER, group.getStoragePoolId());
         }
     }
 
@@ -451,10 +455,10 @@ public class ClusterDaoTest extends BaseDaoTestCase {
 
         final int migrationCount = migrationFreeClusters.size();
         // get a cluster with migrating VMs
-        List<VM> vms = dbFacade.getVmDao().getAllRunningByCluster(FixturesTool.CLUSTER_RHEL6_ISCSI);
+        List<VM> vms = vmDao.getAllRunningByCluster(FixturesTool.CLUSTER_RHEL6_ISCSI);
         // set every VM to UP
         for(VM migratingVM : vms) {
-            dbFacade.getVmDynamicDao().updateStatus(migratingVM.getId(), VMStatus.Up);
+            vmDynamicDao.updateStatus(migratingVM.getId(), VMStatus.Up);
             migrationFreeClusters = dao.getWithoutMigratingVms();
         }
         assertEquals(migrationCount + 1, migrationFreeClusters.size());
@@ -472,15 +476,17 @@ public class ClusterDaoTest extends BaseDaoTestCase {
     @Test
     public void testGetVmsCountByClusterId() {
         // Cluster with no VMs
-        assertEquals("Incorrect number of VMs in cluster", FixturesTool.NUMBER_OF_VMS_IN_CLUSTER_RHEL6_NFS_CLUSTER,
-                dao.getVmsCountByClusterId(FixturesTool.CLUSTER_RHEL6_NFS));
+        assertEquals(FixturesTool.NUMBER_OF_VMS_IN_CLUSTER_RHEL6_NFS_CLUSTER,
+                dao.getVmsCountByClusterId(FixturesTool.CLUSTER_RHEL6_NFS),
+                "Incorrect number of VMs in cluster");
 
         // Cluster with VMs
-        assertEquals("Incorrect number of VMs in cluster", FixturesTool.NUMBER_OF_VMS_IN_CLUSTER_RHEL6_ISCSI,
-                dao.getVmsCountByClusterId(FixturesTool.CLUSTER_RHEL6_ISCSI));
+        assertEquals(FixturesTool.NUMBER_OF_VMS_IN_CLUSTER_RHEL6_ISCSI,
+                dao.getVmsCountByClusterId(FixturesTool.CLUSTER_RHEL6_ISCSI),
+                "Incorrect number of VMs in cluster");
 
         // Non existing cluster, should return 0
-        assertEquals("Incorrect number of VMs in cluster", 0, dao.getVmsCountByClusterId(Guid.newGuid()));
+        assertEquals(0, dao.getVmsCountByClusterId(Guid.newGuid()), "Incorrect number of VMs in cluster");
     }
 
     @Test
@@ -489,8 +495,8 @@ public class ClusterDaoTest extends BaseDaoTestCase {
         List<Cluster> clusters = new ArrayList<>();
         clusters.add(dao.get(guid));
         List<Cluster> data = ((ClusterDaoImpl) dao).getHostsAndVmsForClusters(clusters);
-        assertEquals("Incorrect number of VMs in cluster", 7, data.get(0).getClusterHostsAndVms().getVms());
-        assertEquals("Incorrect number of Hosts in cluster", 1, data.get(0).getClusterHostsAndVms().getHosts());
+        assertEquals(7, data.get(0).getClusterHostsAndVms().getVms(), "Incorrect number of VMs in cluster");
+        assertEquals(1, data.get(0).getClusterHostsAndVms().getHosts(), "Incorrect number of Hosts in cluster");
     }
 
     @Test

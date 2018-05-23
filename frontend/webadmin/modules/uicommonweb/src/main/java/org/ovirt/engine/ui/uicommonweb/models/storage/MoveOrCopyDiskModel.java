@@ -128,8 +128,7 @@ public abstract class MoveOrCopyDiskModel extends DisksAllocationModel implement
                 setQuotaEnforcementType(dataCenter.getQuotaEnforcementType());
                 postInitStorageDomains();
             }), storages.get(0).getStoragePoolId());
-        }
-        else {
+        } else {
             postInitStorageDomains();
         }
     }
@@ -224,18 +223,26 @@ public abstract class MoveOrCopyDiskModel extends DisksAllocationModel implement
     }
 
     private void updateChangeability(DiskModel disk, boolean isDiskBasedOnTemplate, boolean noSources, boolean noTargets) {
-        disk.getStorageDomain().setIsChangeable(!noTargets);
+        disk.getStorageDomain().setIsChangeable(!noSources && !noTargets);
         disk.getSourceStorageDomain().setIsChangeable(!noSources);
         disk.getSourceStorageDomainName().setIsChangeable(!noSources);
-        disk.getStorageDomain().setChangeProhibitionReason(isDiskBasedOnTemplate ?
-                constants.noActiveStorageDomainWithTemplateMsg() : getNoActiveTargetDomainMessage());
+        disk.getStorageDomain().setChangeProhibitionReason(getTargetDomainProhibitionReason(isDiskBasedOnTemplate, noSources));
         disk.getSourceStorageDomain().setChangeProhibitionReason(getNoActiveSourceDomainMessage());
         disk.getSourceStorageDomainName().setChangeProhibitionReason(getNoActiveSourceDomainMessage());
     }
 
+    private String getTargetDomainProhibitionReason(boolean isDiskBasedOnTemplate, boolean noSources) {
+        if (noSources) {
+            return getNoActiveSourceDomainMessage();
+        }
+        return isDiskBasedOnTemplate ?
+                constants.noActiveStorageDomainWithTemplateMsg() : getNoActiveTargetDomainMessage();
+    }
+
     private void addSourceStorageDomainName(DiskModel disk, List<StorageDomain> sourceStorageDomains) {
         String sourceStorageName = sourceStorageDomains.isEmpty() ?
-                constants.notAvailableLabel() : sourceStorageDomains.get(0).getStorageName();
+                ((DiskImage) disk.getDisk()).getStoragesNames().get(0) :
+                sourceStorageDomains.get(0).getStorageName();
         disk.getSourceStorageDomainName().setEntity(sourceStorageName);
     }
 
@@ -250,8 +257,7 @@ public abstract class MoveOrCopyDiskModel extends DisksAllocationModel implement
             closeCommand.setIsDefault(true);
             closeCommand.setIsCancel(true);
             getCommands().add(closeCommand);
-        }
-        else {
+        } else {
             if (!problematicDisks.isEmpty()) {
                 setMessage(getWarning(problematicDisks));
             }

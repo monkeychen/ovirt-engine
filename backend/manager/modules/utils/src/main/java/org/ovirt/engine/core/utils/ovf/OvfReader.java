@@ -456,22 +456,22 @@ public abstract class OvfReader implements IOvfBuilder {
         readManagedVmDevice(node, Guid.newGuid());
     }
 
-    protected Integer parseNodeInteger(XmlNode sourceNode, String string, Integer defaultValue) {
-        XmlNode subNode = selectSingleNode(sourceNode, string, _xmlNS);
+    protected void readCpuItem(XmlNode node) {
+        XmlNode sockets = selectSingleNode(node, "rasd:num_of_sockets", _xmlNS);
+        if (sockets == null || StringUtils.isEmpty(sockets.innerText)) {
+            sockets = selectSingleNode(node, "rasd:VirtualQuantity", _xmlNS);
+        }
+        vmBase.setNumOfSockets(Integer.parseInt(sockets.innerText));
 
-        if (subNode != null && subNode.innerText != null) {
-            return Integer.parseInt(subNode.innerText);
+        XmlNode cpuPerSocket = selectSingleNode(node, "rasd:cpu_per_socket", _xmlNS);
+        if (cpuPerSocket != null && StringUtils.isNotEmpty(cpuPerSocket.innerText)) {
+            vmBase.setCpuPerSocket(Integer.parseInt(cpuPerSocket.innerText));
         }
 
-        return defaultValue;
-    }
-
-    protected void readCpuItem(XmlNode node) {
-        vmBase.setNumOfSockets(
-                Integer.parseInt(selectSingleNode(node, "rasd:num_of_sockets", _xmlNS).innerText));
-        vmBase.setCpuPerSocket(
-                Integer.parseInt(selectSingleNode(node, "rasd:cpu_per_socket", _xmlNS).innerText));
-        vmBase.setThreadsPerCpu(parseNodeInteger(node, "rasd:threads_per_cpu", 1));
+        XmlNode threadsPerCpu = selectSingleNode(node, "rasd:threads_per_cpu", _xmlNS);
+        if (threadsPerCpu != null && StringUtils.isNotEmpty(threadsPerCpu.innerText)) {
+            vmBase.setThreadsPerCpu(Integer.parseInt(threadsPerCpu.innerText));
+        }
     }
 
     private void readMemoryItem(XmlNode node) {
@@ -586,7 +586,7 @@ public abstract class OvfReader implements IOvfBuilder {
                 val -> vmBase.setMigrationSupport(MigrationSupport.forValue(Integer.parseInt(val))));
 
         // TODO dedicated to multiple hosts
-        readDedicatedHostsList();
+        readDedicatedHostsList(content);
 
         consumeReadProperty(content,
                 SERIAL_NUMBER_POLICY,
@@ -656,11 +656,9 @@ public abstract class OvfReader implements IOvfBuilder {
         }
     }
 
-    private void readDedicatedHostsList() {
+    private void readDedicatedHostsList(XmlNode content) {
         vmBase.setDedicatedVmForVdsList(new LinkedList<>()); // initialize to empty list
-        // search all dedicated hosts with xPath
-        XmlNodeList hostsList = selectNodes(_document, "//*/Content/" + DEDICATED_VM_FOR_VDS);
-        for (XmlNode hostNode : hostsList) {
+        for (XmlNode hostNode : selectNodes(content, DEDICATED_VM_FOR_VDS)) {
             if (hostNode != null && StringUtils.isNotEmpty(hostNode.innerText)) {
                 vmBase.getDedicatedVmForVdsList().add(Guid.createGuidFromString(hostNode.innerText));
             }

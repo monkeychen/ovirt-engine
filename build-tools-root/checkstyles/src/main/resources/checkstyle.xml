@@ -37,8 +37,9 @@
     <module name="EmptyStatement"/>
     <module name="EqualsHashCode"/>
     <module name="IllegalImport">
-      <property name="illegalPkgs" value="com.sun, org.powermock"/>
+      <property name="illegalPkgs" value="com.sun, org.powermock, junit.framework"/>
     </module>
+    <module name="IllegalType" />
     <module name="ImportOrder">
       <property name="groups" value="java,javax,org,com"/>
       <property name="ordered" value="true"/>
@@ -50,6 +51,7 @@
     <module name="IllegalInstantiation"/>
     <module name="LeftCurly"/>
     <module name="MethodName" />
+    <module name="MissingOverride" />
     <module name="ModifierOrder" />
     <module name="MultipleVariableDeclarations" />
     <module name="NeedBraces" />
@@ -58,8 +60,10 @@
       <property name="tokens" value="SEMI"/>
     </module>
     <module name="OneStatementPerLine"/>
+    <module name="OneTopLevelClass" />
     <module name="PackageDeclaration"/>
     <module name="RedundantImport"/>
+    <module name="RightCurly" />
     <module name="SimplifyBooleanExpression"/>
     <module name="StringLiteralEquality"/>
     <module name="TypeName" />
@@ -71,7 +75,7 @@
     </module>
 
     <!-- oVirt checks -->
-    <module name="org.ovirt.checkstyle.checks.DiamondOperator"/>
+    <module name="org.ovirt.checkstyle.checks.DiamondOperatorCheck"/>
     <module name="org.ovirt.checkstyle.checks.NlsCheck">
       <property name="run" value="${runNlsCheck}" default="false"/>
     </module>

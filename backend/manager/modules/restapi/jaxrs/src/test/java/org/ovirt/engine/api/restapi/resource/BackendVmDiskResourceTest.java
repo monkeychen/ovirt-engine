@@ -16,6 +16,11 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -29,7 +34,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.Statistic;
@@ -58,6 +65,7 @@ import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.VmDeviceIdQueryParameters;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmDiskResourceTest
     extends AbstractBackendSubResourceTest<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk, BackendVmDiskResource> {
 
@@ -73,7 +81,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(
             QueryType.GetDiskByDiskId,
@@ -82,17 +90,12 @@ public class BackendVmDiskResourceTest
             new Object[] { DISK_ID },
             null
         );
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
 
@@ -102,7 +105,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testGetIncludeStatistics() throws Exception {
+    public void testGetIncludeStatistics() {
         try {
             accepts.add("application/xml; detail=statistics");
             setUriInfo(setUpBasicUriExpectations());
@@ -118,7 +121,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(
             QueryType.GetDiskByDiskId,
@@ -127,17 +130,12 @@ public class BackendVmDiskResourceTest
             new Object[] { DISK_ID },
             null
         );
-        try {
-            resource.update(getUpdate());
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getUpdate())));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(2);
 
         setUpDiskVmElementExpectations();
@@ -157,7 +155,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testUpdateReadOnly() throws Exception {
+    public void testUpdateReadOnly() {
         setUpGetEntityExpectations(2);
         setUpDiskVmElementExpectations();
         setUriInfo(
@@ -175,7 +173,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testActivate() throws Exception {
+    public void testActivate() {
         setUriInfo(
             setUpActionExpectations(
                 ActionType.HotPlugDiskToVm,
@@ -191,7 +189,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testDeactivate() throws Exception {
+    public void testDeactivate() {
         setUriInfo(
             setUpActionExpectations(
                 ActionType.HotUnPlugDiskFromVm,
@@ -219,7 +217,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testExport() throws Exception {
+    public void testExport() {
         setUriInfo(
             setUpActionExpectations(
                 ActionType.ExportRepoImage,
@@ -240,30 +238,21 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendStorageDomainVmResource(null, "foo");
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendStorageDomainVmResource(null, "foo")));
     }
 
     @Test
-    public void testIncompleteExport() throws Exception {
+    public void testIncompleteExport() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.export(new Action());
-            fail("expected WebApplicationException on incomplete parameters");
-        }
-        catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Action", "export", "storageDomain.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> resource.export(new Action())),
+                "Action", "export", "storageDomain.id|name");
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
         UriInfo uriInfo = setUpActionExpectations(
@@ -280,16 +269,16 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
         setUriInfo(
@@ -302,16 +291,10 @@ public class BackendVmDiskResourceTest
                 success
             )
         );
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
-    protected DiskImage setUpStatisticalExpectations() throws Exception {
+    protected DiskImage setUpStatisticalExpectations() {
         DiskImage entity = mock(DiskImage.class);
         when(entity.getId()).thenReturn(DISK_ID);
         when(entity.getReadRate()).thenReturn(10);
@@ -364,7 +347,7 @@ public class BackendVmDiskResourceTest
         return setUpEntityExpectations(mock(DiskImage.class), index);
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetDiskByDiskId,
@@ -376,7 +359,7 @@ public class BackendVmDiskResourceTest
         }
     }
 
-    private void setUpDiskVmElementExpectations() throws Exception {
+    private void setUpDiskVmElementExpectations() {
         DiskVmElement dve = new DiskVmElement(DISK_ID, VM_ID);
         dve.setDiskInterface(DiskInterface.VirtIO);
         dve.setBoot(false);
@@ -390,11 +373,11 @@ public class BackendVmDiskResourceTest
         );
     }
 
-    protected void setUpGetEntityExpectations(int times) throws Exception {
+    protected void setUpGetEntityExpectations(int times) {
         setUpGetEntityExpectations(times, getEntity(1));
     }
 
-    protected void setUpGetEntityExpectations(int times, org.ovirt.engine.core.common.businessentities.storage.Disk entity) throws Exception {
+    protected void setUpGetEntityExpectations(int times, org.ovirt.engine.core.common.businessentities.storage.Disk entity) {
         while (times-- > 0) {
             setUpGetEntityExpectations(
                 QueryType.GetDiskByDiskId,
@@ -407,7 +390,7 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testMoveBySdId() throws Exception {
+    public void testMoveBySdId() {
         setUpEntityQueryExpectations(
             QueryType.GetDiskByDiskId,
             IdQueryParameters.class,
@@ -427,16 +410,16 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testMoveBySdNameWithoutFilter() throws Exception {
+    public void testMoveBySdNameWithoutFilter() {
         testMoveBySdName(false);
     }
 
     @Test
-    public void testMoveBySdNameWithFilter() throws Exception {
+    public void testMoveBySdNameWithFilter() {
         testMoveBySdName(true);
     }
 
-    protected void testMoveBySdName(boolean isFiltered) throws Exception {
+    protected void testMoveBySdName(boolean isFiltered) {
         setUriInfo(setUpBasicUriExpectations());
 
         if (isFiltered) {
@@ -448,8 +431,7 @@ public class BackendVmDiskResourceTest
                 new Object[] {},
                 Collections.singletonList(getStorageDomain(2))
             );
-        }
-        else {
+        } else {
             setUpEntityQueryExpectations(
                 QueryType.GetStorageDomainByName,
                 NameQueryParameters.class,
@@ -501,18 +483,14 @@ public class BackendVmDiskResourceTest
     }
 
     @Test
-    public void testIncompleteMove() throws Exception {
+    public void testIncompleteMove() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.move(new Action());
-            fail("expected WebApplicationException on incomplete parameters");
-        }
-        catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Action", "move", "storageDomain.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> resource.move(new Action())),
+                "Action", "move", "storageDomain.id|name");
     }
 
-    private void verifyActionResponse(Response r) throws Exception {
+    private void verifyActionResponse(Response r) {
         verifyActionResponse(r, "vms/" + VM_ID + "/disks/" + DISK_ID, false);
     }
 
@@ -521,8 +499,7 @@ public class BackendVmDiskResourceTest
         StorageDomain sd = new StorageDomain();
         if (byName) {
             sd.setName(NAMES[2]);
-        }
-        else {
+        } else {
             sd.setId(GUIDS[3].toString());
         }
         action.setStorageDomain(sd);

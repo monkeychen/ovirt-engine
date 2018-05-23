@@ -1,8 +1,10 @@
 package org.ovirt.engine.api.restapi.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.ovirt.engine.api.restapi.types.MappingTestHelper.populate;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Application;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.compat.Guid;
@@ -18,8 +20,6 @@ public class ApplicationMapperTest extends AbstractInvertibleMappingTest<Applica
     @Test
     @Override
     public void testRoundtrip() throws Exception {
-        setUpConfigExpectations();
-
         Application model = Application.class.cast(populate(Application.class));
         model = postPopulate(model);
         model.setName(NAMES[0]);

@@ -29,13 +29,16 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
     private Guid id;
 
     @Size(max = BusinessEntitiesDefinitions.NETWORK_NAME_SIZE)
+    @NotNull
     private String name;
 
     private String vdsmName;
 
     @Size(max = BusinessEntitiesDefinitions.GENERAL_MAX_SIZE)
+    @NotNull
     private String description;
 
+    @NotNull
     private String comment;
 
     private Integer type;
@@ -70,6 +73,8 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
     @MTU
     private int mtu;
 
+    private static final int DEFAULT_MTU = 0;
+
     private Guid qosId;
 
     @Valid
@@ -77,15 +82,18 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
 
     public Network() {
         vmNetwork = true;
+        name = "";
+        description = "";
+        comment = "";
     }
 
     public Network(String addr, String description, Guid id, String name, String vdsmName, String subnet, String gateway,
             Integer type, Integer vlan_id, boolean stp, int mtu, boolean vmNetwork) {
         this();
         this.addr = addr;
-        this.description = description;
+        this.setDescription(description);
         this.id = id;
-        this.name = name;
+        this.setName(name);
         this.vdsmName = vdsmName;
         this.subnet = subnet;
         this.gateway = gateway;
@@ -94,6 +102,7 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
         this.stp = stp;
         this.mtu = mtu;
         this.vmNetwork = vmNetwork;
+        this.comment = "";
     }
 
     public NetworkCluster getCluster() {
@@ -113,7 +122,7 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
     }
 
     public void setDescription(String value) {
-        this.description = value;
+        this.description = value == null ? "" : value;
     }
 
     public String getComment() {
@@ -121,7 +130,7 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
     }
 
     public void setComment(String value) {
-        comment = value;
+        comment = value == null ? "" : value;
     }
 
     @Override
@@ -140,7 +149,7 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
     }
 
     public void setName(String value) {
-        this.name = value;
+        this.name = value == null ? "" : value;
     }
 
     public String getVdsmName() {
@@ -225,6 +234,10 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
 
     public boolean isExternal() {
         return providedBy != null;
+    }
+
+    public boolean isTunnelled() {
+        return isExternal() && getProvidedBy().getPhysicalNetworkId()==null;
     }
 
     public String getLabel() {
@@ -324,6 +337,14 @@ public class Network implements Queryable, BusinessEntity<Guid>, Nameable, Comme
 
     public void setMtu(int mtu) {
         this.mtu = mtu;
+    }
+
+    public boolean isDefaultMtu() {
+        return mtu == DEFAULT_MTU;
+    }
+
+    public void setDefaultMtu() {
+        mtu = DEFAULT_MTU;
     }
 
     public boolean isVmNetwork() {

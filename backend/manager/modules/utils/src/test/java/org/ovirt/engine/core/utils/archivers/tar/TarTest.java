@@ -1,9 +1,9 @@
 package org.ovirt.engine.core.utils.archivers.tar;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -17,8 +17,9 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-import org.apache.commons.lang.SystemUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 public class TarTest {
 
@@ -45,8 +46,7 @@ public class TarTest {
             for (String f : files) {
                 digestDirectory(md, base, new File(file, f));
             }
-        }
-        else {
+        } else {
             MessageDigest fmd = MessageDigest.getInstance(md.getAlgorithm());
             try (InputStream fis = new FileInputStream(fullFile);
                  InputStream is = new DigestInputStream(fis, fmd)) {
@@ -61,9 +61,8 @@ public class TarTest {
     }
 
     @Test
+    @DisabledOnOs({OS.WINDOWS, OS.OTHER})
     public void testSimple() throws Exception {
-        assumeTrue(SystemUtils.IS_OS_UNIX);
-
         File tmpTar = null;
         File tmpDir1 = null;
         File tmpDir2 = null;
@@ -106,8 +105,7 @@ public class TarTest {
             assertArrayEquals(md1.digest(), md2.digest());
             assertTrue(new File(tmpDir2, "script1").canExecute());
             assertFalse(new File(tmpDir2, "file1").canExecute());
-        }
-        finally {
+        } finally {
             for (File file : new File[] {tmpDir1, tmpDir2, tmpTar}) {
                 if (file != null) {
                     if (!file.delete()) {
@@ -118,8 +116,9 @@ public class TarTest {
         }
     }
 
-    @Test(expected=FileNotFoundException.class)
-    public void testNoBase() throws IOException {
-        Tar.doTar(new ByteArrayOutputStream(), new File("/asdasdsadasdasdsa"));
+    @Test
+    public void testNoBase() {
+        assertThrows(FileNotFoundException.class,
+                () -> Tar.doTar(new ByteArrayOutputStream(), new File("/asdasdsadasdasdsa")));
     }
 }

@@ -1,10 +1,11 @@
 package org.ovirt.engine.core.dao.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,9 +14,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.asynctasks.gluster.GlusterTaskType;
-import org.ovirt.engine.core.common.businessentities.VdsStatic;
 import org.ovirt.engine.core.common.businessentities.gluster.AccessProtocol;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterBrickEntity;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterStatus;
@@ -31,7 +32,7 @@ import org.ovirt.engine.core.dao.FixturesTool;
 /**
  * Tests for Gluster Volume Dao
  */
-public class GlusterVolumeDaoTest extends BaseDaoTestCase {
+public class GlusterVolumeDaoTest extends BaseDaoTestCase<GlusterVolumeDao> {
     private static final Guid CLUSTER_ID = new Guid("ae956031-6be2-43d6-bb8f-5191c9253314");
     private static final Guid EXISTING_VOL_DIST_ID = new Guid("0c3f45f6-3fe9-4b35-a30c-be0d1a835ea8");
     private static final Guid EXISTING_VOL_REPL_ID = new Guid("b2cb2f73-fab3-4a42-93f0-d5e4c069a43e");
@@ -41,17 +42,14 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
     private static final String NEW_VOL_NAME = "test-new-vol-1";
     private static final String OPTION_KEY_NFS_DISABLE = "nfs.disable";
     private static final String OPTION_VALUE_OFF = "off";
-    private GlusterVolumeDao dao;
-    private VdsStatic server;
     private GlusterVolumeEntity existingDistVol;
     private GlusterVolumeEntity existingReplVol;
     private GlusterVolumeEntity newVolume;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        dao = dbFacade.getGlusterVolumeDao();
-        server = dbFacade.getVdsStaticDao().get(FixturesTool.VDS_RHEL6_NFS_SPM);
         existingDistVol = dao.getById(EXISTING_VOL_DIST_ID);
         existingReplVol = dao.getById(EXISTING_VOL_REPL_ID);
     }
@@ -90,7 +88,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
     @Test
     public void testGetCapacityInfo() throws ParseException {
         GlusterVolumeEntity volume = dao.getById(EXISTING_VOL_DIST_ID);
-        assertNotNull("volume capacity info is not available", volume.getAdvancedDetails());
+        assertNotNull(volume.getAdvancedDetails(), "volume capacity info is not available");
         assertEquals(100000L, volume.getAdvancedDetails().getCapacityInfo().getTotalSize().longValue());
         assertEquals(60000L, volume.getAdvancedDetails().getCapacityInfo().getUsedSize().longValue());
         assertEquals(40000L, volume.getAdvancedDetails().getCapacityInfo().getFreeSize().longValue());
@@ -158,7 +156,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertNotNull(volume);
         assertFalse(volume.isOnline());
 
-        assertFalse(volume.equals(existingDistVol));
+        assertNotEquals(volume, existingDistVol);
         existingDistVol.setStatus(GlusterStatus.DOWN);
         assertEquals(existingDistVol, volume);
     }
@@ -176,11 +174,11 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         GlusterVolumeEntity volume = dao.getById(existingDistVol.getId());
 
         assertNotNull(volume);
-        assertFalse(volume.equals(existingDistVol));
-        assertNotNull("volume capacity info is not available", volume.getAdvancedDetails().getCapacityInfo());
-        assertTrue(volume.getAdvancedDetails().getCapacityInfo().getTotalSize() == 500000);
-        assertTrue(volume.getAdvancedDetails().getCapacityInfo().getUsedSize() == 200000);
-        assertTrue(volume.getAdvancedDetails().getCapacityInfo().getFreeSize() == 300000);
+        assertNotEquals(volume, existingDistVol);
+        assertNotNull(volume.getAdvancedDetails().getCapacityInfo(), "volume capacity info is not available");
+        assertEquals(500000, (long) volume.getAdvancedDetails().getCapacityInfo().getTotalSize());
+        assertEquals(200000, (long) volume.getAdvancedDetails().getCapacityInfo().getUsedSize());
+        assertEquals(300000, (long) volume.getAdvancedDetails().getCapacityInfo().getFreeSize());
         assertNotNull(volume.getAdvancedDetails().getUpdatedAt());
 
     }
@@ -197,7 +195,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertNotNull(volume);
         assertFalse(volume.isOnline());
 
-        assertFalse(volume.equals(existingDistVol));
+        assertNotEquals(volume, existingDistVol);
         existingDistVol.setStatus(GlusterStatus.DOWN);
         assertEquals(existingDistVol, volume);
     }
@@ -210,10 +208,10 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         GlusterVolumeEntity volume = dao.getAllWithQuery("select * from gluster_volumes_view where id = '"
                         + existingDistVol.getId() + "'").get(0);
 
-        assertNotNull("Volume : "+ existingDistVol.getId() +" doesn't exists", volume);
-        assertEquals("Task ID is not getting updated", REBALANCING_VOLUME_TASKID, volume.getAsyncTask().getTaskId());
-        assertEquals("Invalid Task status", JobExecutionStatus.STARTED, volume.getAsyncTask().getStatus());
-        assertEquals("Invalid Task type", GlusterTaskType.REBALANCE, volume.getAsyncTask().getType());
+        assertNotNull(volume, "Volume : "+ existingDistVol.getId() +" doesn't exists");
+        assertEquals(REBALANCING_VOLUME_TASKID, volume.getAsyncTask().getTaskId(), "Task ID is not getting updated");
+        assertEquals(JobExecutionStatus.STARTED, volume.getAsyncTask().getStatus(), "Invalid Task status");
+        assertEquals(GlusterTaskType.REBALANCE, volume.getAsyncTask().getType(), "Invalid Task type");
     }
 
     @Test
@@ -267,7 +265,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertEquals(2, protocols.size());
         assertTrue(protocols.contains(AccessProtocol.NFS));
 
-        assertFalse(volumeAfter.equals(existingDistVol));
+        assertNotEquals(volumeAfter, existingDistVol);
         existingDistVol.addAccessProtocol(AccessProtocol.NFS);
         assertEquals(volumeAfter, existingDistVol);
     }
@@ -287,7 +285,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertEquals(1, protocols.size());
         assertFalse(protocols.contains(AccessProtocol.NFS));
 
-        assertFalse(volumeAfter.equals(existingReplVol));
+        assertNotEquals(volumeAfter, existingReplVol);
         existingReplVol.removeAccessProtocol(AccessProtocol.NFS);
         assertEquals(volumeAfter, existingReplVol);
     }
@@ -307,7 +305,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertEquals(2, transportTypes.size());
         assertTrue(transportTypes.contains(TransportType.RDMA));
 
-        assertFalse(volumeAfter.equals(existingDistVol));
+        assertNotEquals(volumeAfter, existingDistVol);
         existingDistVol.addTransportType(TransportType.RDMA);
         assertEquals(volumeAfter, existingDistVol);
     }
@@ -328,9 +326,9 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         GlusterVolumeEntity volumeAfter = dao.getById(EXISTING_VOL_REPL_ID);
         assertNotNull(volumeAfter);
         assertNotNull(volumeAfter.getAdvancedDetails().getCapacityInfo());
-        assertTrue(volumeAfter.getAdvancedDetails().getCapacityInfo().getTotalSize() == 250000);
-        assertTrue(volumeAfter.getAdvancedDetails().getCapacityInfo().getUsedSize() == 175000);
-        assertTrue(volumeAfter.getAdvancedDetails().getCapacityInfo().getFreeSize() == 75000);
+        assertEquals(250000, (long) volumeAfter.getAdvancedDetails().getCapacityInfo().getTotalSize());
+        assertEquals(175000, (long) volumeAfter.getAdvancedDetails().getCapacityInfo().getUsedSize());
+        assertEquals(75000, (long) volumeAfter.getAdvancedDetails().getCapacityInfo().getFreeSize());
         assertNotNull(volumeAfter.getAdvancedDetails().getUpdatedAt());
     }
 
@@ -355,7 +353,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertTrue(transportTypes.contains(TransportType.TCP));
         assertTrue(transportTypes.contains(TransportType.RDMA));
 
-        assertFalse(volumeAfter.equals(existingDistVol));
+        assertNotEquals(volumeAfter, existingDistVol);
         existingDistVol.addTransportType(TransportType.TCP);
         existingDistVol.addTransportType(TransportType.RDMA);
         assertEquals(volumeAfter, existingDistVol);
@@ -376,7 +374,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertEquals(1, transportTypes.size());
         assertFalse(transportTypes.contains(TransportType.RDMA));
 
-        assertFalse(volumeAfter.equals(existingReplVol));
+        assertNotEquals(volumeAfter, existingReplVol);
         existingReplVol.removeTransportType(TransportType.RDMA);
         assertEquals(volumeAfter, existingReplVol);
     }
@@ -441,7 +439,7 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
         assertFalse(transportTypes.contains(TransportType.TCP));
         assertFalse(transportTypes.contains(TransportType.RDMA));
 
-        assertFalse(volumeAfter.equals(existingReplVol));
+        assertNotEquals(volumeAfter, existingReplVol);
         existingReplVol.removeTransportType(TransportType.TCP);
         existingReplVol.removeTransportType(TransportType.RDMA);
         assertEquals(volumeAfter, existingReplVol);
@@ -471,8 +469,8 @@ public class GlusterVolumeDaoTest extends BaseDaoTestCase {
 
         GlusterBrickEntity brick = new GlusterBrickEntity();
         brick.setVolumeId(volumeId);
-        brick.setServerId(server.getId());
-        brick.setServerName(server.getHostName());
+        brick.setServerId(FixturesTool.VDS_RHEL6_NFS_SPM);
+        brick.setServerName("some host name");
         brick.setBrickDirectory("/export/testVol1");
         brick.setStatus(GlusterStatus.UP);
         brick.setBrickOrder(0);

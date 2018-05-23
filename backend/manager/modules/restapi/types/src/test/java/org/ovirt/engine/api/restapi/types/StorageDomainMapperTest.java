@@ -1,6 +1,10 @@
 package org.ovirt.engine.api.restapi.types;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.HostStorage;
 import org.ovirt.engine.api.model.NfsVersion;
 import org.ovirt.engine.api.model.StorageConnection;

@@ -9,15 +9,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.scheduling.AffinityGroup;
 import org.ovirt.engine.core.common.scheduling.EntityAffinityRule;
 import org.ovirt.engine.core.common.scheduling.PerHostMessages;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class VmToHostAffinityFilterPolicyUnitTest extends VmToHostAffinityPolicyUnitBaseTest {
 
     @InjectMocks
@@ -38,7 +38,7 @@ public class VmToHostAffinityFilterPolicyUnitTest extends VmToHostAffinityPolicy
     }
 
     @Test
-    public void testPositiveAffinity() throws Exception {
+    public void testPositiveAffinity() {
         hosts = Arrays.asList(host_positive_enforcing, host_not_in_affinity_group);
 
         List<AffinityGroup> affinityGroups = Arrays.asList(positive_enforcing_group);
@@ -49,7 +49,7 @@ public class VmToHostAffinityFilterPolicyUnitTest extends VmToHostAffinityPolicy
     }
 
     @Test
-    public void testNegativeAffinity() throws Exception {
+    public void testNegativeAffinity() {
         hosts = Arrays.asList(host_negative_enforcing, host_not_in_affinity_group);
 
         List<AffinityGroup> affinityGroups = Arrays.asList(negative_enforcing_group);
@@ -60,7 +60,7 @@ public class VmToHostAffinityFilterPolicyUnitTest extends VmToHostAffinityPolicy
     }
 
     @Test
-    public void testNegativeAndPositiveAffinity() throws Exception {
+    public void testNegativeAndPositiveAffinity() {
         hosts = Arrays.asList(host_positive_enforcing, host_negative_enforcing, host_not_in_affinity_group);
 
         List<AffinityGroup> affinityGroups = Arrays.asList(positive_enforcing_group, negative_enforcing_group);
@@ -72,7 +72,7 @@ public class VmToHostAffinityFilterPolicyUnitTest extends VmToHostAffinityPolicy
     }
 
     @Test
-    public void testWithAffinityIntersection() throws Exception {
+    public void testWithAffinityIntersection() {
 
         AffinityGroup positiveCollisionGroup = new AffinityGroup();
         positiveCollisionGroup.setVdsIds(Arrays.asList(host_negative_enforcing.getId()));

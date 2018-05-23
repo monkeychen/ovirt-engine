@@ -69,7 +69,8 @@ public class VolumeModule extends AbstractGinModule {
             final Provider<VolumeProfileStatisticsPopupPresenterWidget> volumeProfileStatsPopupProvider,
             final Provider<VolumeListModel> modelProvider,
             final Provider<GlusterVolumeSnapshotConfigureOptionsPopupPresenterWidget> volumeSnapshotConfigOptionsPopupProvider,
-            final Provider<GlusterClusterSnapshotConfigureOptionsPopupPresenterWidget> clusterSnapshotConfigOptionsPopupProvider) {
+            final Provider<GlusterClusterSnapshotConfigureOptionsPopupPresenterWidget> clusterSnapshotConfigOptionsPopupProvider,
+            final Provider<GlusterVolumeSnapshotCreatePopupPresenterWidget> snapshotPopupProvider) {
         MainViewModelProvider<GlusterVolumeEntity, VolumeListModel> result =
                 new MainViewModelProvider<GlusterVolumeEntity, VolumeListModel>(eventBus, defaultConfirmPopupProvider) {
             @Override
@@ -77,20 +78,19 @@ public class VolumeModule extends AbstractGinModule {
                     UICommand lastExecutedCommand, Model windowModel) {
                 if (lastExecutedCommand == getModel().getNewVolumeCommand()) {
                     return popupProvider.get();
-                }
-                else if (lastExecutedCommand == getModel().getStatusRebalanceCommand() || lastExecutedCommand.getName().equals("onStopRebalance")) {//$NON-NLS-1$
+                } else if (lastExecutedCommand == getModel().getStatusRebalanceCommand() || lastExecutedCommand.getName().equals("onStopRebalance")) {//$NON-NLS-1$
                     return rebalanceStatusPopupProvider.get();
-                }
-                else if(lastExecutedCommand == getModel().getShowVolumeProfileDetailsCommand() || lastExecutedCommand.getName().equals("showProfileDetails")) {//$NON-NLS-1$
+                } else if (lastExecutedCommand == getModel().getShowVolumeProfileDetailsCommand() || lastExecutedCommand.getName().equals("showProfileDetails")) {//$NON-NLS-1$
                     return volumeProfileStatsPopupProvider.get();
-                }
-                else if (lastExecutedCommand == getModel().getConfigureVolumeSnapshotOptionsCommand()) {
+                } else if (lastExecutedCommand == getModel().getConfigureVolumeSnapshotOptionsCommand()) {
                     return volumeSnapshotConfigOptionsPopupProvider.get();
-                }
-                else if (lastExecutedCommand == getModel().getConfigureClusterSnapshotOptionsCommand()) {
+                } else if (lastExecutedCommand == getModel().getConfigureClusterSnapshotOptionsCommand()) {
                     return clusterSnapshotConfigOptionsPopupProvider.get();
-                }
-                else {
+                }  else if (lastExecutedCommand == getModel().getCreateSnapshotCommand()) {
+                    return snapshotPopupProvider.get();
+                } else if (lastExecutedCommand == getModel().getEditSnapshotScheduleCommand()) {
+                    return snapshotPopupProvider.get();
+                }else {
                     return super.getModelPopup(source, lastExecutedCommand, windowModel);
                 }
             }

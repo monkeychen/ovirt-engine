@@ -59,12 +59,9 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <additionalClasspathElements>
-            <additionalClasspathElement>${basedir}/src/test/java</additionalClasspathElement>
-          </additionalClasspathElements>
-          <excludes>
-            <exclude>**/DBSchedulerUtilQuartzImplTest.java</exclude>
-          </excludes>
+          <properties>
+            <excludeTags>dao</excludeTags>
+          </properties>
         </configuration>
       </plugin>
       <plugin>
@@ -93,7 +90,7 @@
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration combine.self="override">
-              <excludes/>
+              <properties/>
               <systemPropertyVariables>
                 <java.util.logging.config.file>src/test/resources/logging.properties</java.util.logging.config.file>
               </systemPropertyVariables>

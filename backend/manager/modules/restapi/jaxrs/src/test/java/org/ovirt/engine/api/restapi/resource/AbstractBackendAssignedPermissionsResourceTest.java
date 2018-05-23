@@ -1,12 +1,15 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.BaseResource;
 import org.ovirt.engine.api.model.Group;
 import org.ovirt.engine.api.model.Permission;
@@ -54,13 +57,13 @@ public abstract class AbstractBackendAssignedPermissionsResourceTest
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
-    public void testAddPermission() throws Exception {
+    public void testAddPermission() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddPermission,
                                   PermissionsOperationsParameters.class,
@@ -125,7 +128,7 @@ public abstract class AbstractBackendAssignedPermissionsResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         List<org.ovirt.engine.core.common.businessentities.Permission> perms = setUpPermissions();
@@ -137,7 +140,7 @@ public abstract class AbstractBackendAssignedPermissionsResourceTest
                                      failure);
     }
 
-    protected void setUpQueryExpectations(String query, Object failure, Guid adElementId) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure, Guid adElementId) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(queryType,

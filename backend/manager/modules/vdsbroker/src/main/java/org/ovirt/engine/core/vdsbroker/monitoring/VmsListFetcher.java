@@ -1,7 +1,6 @@
 package org.ovirt.engine.core.vdsbroker.monitoring;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,6 @@ import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.common.vdscommands.VdsIdAndVdsVDSCommandParametersBase;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.VmDynamicDao;
 import org.ovirt.engine.core.di.Injector;
 import org.ovirt.engine.core.vdsbroker.ResourceManager;
@@ -35,21 +33,15 @@ public class VmsListFetcher {
     private Map<Guid, VmDynamic> dbVms;
 
     // dependencies
-    private DbFacade dbFacade;
     private ResourceManager resourceManager;
+    private VmDynamicDao vmDynamicDao;
 
     private static final Logger log = LoggerFactory.getLogger(VmsListFetcher.class);
 
     public VmsListFetcher(VdsManager vdsManager) {
         this.vdsManager = vdsManager;
-        this.dbFacade = DbFacade.getInstance();
         this.resourceManager = Injector.get(ResourceManager.class);
-    }
-
-    public VmsListFetcher(VdsManager vdsManager, DbFacade dbFacade, ResourceManager resourceManager) {
-        this.vdsManager = vdsManager;
-        this.dbFacade = dbFacade;
-        this.resourceManager = resourceManager;
+        this.vmDynamicDao = Injector.get(VmDynamicDao.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -136,15 +128,11 @@ public class VmsListFetcher {
     }
 
     public VmDynamicDao getVmDynamicDao() {
-        return dbFacade.getVmDynamicDao();
+        return vmDynamicDao;
     }
 
     public ResourceManager getResourceManager() {
         return resourceManager;
-    }
-
-    public Collection<VdsmVm> getVdsmVms() {
-        return vdsmVms.values();
     }
 
     public List<Pair<VmDynamic, VdsmVm>> getChangedVms() {

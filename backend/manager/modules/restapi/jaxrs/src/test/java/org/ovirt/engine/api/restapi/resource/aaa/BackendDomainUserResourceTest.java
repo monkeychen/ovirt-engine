@@ -1,12 +1,16 @@
 package org.ovirt.engine.api.restapi.resource.aaa;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Domain;
 import org.ovirt.engine.api.model.User;
 import org.ovirt.engine.api.restapi.resource.AbstractBackendSubResourceTest;
@@ -15,6 +19,7 @@ import org.ovirt.engine.core.aaa.DirectoryUser;
 import org.ovirt.engine.core.common.queries.DirectoryIdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendDomainUserResourceTest
     extends AbstractBackendSubResourceTest<User, DirectoryUser, BackendDomainUserResource> {
 
@@ -29,7 +34,7 @@ public class BackendDomainUserResourceTest
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         setUriInfo(uriInfo);
         setUpEntityQueryExpectations(1, false);
@@ -42,17 +47,11 @@ public class BackendDomainUserResourceTest
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         setUriInfo(uriInfo);
         setUpEntityQueryExpectations(1, true);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     private void setUpParentExpectations() {
@@ -63,7 +62,7 @@ public class BackendDomainUserResourceTest
         resource.setParent(parent);
     }
 
-    private void setUpEntityQueryExpectations(int index, boolean notFound) throws Exception {
+    private void setUpEntityQueryExpectations(int index, boolean notFound) {
         setUpGetEntityExpectations(
             QueryType.GetDirectoryUserById,
             DirectoryIdQueryParameters.class,

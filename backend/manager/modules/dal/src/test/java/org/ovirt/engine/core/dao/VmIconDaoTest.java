@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VmIcon;
 import org.ovirt.engine.core.compat.Guid;
 
@@ -38,11 +38,6 @@ public class VmIconDaoTest extends BaseGenericDaoTestCase<Guid, VmIcon, VmIconDa
     }
 
     @Override
-    protected VmIconDao prepareDao() {
-        return getDbFacade().getVmIconDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
@@ -54,49 +49,49 @@ public class VmIconDaoTest extends BaseGenericDaoTestCase<Guid, VmIcon, VmIconDa
 
     @Test
     public void testGetVmIconByDataUrlWithValidUrl() {
-        final List<VmIcon> result = prepareDao().getByDataUrl(OTHER_SMALL_DATAURL);
+        final List<VmIcon> result = dao.getByDataUrl(OTHER_SMALL_DATAURL);
         assertEquals(1, result.size());
         assertEquals(new VmIcon(FixturesTool.SMALL_ICON_ID, OTHER_SMALL_DATAURL), result.get(0));
     }
 
     @Test
     public void testGetVmIconByDataUrlWithInvalidUrl() {
-        final List<VmIcon> result = prepareDao().getByDataUrl(OTHER_SMALL_DATAURL + "garbage");
+        final List<VmIcon> result = dao.getByDataUrl(OTHER_SMALL_DATAURL + "garbage");
         assertTrue(result.isEmpty());
     }
 
     @Test
     public void testRemoveIfUnusedWithUsed() {
-        prepareDao().removeIfUnused(FixturesTool.SMALL_ICON_ID);
-        final VmIcon survivor = prepareDao().get(FixturesTool.SMALL_ICON_ID);
+        dao.removeIfUnused(FixturesTool.SMALL_ICON_ID);
+        final VmIcon survivor = dao.get(FixturesTool.SMALL_ICON_ID);
         assertEquals(FixturesTool.SMALL_ICON_ID, survivor.getId());
     }
 
     @Test
     public void testRemoveIfUnusedWithUnused() {
-        prepareDao().removeIfUnused(UNUSED_ICON_ID);
-        final VmIcon nothing = prepareDao().get(UNUSED_ICON_ID);
+        dao.removeIfUnused(UNUSED_ICON_ID);
+        final VmIcon nothing = dao.get(UNUSED_ICON_ID);
         assertNull(nothing);
     }
 
     @Test
     public void testDeleteAllUnusedIcons() {
         reinitializeDatabase();
-        prepareDao().removeAllUnusedIcons();
-        final VmIcon unusedIcon = prepareDao().get(UNUSED_ICON_ID);
+        dao.removeAllUnusedIcons();
+        final VmIcon unusedIcon = dao.get(UNUSED_ICON_ID);
         assertNull(unusedIcon);
-        final VmIcon usedIcon = prepareDao().get(FixturesTool.SMALL_ICON_ID);
+        final VmIcon usedIcon = dao.get(FixturesTool.SMALL_ICON_ID);
         assertNotNull(usedIcon);
         reinitializeDatabase();
     }
 
     @Test
     public void testExistsExisting() {
-        assertTrue(prepareDao().exists(UNUSED_ICON_ID));
+        assertTrue(dao.exists(UNUSED_ICON_ID));
     }
 
     @Test
     public void testExistsNonExisting() {
-        assertFalse(prepareDao().exists(NON_EXISTING_ICON_ID));
+        assertFalse(dao.exists(NON_EXISTING_ICON_ID));
     }
 }

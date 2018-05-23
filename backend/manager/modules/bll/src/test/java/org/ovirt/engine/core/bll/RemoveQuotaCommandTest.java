@@ -1,14 +1,10 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.ovirt.engine.core.bll.quota.QuotaManager;
@@ -38,25 +34,20 @@ public class RemoveQuotaCommandTest extends BaseCommandTest {
     @InjectMocks
     private RemoveQuotaCommand command = createCommand();
 
-    @Before
+    @BeforeEach
     public void mockQuotaDao() {
         quota = mockStorageQuota(quotaGuid);
         when(quotaDao.getById(quotaGuid)).thenReturn(quota);
-        List<Quota> quotaList = new ArrayList<>();
-        quotaList.add(new Quota());
-        quotaList.add(new Quota());
-        when(quotaDao.getQuotaByStoragePoolGuid(storagePoolUUID)).thenReturn(quotaList);
-        when(quotaDao.isQuotaInUse(any())).thenReturn(false);
     }
 
     @Test
-    public void testExecuteCommand() throws Exception {
+    public void testExecuteCommand() {
         command.executeCommand();
         assertTrue(command.getSucceeded());
     }
 
     @Test
-    public void testValidateCommand() throws Exception {
+    public void testValidateCommand() {
         ValidateTestUtils.runAndAssertValidateSuccess(command);
     }
 

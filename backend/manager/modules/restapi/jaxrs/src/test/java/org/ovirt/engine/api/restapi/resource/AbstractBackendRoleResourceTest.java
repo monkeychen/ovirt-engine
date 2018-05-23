@@ -1,8 +1,11 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Role;
 import org.ovirt.engine.core.common.businessentities.RoleType;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
@@ -16,40 +19,31 @@ public abstract class AbstractBackendRoleResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendRoleResource("foo", null);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendRoleResource("foo", null)));
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(true);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.get()));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations();
 
         verifyModel(resource.get(), 0);
     }
 
-    protected void setUpGetEntityExpectations() throws Exception {
+    protected void setUpGetEntityExpectations() {
         setUpGetEntityExpectations(false);
     }
 
-    protected void setUpGetEntityExpectations(boolean notFound) throws Exception {
+    protected void setUpGetEntityExpectations(boolean notFound) {
         setUpGetEntityExpectations(QueryType.GetRoleById,
                                    IdQueryParameters.class,
                                    new String[] { "Id" },

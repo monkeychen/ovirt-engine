@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
@@ -258,8 +257,7 @@ public class BackendApiResource
         Api api;
         if(appMode == ApplicationMode.GlusterOnly) {
             api = getGlusterApi();
-        }
-        else {
+        } else {
             api = getApi();
         }
         return getResponseBuilder(api).build();
@@ -275,18 +273,15 @@ public class BackendApiResource
             } catch (Exception e) {
                 throw new WebApplicationException(e, Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
             }
-        }
-        else if (ParametersHelper.getParameter(httpHeaders, uriInfo, SCHEMA_CONSTRAINT_PARAMETER) != null) {
+        } else if (ParametersHelper.getParameter(httpHeaders, uriInfo, SCHEMA_CONSTRAINT_PARAMETER) != null) {
             return getSchema();
-        }
-        else {
+        } else {
             BaseResource response;
             Api api;
             if (appMode == ApplicationMode.GlusterOnly) {
                 api = getGlusterApi();
                 response = addGlusterSummary(addSystemVersion(api));
-            }
-            else {
+            } else {
                 api = getApi();
                 response = addSummary(addSystemVersion(api));
             }
@@ -374,8 +369,8 @@ public class BackendApiResource
     }
 
     @SuppressWarnings("unchecked")
-    private HashMap<String, Integer> asStatisticsMap(Object result) {
-        return (HashMap<String, Integer>)result;
+    private Map<String, Integer> asStatisticsMap(Object result) {
+        return (Map<String, Integer>)result;
     }
 
     private Api addSummary(Api api) {

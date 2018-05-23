@@ -1,6 +1,6 @@
 package org.ovirt.engine.core.bll.scheduling.utils;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -8,13 +8,10 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.ovirt.engine.core.bll.scheduling.SlaValidator;
 import org.ovirt.engine.core.common.businessentities.MigrationSupport;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -25,13 +22,10 @@ public class FindVmAndDestinationsTest {
     @Mock
     VmDao vmDao;
 
-    @Inject
-    SlaValidator slaValidator;
-
     @InjectMocks
-    FindVmAndDestinations findVmAndDestinations = new FindVmAndDestinations(null, 80, 1024, slaValidator);
+    FindVmAndDestinations findVmAndDestinations = new FindVmAndDestinations(null, 80, 1024);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         initMocks(this);
     }
@@ -41,7 +35,7 @@ public class FindVmAndDestinationsTest {
      * and that migration support is not tied to host pinning.
      */
     @Test
-    public void testGetMigratableVmsFromHost() throws Exception {
+    public void testGetMigratableVmsFromHost() {
         List<VDS> hosts = new ArrayList<>();
         hosts.add(createHost());
         hosts.add(createHost());

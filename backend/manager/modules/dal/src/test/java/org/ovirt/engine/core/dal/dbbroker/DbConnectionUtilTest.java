@@ -1,6 +1,7 @@
 package org.ovirt.engine.core.dal.dbbroker;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -8,14 +9,15 @@ import java.util.Properties;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
+import org.ovirt.engine.core.dao.TagDao;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.annotation.DirtiesContext;
 
-public class DbConnectionUtilTest extends BaseDaoTestCase{
+public class DbConnectionUtilTest extends BaseDaoTestCase<TagDao> {
 
     @Inject
     private JdbcTemplate jdbcTemplate;
@@ -34,7 +36,7 @@ public class DbConnectionUtilTest extends BaseDaoTestCase{
     /**
      * Ensures that the checkDBConnection method throws an Exception when connection is not valid
      */
-    @Test(expected = DataAccessException.class)
+    @Test
     @DirtiesContext
     public void testDBConnectionWithoutConnection() throws Exception {
 
@@ -55,7 +57,7 @@ public class DbConnectionUtilTest extends BaseDaoTestCase{
             final JdbcTemplate jdbcTemplate = dbEngineDialect.createJdbcTemplate(dataSource);
             underTest = new DbConnectionUtil(jdbcTemplate, 666, 777);
 
-            underTest.checkDBConnection();
+            assertThrows(DataAccessException.class, underTest::checkDBConnection);
         }
     }
 }

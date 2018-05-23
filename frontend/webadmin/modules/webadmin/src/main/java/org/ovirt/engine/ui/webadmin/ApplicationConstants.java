@@ -260,10 +260,6 @@ public interface ApplicationConstants extends CommonApplicationConstants {
 
     String downloadImage();
 
-    String downloadImageStart();
-
-    String downloadImageCancel();
-
     String testImageIOProxyConnection();
 
     String testImageIOProxyConnectionSuccess();
@@ -1350,6 +1346,12 @@ public interface ApplicationConstants extends CommonApplicationConstants {
 
     String freeSpaceStorage();
 
+    String confirmedFreeSpaceStorage();
+
+    String confirmedFreeSpaceStorageNonThinTooltip();
+
+    String confirmedFreeSpaceStorageThinTooltip();
+
     String newDomainStorage();
 
     String importDomainStorage();
@@ -2384,6 +2386,8 @@ public interface ApplicationConstants extends CommonApplicationConstants {
 
     String freeSizeBrickAdvancedLabel();
 
+    String confirmedFreeSizeBrickAdvancedLabel();
+
     String deviceBrickAdvancedLabel();
 
     String blockSizeBrickAdvancedLabel();
@@ -2530,6 +2534,8 @@ public interface ApplicationConstants extends CommonApplicationConstants {
     String total();
 
     String free();
+
+    String confirmedFree();
 
     @Override
     String unknown();
@@ -2903,7 +2909,11 @@ public interface ApplicationConstants extends CommonApplicationConstants {
 
     String polarityAffinityGroup();
 
+    String hostPolarityAffinityGroup();
+
     String enforceAffinityGroup();
+
+    String hostEnforceAffinityGroup();
 
     String hostMembersAffinityGroup();
 

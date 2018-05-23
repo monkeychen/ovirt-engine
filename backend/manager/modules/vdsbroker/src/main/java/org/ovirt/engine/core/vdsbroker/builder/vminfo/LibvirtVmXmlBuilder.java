@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.vdsbroker.builder.vminfo;
 
 import static org.ovirt.engine.core.common.utils.VmDeviceCommonUtils.updateVmDevicesBootOrder;
-import static org.ovirt.engine.core.vdsbroker.vdsbroker.IoTuneUtils.ioTuneListFrom;
+import static org.ovirt.engine.core.vdsbroker.vdsbroker.IoTuneUtils.ioTuneMapFrom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +70,7 @@ import org.ovirt.engine.core.utils.NetworkUtils;
 import org.ovirt.engine.core.utils.StringMapUtils;
 import org.ovirt.engine.core.utils.archstrategy.ArchStrategyFactory;
 import org.ovirt.engine.core.utils.ovf.xml.XmlTextWriter;
+import org.ovirt.engine.core.vdsbroker.architecture.CreateAdditionalControllersForDomainXml;
 import org.ovirt.engine.core.vdsbroker.architecture.GetControllerIndices;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.NumaSettingFactory;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.VdsProperties;
@@ -101,8 +102,6 @@ public class LibvirtVmXmlBuilder {
     private static final int LIBVIRT_PORT_AUTOSELECT = -1;
     private static final Set<String> SPICE_CHANNEL_NAMES = new HashSet<>(Arrays.asList(
             "main", "display", "inputs", "cursor", "playback", "record", "smartcard", "usbredir"));
-    private static final int DEFAULT_HUGEPAGESIZE_X86_64 = 2048;
-    private static final int DEFAULT_HUGEPAGESIZE_PPC64LE = 16384;
 
     private VmInfoBuildUtils vmInfoBuildUtils;
 
@@ -327,6 +326,7 @@ public class LibvirtVmXmlBuilder {
 
         switch(vm.getClusterArch().getFamily()) {
         case x86:
+        case s390x:
             writer.writeAttributeString("match", "exact");
 
             // is this a list of strings??..
@@ -338,15 +338,18 @@ public class LibvirtVmXmlBuilder {
                 writer.writeAttributeString("mode", "host-model");
                 break;
             default:
-                writer.writeStartElement("model");
-                writer.writeRaw(cpuType);
-                // TODO: features
-                writer.writeEndElement();
+                String[] typeAndFlags = cpuType.split(",");
+                writer.writeElement("model", typeAndFlags[0]);
+                writeCpuFlags(typeAndFlags);
                 break;
             }
             break;
         case ppc:
-            writer.writeElement("model", cpuType);
+            writer.writeAttributeString("mode", "host-model");
+            // needs to be lowercase for libvirt
+            String[] typeAndFlags = cpuType.split(",");
+            writer.writeElement("model", typeAndFlags[0].toLowerCase());
+            writeCpuFlags(typeAndFlags);
         }
 
         if ((boolean) Config.getValue(ConfigValues.SendSMPOnRunVm)) {
@@ -376,6 +379,25 @@ public class LibvirtVmXmlBuilder {
         }
 
         writer.writeEndElement();
+    }
+
+    private void writeCpuFlags(String[] typeAndFlags) {
+        Stream.of(typeAndFlags).skip(1).filter(StringUtils::isNotEmpty).forEach(flag -> {
+            writer.writeStartElement("feature");
+            switch(flag.charAt(0)) {
+            case '+':
+                writer.writeAttributeString("name", flag.substring(1));
+                writer.writeAttributeString("policy", "require");
+                break;
+            case '-':
+                writer.writeAttributeString("name", flag.substring(1));
+                writer.writeAttributeString("policy", "disable");
+                break;
+            default:
+                writer.writeAttributeString("name", flag);
+            }
+            writer.writeEndElement();
+        });
     }
 
     private void writeCpuTune(boolean numaEnabled) {
@@ -627,7 +649,8 @@ public class LibvirtVmXmlBuilder {
         //   </hyperv>
         // <features/>
         boolean acpiEnabled = vm.getAcpiEnable();
-        if (!acpiEnabled && !hypervEnabled) {
+        boolean kaslr = vmInfoBuildUtils.isKASLRDumpEnabled(vm.getVmOsId());
+        if (!acpiEnabled && !hypervEnabled && !kaslr) {
             return;
         }
 
@@ -657,6 +680,10 @@ public class LibvirtVmXmlBuilder {
             writer.writeEndElement();
         }
 
+        if (kaslr) {
+            writer.writeElement("vmcoreinfo");
+        }
+
         writer.writeEndElement();
     }
 
@@ -674,14 +701,7 @@ public class LibvirtVmXmlBuilder {
                 .map(HugePage::getSizeKB)
                 .collect(Collectors.toList());
         if (!hugepageSizes.contains(hugepageSize)) {
-            switch(vm.getClusterArch().getFamily()) {
-            case x86:
-                hugepageSize = DEFAULT_HUGEPAGESIZE_X86_64;
-                break;
-            case ppc:
-                hugepageSize = DEFAULT_HUGEPAGESIZE_PPC64LE;
-                break;
-            }
+            hugepageSize = vmInfoBuildUtils.getDefaultHugepageSize(vm);
         }
         writer.writeAttributeString("size", String.valueOf(hugepageSize));
         writer.writeEndElement();
@@ -821,6 +841,7 @@ public class LibvirtVmXmlBuilder {
         devices = overrideDevicesForRunOnce(devices);
         devices = processPayload(devices);
         devices.stream().filter(d -> d.getSpecParams() == null).forEach(d -> d.setSpecParams(Collections.emptyMap()));
+        ArchStrategyFactory.getStrategy(vm.getClusterArch()).run(new CreateAdditionalControllersForDomainXml(devices));
 
         writer.writeStartElement("devices");
 
@@ -1509,7 +1530,7 @@ public class LibvirtVmXmlBuilder {
             String displayIp = (String) device.getSpecParams().get("displayIp");
             if (displayIp == null) {
                 writer.writeAttributeString("type", "network");
-                writer.writeAttributeString("network", String.format("vdsm-%s", displayNetwork.getName()));
+                writer.writeAttributeString("network", String.format("vdsm-%s", displayNetwork.getVdsmName()));
             } else {
                 writer.writeAttributeString("type", "address");
                 writer.writeAttributeString("address", displayIp);
@@ -1589,7 +1610,7 @@ public class LibvirtVmXmlBuilder {
 
         writeGeneralDiskAttributes(device, disk, dve);
         writeDiskTarget(dve, dev);
-        writeDiskSource(disk, dev);
+        writeDiskSource(device, disk, dev);
         writeDiskDriver(device, disk, dve, pinTo);
         writeAlias(device);
         writeAddress(device);
@@ -1643,7 +1664,7 @@ public class LibvirtVmXmlBuilder {
             return;
         }
         writer.writeStartElement("iotune");
-        ioTuneListFrom(storageQos).forEach(pair -> writer.writeAttributeString(pair.getFirst(), pair.getSecond().toString()));
+        ioTuneMapFrom(storageQos).forEach((key, val) -> writer.writeElement(key, val.toString()));
         writer.writeEndElement();
     }
 
@@ -1661,7 +1682,7 @@ public class LibvirtVmXmlBuilder {
         switch (disk.getDiskStorageType()) {
         case IMAGE:
             DiskImage diskImage = (DiskImage) disk;
-            String diskType = this.vmInfoBuildUtils.getDiskType(this.vm, diskImage);
+            String diskType = this.vmInfoBuildUtils.getDiskType(this.vm, diskImage, device);
             nativeIO = !"file".equals(diskType);
             writer.writeAttributeString("io", nativeIO ? "native" : "threads");
             writer.writeAttributeString("type", diskImage.getVolumeFormat() == VolumeFormat.COW ? "qcow2" : "raw");
@@ -1710,7 +1731,7 @@ public class LibvirtVmXmlBuilder {
         writer.writeEndElement();
     }
 
-    private void writeDiskSource(Disk disk, String dev) {
+    private void writeDiskSource(VmDevice device, Disk disk, String dev) {
         writer.writeStartElement("source");
         switch (disk.getDiskStorageType()) {
         case IMAGE:
@@ -1727,7 +1748,7 @@ public class LibvirtVmXmlBuilder {
                 addVolumeLease(diskImage.getImageId(), diskImage.getStorageIds().get(0));
             }
 
-            String diskType = this.vmInfoBuildUtils.getDiskType(this.vm, diskImage);
+            String diskType = this.vmInfoBuildUtils.getDiskType(this.vm, diskImage, device);
 
             switch (diskType) {
             case "block":
@@ -1831,7 +1852,7 @@ public class LibvirtVmXmlBuilder {
 
         switch (disk.getDiskStorageType()) {
         case IMAGE:
-            writer.writeAttributeString("type", this.vmInfoBuildUtils.getDiskType(this.vm, (DiskImage) disk));
+            writer.writeAttributeString("type", this.vmInfoBuildUtils.getDiskType(this.vm, (DiskImage) disk, device));
             break;
         case LUN:
             writer.writeAttributeString("type", "block");
@@ -2098,6 +2119,12 @@ public class LibvirtVmXmlBuilder {
         writer.writeStartElement("mac");
         writer.writeAttributeString("address", nic.getMacAddress());
         writer.writeEndElement();
+
+        if (!networkless) {
+            writer.writeStartElement("mtu");
+            writer.writeAttributeString("size", String.valueOf(NetworkUtils.getVmMtuActualValue(network)));
+            writer.writeEndElement();
+        }
 
         NetworkFilter networkFilter = vmInfoBuildUtils.fetchVnicProfileNetworkFilter(nic);
         if (networkFilter != null) {

@@ -1,25 +1,28 @@
 package org.ovirt.engine.core.vdsbroker.monitoring;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dal.dbbroker.auditloghandling.AuditLogDirector;
+import org.ovirt.engine.core.dao.VdsDynamicDao;
+import org.ovirt.engine.core.dao.VdsNumaNodeDao;
 import org.ovirt.engine.core.dao.network.InterfaceDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.dao.network.NetworkDao;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.vdsbroker.ResourceManager;
 import org.ovirt.engine.core.vdsbroker.VdsManager;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.VDSNetworkException;
@@ -27,19 +30,17 @@ import org.ovirt.engine.core.vdsbroker.vdsbroker.VDSNetworkException;
 /**
  Host and Vms Monitoring now split to 2 classes - all VMs related tests have been move to {@link org.ovirt.engine.core.vdsbroker.monitoring.VmAnalyzerTest}
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
 public class HostMonitoringTest {
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(mockConfig(ConfigValues.DebugTimerLogging, true));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.DebugTimerLogging, true));
+    }
 
+    @Mock
     private VDS vds;
-    private HostMonitoring updater;
-
     @Mock
     InterfaceDao interfaceDao;
-    @Mock
-    DbFacade dbFacade;
     @Mock
     Cluster cluster;
     @Mock
@@ -48,27 +49,20 @@ public class HostMonitoringTest {
     private VdsManager vdsManager;
     @Mock
     private AuditLogDirector auditLogDirector;
+    @Mock
+    private MonitoringStrategy monitoringStrategy;
+    @Mock
+    private VdsDynamicDao vdsDynamicDao;
+    @Mock
+    private VdsNumaNodeDao vdsNumaNodeDao;
+    @Mock
+    private NetworkDao networkDao;
+    @InjectMocks
+    private HostMonitoring updater;
 
-    @Before
-    public void setup() {
-        initVds();
-        initConditions();
-        updater =
-                new HostMonitoring(vdsManager,
-                        vds,
-                        mock(MonitoringStrategy.class),
-                        resourceManager,
-                        dbFacade,
-                        auditLogDirector);
-    }
-
-    private void initConditions() {
-        when(dbFacade.getInterfaceDao()).thenReturn(interfaceDao);
-    }
-
-    private void initVds() {
-        vds = new VDS();
-        vds.setId(new Guid("00000000-0000-0000-0000-000000000012"));
+    @BeforeEach
+    public void initVds() {
+        when(vds.getId()).thenReturn(new Guid("00000000-0000-0000-0000-000000000012"));
     }
 
     /**

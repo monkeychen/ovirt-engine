@@ -16,6 +16,9 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +29,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Nic;
 import org.ovirt.engine.api.model.NicInterface;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -37,6 +42,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendInstanceTypeNicsResourceTest
         extends AbstractBackendCollectionResourceTest<Nic, VmNetworkInterface, BackendTemplateNicsResource> {
 
@@ -48,20 +54,20 @@ public class BackendInstanceTypeNicsResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         setUpEntityQueryExpectations(times, null);
     }
 
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetTemplateInterfacesByTemplateId,
@@ -154,7 +160,7 @@ public class BackendInstanceTypeNicsResourceTest
     }
 
     @Test
-    public void testAddNic() throws Exception {
+    public void testAddNic() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(
             ActionType.AddVmTemplateInterface,
@@ -179,16 +185,16 @@ public class BackendInstanceTypeNicsResourceTest
     }
 
     @Test
-    public void testAddNicCantDo() throws Exception {
+    public void testAddNicCantDo() {
         doTestBadAddNic(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddNicFailure() throws Exception {
+    public void testAddNicFailure() {
         doTestBadAddNic(true, false, FAILURE);
     }
 
-    private void doTestBadAddNic(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddNic(boolean valid, boolean success, String detail) {
         setUriInfo(
             setUpActionExpectations(
                 ActionType.AddVmTemplateInterface,
@@ -201,36 +207,22 @@ public class BackendInstanceTypeNicsResourceTest
         );
         Nic model = getModel(0);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         Nic model = new Nic();
         model.setName(null);
 
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Nic", "add", "name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Nic", "add", "name");
     }
 
     @Test
-    public void testSubResourceLocatorBadGuid() throws Exception {
-        try {
-            collection.getNicResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testSubResourceLocatorBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> collection.getNicResource("foo")));
     }
 
     @Test

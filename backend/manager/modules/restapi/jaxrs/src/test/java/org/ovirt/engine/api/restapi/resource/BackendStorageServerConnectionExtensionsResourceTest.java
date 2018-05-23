@@ -1,13 +1,19 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.StorageConnectionExtension;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.StorageServerConnectionExtensionParameters;
@@ -16,6 +22,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageServerConnectionExtensionsResourceTest extends AbstractBackendCollectionResourceTest<StorageConnectionExtension, StorageServerConnectionExtension, BackendStorageServerConnectionExtensionsResource>{
     private static Guid hostID = GUIDS[1];
     private Guid extensionID    = GUIDS[0];
@@ -33,7 +40,7 @@ public class BackendStorageServerConnectionExtensionsResourceTest extends Abstra
 
     @Test
     @Override
-    public void testList() throws Exception {
+    public void testList() {
         int numOfEntitiesInList = 2;
         setUpGetEntityExpectations(QueryType.GetStorageServerConnectionExtensionsByHostId,
                 IdQueryParameters.class,
@@ -50,7 +57,7 @@ public class BackendStorageServerConnectionExtensionsResourceTest extends Abstra
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         StorageServerConnectionExtension entity =
                 StorageConnectionExtensionResourceTestHelper.getEntity(extensionID, hostID, pass, user, iqn);
 
@@ -76,27 +83,27 @@ public class BackendStorageServerConnectionExtensionsResourceTest extends Abstra
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testListFailure() throws Exception {
+    public void testListFailure() {
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testListCrash() throws Exception {
+    public void testListCrash() {
     }
 
     @Test
     @Override
-    @Ignore
-    public void testListCrashClientLocale() throws Exception {
+    @Disabled
+    public void testListCrashClientLocale() {
     }
 
     public List<StorageServerConnectionExtension> getEntityList(int numOfEntities) {

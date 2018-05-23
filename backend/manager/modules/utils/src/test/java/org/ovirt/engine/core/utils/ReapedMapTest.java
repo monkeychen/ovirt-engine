@@ -16,20 +16,21 @@
 
 package org.ovirt.engine.core.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.ovirt.engine.core.utils.ReapedMap.IdAwareReference;
 
 
-public class ReapedMapTest extends Assert {
+public class ReapedMapTest {
 
     private static final String[] NUMBERS = { "one", "two", "three", "four", "five" };
 
@@ -63,7 +64,7 @@ public class ReapedMapTest extends Assert {
     }
 
     @Test
-    public void testReapingOnGetWithGC() throws Exception {
+    public void testReapingOnGetWithGC() {
         setUpGCExpectations(5);
 
         populate(1, 2, 3);
@@ -102,7 +103,7 @@ public class ReapedMapTest extends Assert {
     }
 
     @Test
-    public void testReapingOnPutWithGC() throws Exception {
+    public void testReapingOnPutWithGC() {
         setUpGCExpectations(5);
 
         populate(1, 2, 3);
@@ -115,7 +116,7 @@ public class ReapedMapTest extends Assert {
     }
 
     @Test
-    public void testReapingOnRemoveWithGC() throws Exception {
+    public void testReapingOnRemoveWithGC() {
         setUpGCExpectations(5);
 
         populate(1, 2, 3);
@@ -141,7 +142,7 @@ public class ReapedMapTest extends Assert {
             private int times = 0;
 
             @Override
-            public Reference<Integer> answer(InvocationOnMock invocation) throws Throwable {
+            public Reference<Integer> answer(InvocationOnMock invocation) {
                 return times++ == gcAfter ? ref : null;
             }
         });
@@ -160,8 +161,8 @@ public class ReapedMapTest extends Assert {
     }
 
     private void assertSizes(int i, int j) {
-        assertEquals("unexpected primary map size", i, map.size());
-        assertEquals("unexpected secondary map size", j, map.reapableSize());
+        assertEquals(i, map.size(), "unexpected primary map size");
+        assertEquals(j, map.reapableSize(), "unexpected secondary map size");
     }
 
     private void assertExpected(Integer ... values) {

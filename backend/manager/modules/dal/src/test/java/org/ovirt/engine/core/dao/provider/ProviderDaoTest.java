@@ -1,10 +1,10 @@
 package org.ovirt.engine.core.dao.provider;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.OpenstackNetworkPluginType;
 import org.ovirt.engine.core.common.businessentities.OpenstackNetworkProviderProperties;
 import org.ovirt.engine.core.common.businessentities.Provider;
@@ -43,11 +43,6 @@ public class ProviderDaoTest extends BaseGenericDaoTestCase<Guid, Provider<?>, P
     }
 
     @Override
-    protected ProviderDao prepareDao() {
-        return dbFacade.getProviderDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
@@ -58,41 +53,41 @@ public class ProviderDaoTest extends BaseGenericDaoTestCase<Guid, Provider<?>, P
     }
 
     @Test
-    public void getByName() throws Exception {
+    public void getByName() {
         assertEquals(FixturesTool.PROVIDER_NAME, dao.getByName(FixturesTool.PROVIDER_NAME).getName());
     }
 
     @Test
-    public void getByNameCaseSensitive() throws Exception {
+    public void getByNameCaseSensitive() {
         assertNull(dao.getByName(FixturesTool.PROVIDER_NAME.toUpperCase()));
     }
 
     @Test
-    public void getByNameNonExistant() throws Exception {
+    public void getByNameNonExistant() {
         assertNull(dao.getByName(FixturesTool.PROVIDER_NAME + FixturesTool.PROVIDER_NAME));
     }
 
     @Test
-    public void searchQueryByExistentName() throws Exception {
+    public void searchQueryByExistentName() {
         assertEquals(FixturesTool.PROVIDER_NAME,
                 dao.getAllWithQuery(String.format("SELECT * FROM providers WHERE name = '%s'",
                         FixturesTool.PROVIDER_NAME)).get(0).getName());
     }
 
     @Test
-    public void searchQueryByNonExistentName() throws Exception {
+    public void searchQueryByNonExistentName() {
         assertTrue(dao.getAllWithQuery("SELECT * FROM providers WHERE name = 'foo'").isEmpty());
     }
 
     @Test
-    public void searchQueryByExistentType() throws Exception {
+    public void searchQueryByExistentType() {
         assertEquals(FixturesTool.PROVIDER_NAME,
                 dao.getAllWithQuery(String.format("SELECT * FROM providers WHERE provider_type = '%s'",
                         FixturesTool.PROVIDER_TYPE.name())).get(0).getName());
     }
 
     @Test
-    public void searchQueryByNonExistentType() throws Exception {
+    public void searchQueryByNonExistentType() {
         assertTrue(dao.getAllWithQuery("SELECT * FROM providers WHERE provider_type = 'foo'").isEmpty());
     }
 }

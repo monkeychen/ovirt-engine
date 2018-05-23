@@ -631,6 +631,8 @@ public interface UIConstants extends Constants {
 
     String i18NExtraNameOrNoneValidation();
 
+    String cpuNameValidation();
+
     String nonUtfValidationMsg();
 
     String youHavntConfigPmMsg();
@@ -1555,6 +1557,8 @@ public interface UIConstants extends Constants {
 
     String hosCPUUnavailable();
 
+    String cpuAutoDetect();
+
     String cpuPinningUnavailable();
 
     String portMirroringNotSupportedExternalNetworks();
@@ -2118,6 +2122,8 @@ public interface UIConstants extends Constants {
     String replaceBrickWarning();
 
     String ignoreOVFUpdateFailure();
+
+    String cannotEditNotActiveLeaseDomain();
 
     String selectCacheDevicePath();
 

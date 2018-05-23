@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +12,9 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cpu;
 import org.ovirt.engine.api.model.DataCenter;
 import org.ovirt.engine.api.model.Version;
@@ -22,6 +27,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendDataCenterClustersResourceTest extends
         AbstractBackendCollectionResourceTest<org.ovirt.engine.api.model.Cluster, Cluster, BackendDataCenterClustersResource> {
 
@@ -32,7 +38,7 @@ public class BackendDataCenterClustersResourceTest extends
     }
 
     @Test
-    public void testAddClusterFallbackVersion() throws Exception {
+    public void testAddClusterFallbackVersion() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(QueryType.GetStoragePoolById,
                                    IdQueryParameters.class,
@@ -69,7 +75,7 @@ public class BackendDataCenterClustersResourceTest extends
     }
 
     @Test
-    public void testAddClusterSpecificVersion() throws Exception {
+    public void testAddClusterSpecificVersion() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(QueryType.GetStoragePoolById,
                                    IdQueryParameters.class,
@@ -109,24 +115,20 @@ public class BackendDataCenterClustersResourceTest extends
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         org.ovirt.engine.api.model.Cluster model = new org.ovirt.engine.api.model.Cluster();
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Cluster", "add", "name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Cluster", "add", "name");
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpQueryExpectations(query, null);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetClustersByStoragePoolId,
                                      IdQueryParameters.class,
                                      new String[] { "Id" },

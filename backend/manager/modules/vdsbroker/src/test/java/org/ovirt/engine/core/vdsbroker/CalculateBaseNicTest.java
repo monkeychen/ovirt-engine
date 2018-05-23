@@ -1,7 +1,8 @@
 package org.ovirt.engine.core.vdsbroker;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -13,16 +14,16 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkInterface;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.network.InterfaceDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CalculateBaseNicTest {
 
     @Mock
@@ -35,20 +36,20 @@ public class CalculateBaseNicTest {
     private VdsNetworkInterface baseNic = createNic("baseNic");
     private VdsNetworkInterface vlanNic = createVlanNic(baseNic);
 
-    @Test(expected = NullPointerException.class)
-    public void testGetBaseNicWithNullNic() throws Exception {
-        calculateBaseNic.getBaseNic(null);
+    @Test
+    public void testGetBaseNicWithNullNic() {
+        assertThrows(NullPointerException.class, () -> calculateBaseNic.getBaseNic(null));
     }
 
     @Test
-    public void testGetBaseNicBaseNicIsSimplyReturned() throws Exception {
+    public void testGetBaseNicBaseNicIsSimplyReturned() {
         verifyNoMoreInteractions(interfaceDao);
         assertThat(calculateBaseNic.getBaseNic(baseNic, null), is(baseNic));
 
     }
 
     @Test
-    public void testGetBaseNicVerifyDelegation() throws Exception {
+    public void testGetBaseNicVerifyDelegation() {
         CalculateBaseNic spy = spy(calculateBaseNic);
 
         spy.getBaseNic(baseNic);
@@ -56,7 +57,7 @@ public class CalculateBaseNicTest {
     }
 
     @Test
-    public void testGetBaseNicWhenCacheIsNotProvided() throws Exception {
+    public void testGetBaseNicWhenCacheIsNotProvided() {
         when(interfaceDao.get(baseNic.getVdsId(), baseNic.getName())).thenReturn(baseNic);
         assertThat(calculateBaseNic.getBaseNic(vlanNic, null), is(baseNic));
         verify(interfaceDao).get(eq(baseNic.getVdsId()), eq(baseNic.getName()));
@@ -64,7 +65,7 @@ public class CalculateBaseNicTest {
     }
 
     @Test
-    public void testGetBaseNicUsingCacheNotHavingRequiredRecord() throws Exception {
+    public void testGetBaseNicUsingCacheNotHavingRequiredRecord() {
         when(interfaceDao.get(baseNic.getVdsId(), baseNic.getName())).thenReturn(baseNic);
         Map<String, VdsNetworkInterface> cachedExistingInterfaces =
             Collections.singletonMap("unrelatedNicName", new VdsNetworkInterface());
@@ -74,7 +75,7 @@ public class CalculateBaseNicTest {
     }
 
     @Test
-    public void testGetBaseNicUsingCache() throws Exception {
+    public void testGetBaseNicUsingCache() {
         Map<String, VdsNetworkInterface> cachedExistingInterfaces =
             Collections.singletonMap(baseNic.getName(), baseNic);
         assertThat(calculateBaseNic.getBaseNic(vlanNic, cachedExistingInterfaces), is(baseNic));

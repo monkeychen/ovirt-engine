@@ -1,7 +1,8 @@
 package org.ovirt.engine.core.bll.validator;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
@@ -14,15 +15,15 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.validator.network.NetworkExclusivenessValidator;
 import org.ovirt.engine.core.bll.validator.network.NetworkType;
@@ -34,7 +35,8 @@ import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.utils.ReplacementUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NetworkAttachmentsValidatorTest {
 
     private Network vlanNetwork;
@@ -45,8 +47,6 @@ public class NetworkAttachmentsValidatorTest {
 
     private VdsNetworkInterface nic;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
     private BusinessEntityMap<Network> networkMap;
 
     @Mock
@@ -55,8 +55,8 @@ public class NetworkAttachmentsValidatorTest {
     @Captor
     private ArgumentCaptor<List<NetworkType>> networkTypeCaptor;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         nic = new VdsNetworkInterface();
         nic.setId(Guid.newGuid());
         nic.setName("nicName");
@@ -133,24 +133,24 @@ public class NetworkAttachmentsValidatorTest {
         return result;
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testValidateNetworkExclusiveOnNicsAllAttachmentsMustHaveNicNameSet() throws Exception {
+    @Test
+    public void testValidateNetworkExclusiveOnNicsAllAttachmentsMustHaveNicNameSet() {
         NetworkAttachment networkAttachment = new NetworkAttachment();
         networkAttachment.setNetworkId(vmNetwork1.getId());
         List<NetworkAttachment> attachmentsToConfigure = Collections.singletonList(networkAttachment);
 
-        new NetworkAttachmentsValidator(attachmentsToConfigure,
-                networkMap,
-                networkExclusivenessValidator).validateNetworkExclusiveOnNics();
+        assertThrows(IllegalArgumentException.class,
+                () -> new NetworkAttachmentsValidator(attachmentsToConfigure, networkMap, networkExclusivenessValidator)
+                        .validateNetworkExclusiveOnNics());
     }
 
     @Test
-    public void testValidateNetworkExclusiveOnNicsVmNetworkMustBeSoleAttachedInterface() throws Exception {
+    public void testValidateNetworkExclusiveOnNicsVmNetworkMustBeSoleAttachedInterface() {
         checkVmNetworkIsSoleAssignedInterface(false, Collections.singletonList(NetworkType.VM), vmNetwork1);
     }
 
     @Test
-    public void testValidateNetworkExclusiveOnNicsTwoVmNetworksAttachedToInterface() throws Exception {
+    public void testValidateNetworkExclusiveOnNicsTwoVmNetworksAttachedToInterface() {
         checkVmNetworkIsSoleAssignedInterface(
                 false,
                 Arrays.asList(NetworkType.VM, NetworkType.VM),
@@ -158,7 +158,7 @@ public class NetworkAttachmentsValidatorTest {
     }
 
     @Test
-    public void testValidateNetworkExclusiveOnNicsVmAndNonVmAttachedToInterface() throws Exception {
+    public void testValidateNetworkExclusiveOnNicsVmAndNonVmAttachedToInterface() {
         checkVmNetworkIsSoleAssignedInterface(
                 false,
                 Arrays.asList(NetworkType.VM, NetworkType.NON_VM),
@@ -166,7 +166,7 @@ public class NetworkAttachmentsValidatorTest {
     }
 
     @Test
-    public void testValidateNetworkExclusiveOnNicsVmAndVlanAttachedToInterface() throws Exception {
+    public void testValidateNetworkExclusiveOnNicsVmAndVlanAttachedToInterface() {
         checkVmNetworkIsSoleAssignedInterface(
                 true,
                 Arrays.asList(NetworkType.VM, NetworkType.VLAN),
@@ -174,7 +174,7 @@ public class NetworkAttachmentsValidatorTest {
     }
 
     @Test
-    public void testValidateNetworkExclusiveOnNicAtMostOneNonVmNetwork() throws Exception {
+    public void testValidateNetworkExclusiveOnNicAtMostOneNonVmNetwork() {
         checkVmNetworkIsSoleAssignedInterface(
                 true,
                 Arrays.asList(NetworkType.VLAN, NetworkType.NON_VM),
@@ -182,7 +182,7 @@ public class NetworkAttachmentsValidatorTest {
     }
 
     @Test
-    public void testValidateNetworkExclusiveOnNicAtMostOneNonVmNetworkViolated() throws Exception {
+    public void testValidateNetworkExclusiveOnNicAtMostOneNonVmNetworkViolated() {
         checkVmNetworkIsSoleAssignedInterface(
                 false,
                 Arrays.asList(NetworkType.NON_VM, NetworkType.NON_VM),
@@ -190,7 +190,7 @@ public class NetworkAttachmentsValidatorTest {
     }
 
     @Test
-    public void testDetermineNetworkType() throws Exception {
+    public void testDetermineNetworkType() {
         NetworkAttachmentsValidator validator = new NetworkAttachmentsValidator(null, null,
                 networkExclusivenessValidator);
         assertThat(validator.determineNetworkType(vlanNetwork), is(NetworkType.VLAN));

@@ -1,11 +1,11 @@
 package org.ovirt.engine.core.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,7 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.ActionGroup;
 import org.ovirt.engine.core.common.businessentities.OriginType;
 import org.ovirt.engine.core.common.businessentities.QuotaEnforcementTypeEnum;
@@ -23,34 +26,36 @@ import org.ovirt.engine.core.common.businessentities.VMStatus;
 import org.ovirt.engine.core.common.businessentities.VmDynamic;
 import org.ovirt.engine.core.common.businessentities.VmStatic;
 import org.ovirt.engine.core.common.businessentities.VmStatistics;
-import org.ovirt.engine.core.common.businessentities.VmTemplate;
 import org.ovirt.engine.core.compat.Guid;
 
-public class VmDaoTest extends BaseDaoTestCase {
+public class VmDaoTest extends BaseDaoTestCase<VmDao> {
     private static final int VM_COUNT = 8;
-    private VmDao dao;
     private VM existingVm;
-    private VmTemplate existingTemplate;
 
+    @Inject
+    private VmStaticDao vmStaticDao;
+    @Inject
+    private VmDynamicDao vmDynamicDao;
+    @Inject
+    private VmStatisticsDao vmStatisticsDao;
+
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        dao = dbFacade.getVmDao();
         existingVm = dao.get(FixturesTool.VM_RHEL5_POOL_57);
         existingVm.setStatus(VMStatus.Up);
-        VmTemplate vmtemplate = dbFacade.getVmTemplateDao().get(FixturesTool.VM_TEMPLATE_RHEL5);
-        existingTemplate = dbFacade.getVmTemplateDao().get(FixturesTool.VM_TEMPLATE_RHEL5);
 
         VM newVm = new VM();
         newVm.setId(Guid.newGuid());
         newVm.setClusterId(FixturesTool.CLUSTER_RHEL6_ISCSI);
-        newVm.setVmtGuid(vmtemplate.getId());
+        newVm.setVmtGuid(FixturesTool.VM_TEMPLATE_RHEL5);
 
         VmStatic newVmStatic = new VmStatic();
         newVmStatic.setName("New Virtual Machine");
         newVmStatic.setClusterId(FixturesTool.CLUSTER_RHEL6_ISCSI);
-        newVmStatic.setVmtGuid(vmtemplate.getId());
+        newVmStatic.setVmtGuid(FixturesTool.VM_TEMPLATE_RHEL5);
     }
 
     /**
@@ -130,7 +135,7 @@ public class VmDaoTest extends BaseDaoTestCase {
      */
     private void assertGetResult(VM result) {
         assertNotNull(result);
-        assertEquals("Vm db generation wasn't loaded as expected", 1, result.getDbGeneration());
+        assertEquals(1, result.getDbGeneration(), "Vm db generation wasn't loaded as expected");
         assertEquals(result, existingVm);
     }
 
@@ -142,7 +147,7 @@ public class VmDaoTest extends BaseDaoTestCase {
         Map<Boolean, List<VM>> result = dao.getForDisk(FixturesTool.IMAGE_GROUP_ID, true);
 
         assertNotNull(result);
-        assertEquals("wrong number of VMs with unplugged image", 1, result.get(Boolean.TRUE).size());
+        assertEquals(1, result.get(Boolean.TRUE).size(), "wrong number of VMs with unplugged image");
     }
 
     /**
@@ -153,7 +158,7 @@ public class VmDaoTest extends BaseDaoTestCase {
         List<VM> result = dao.getVmsListForDisk(FixturesTool.IMAGE_GROUP_ID, false);
 
         assertNotNull(result);
-        assertEquals("wrong number of VMs", 1, result.size());
+        assertEquals(1, result.size(), "wrong number of VMs");
     }
 
     /**
@@ -192,10 +197,10 @@ public class VmDaoTest extends BaseDaoTestCase {
     @Test
     public void testGetVmsByIds() {
         List<VM> result = dao.getVmsByIds(Arrays.asList(FixturesTool.VM_RHEL5_POOL_60, FixturesTool.VM_RHEL5_POOL_59));
-        assertEquals("loaded templates list isn't in the expected size", 2, result.size());
+        assertEquals(2, result.size(), "loaded templates list isn't in the expected size");
         Collection<Guid> recieved = result.stream().map(VM::getId).collect(Collectors.toList());
-        assertTrue("the received list didn't contain an expected VM", recieved.contains(FixturesTool.VM_RHEL5_POOL_60));
-        assertTrue("the received list didn't contain an expected VM", recieved.contains(FixturesTool.VM_RHEL5_POOL_59));
+        assertTrue(recieved.contains(FixturesTool.VM_RHEL5_POOL_60), "the received list didn't contain an expected VM");
+        assertTrue(recieved.contains(FixturesTool.VM_RHEL5_POOL_59), "the received list didn't contain an expected VM");
     }
 
     /**
@@ -217,7 +222,7 @@ public class VmDaoTest extends BaseDaoTestCase {
     public void testGetVmsByInstanceTypeId() {
         List<VM> result = dao.getVmsListByInstanceType(FixturesTool.INSTANCE_TYPE);
         assertEquals(1, result.size());
-        assertEquals(result.iterator().next().getId(), FixturesTool.VM_RHEL5_POOL_50);
+        assertEquals(FixturesTool.VM_RHEL5_POOL_50, result.iterator().next().getId());
     }
 
     /**
@@ -268,12 +273,11 @@ public class VmDaoTest extends BaseDaoTestCase {
         assertNotNull(result);
         assertFalse(result.isEmpty());
         for (VM vm : result) {
-            assertEquals("Wrong quota id", FixturesTool.QUOTA_GENERAL, vm.getQuotaId());
-            assertEquals("Wrong quota name", "Quota General", vm.getQuotaName());
-            assertFalse("Quota shouldn't be default", vm.isQuotaDefault());
-            assertEquals("Wrong quota enforcement type",
-                    QuotaEnforcementTypeEnum.DISABLED,
-                    vm.getQuotaEnforcementType());
+            assertEquals(FixturesTool.QUOTA_GENERAL, vm.getQuotaId(), "Wrong quota id");
+            assertEquals("Quota General", vm.getQuotaName(), "Wrong quota name");
+            assertFalse(vm.isQuotaDefault(), "Quota shouldn't be default");
+            assertEquals(QuotaEnforcementTypeEnum.DISABLED, vm.getQuotaEnforcementType(),
+                    "Wrong quota enforcement type");
         }
     }
 
@@ -372,13 +376,12 @@ public class VmDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testGetAllWithTemplate() {
-        List<VM> result = dao
-                .getAllWithTemplate(existingTemplate.getId());
+        List<VM> result = dao.getAllWithTemplate(FixturesTool.VM_TEMPLATE_RHEL5);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
         for (VM vm : result) {
-            assertEquals(existingTemplate.getId(), vm.getVmtGuid());
+            assertEquals(FixturesTool.VM_TEMPLATE_RHEL5, vm.getVmtGuid());
         }
     }
 
@@ -446,7 +449,7 @@ public class VmDaoTest extends BaseDaoTestCase {
         assertFalse(result.isEmpty());
         assertEquals(VM_COUNT, result.size());
         for (VM vm : result) {
-            assertEquals("Vm db generation wasn't loaded as expected", 1, vm.getDbGeneration());
+            assertEquals(1, vm.getDbGeneration(), "Vm db generation wasn't loaded as expected");
         }
     }
 
@@ -455,7 +458,7 @@ public class VmDaoTest extends BaseDaoTestCase {
         List<VM> result = dao.getAllForVmPool(FixturesTool.STORAGE_POOL_FEDORA);
 
         assertNotNull(result);
-        assertEquals("wrong number of VMs attached to pool", 2, result.size());
+        assertEquals(2, result.size(), "wrong number of VMs attached to pool");
     }
 
     @Test
@@ -466,12 +469,12 @@ public class VmDaoTest extends BaseDaoTestCase {
         // Switch is_initialized
         dao.saveIsInitialized(vmId, !origInitialized);
         VM updatedVm = dao.get(vmId);
-        assertEquals("VM's is_initiazlied was not updated", !origInitialized, updatedVm.isInitialized());
+        assertEquals(!origInitialized, updatedVm.isInitialized(), "VM's is_initiazlied was not updated");
 
         // Switch it back, just to make sure
         dao.saveIsInitialized(vmId, origInitialized);
         updatedVm = dao.get(vmId);
-        assertEquals("VM's is_initiazlied was not updated", origInitialized, updatedVm.isInitialized());
+        assertEquals(origInitialized, updatedVm.isInitialized(), "VM's is_initiazlied was not updated");
     }
 
     @Test
@@ -479,7 +482,7 @@ public class VmDaoTest extends BaseDaoTestCase {
         List<VM> result = dao.getAllFailedAutoStartVms();
 
         assertNotNull(result);
-        assertEquals("wrong number of failed HA VMs", 1, result.size());
+        assertEquals(1, result.size(), "wrong number of failed HA VMs");
     }
 
     @Test
@@ -578,15 +581,15 @@ public class VmDaoTest extends BaseDaoTestCase {
         vmStatic.setName("HostedEngine");
         vmStatic.setOrigin(OriginType.HOSTED_ENGINE);
         vmStatic.setCpuProfileId(FixturesTool.CPU_PROFILE_1);
-        getDbFacade().getVmStaticDao().save(vmStatic);
+        vmStaticDao.save(vmStatic);
 
         VmDynamic vmDynamic = new VmDynamic();
         vmDynamic.setId(id);
-        getDbFacade().getVmDynamicDao().save(vmDynamic);
+        vmDynamicDao.save(vmDynamic);
 
         VmStatistics vmStatistics = new VmStatistics();
         vmStatistics.setId(id);
-        getDbFacade().getVmStatisticsDao().save(vmStatistics);
+        vmStatisticsDao.save(vmStatistics);
     }
 
     @Test

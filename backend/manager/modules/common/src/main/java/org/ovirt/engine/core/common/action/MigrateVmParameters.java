@@ -11,28 +11,30 @@ import org.ovirt.engine.core.compat.Guid;
  * user requests to perform migration even if the VM is non migratable
  */
 public class MigrateVmParameters extends VmOperationParameterBase {
+
     private static final long serialVersionUID = -7523728706659584319L;
-    protected boolean forceMigrationForNonMigratableVm;
-    ArrayList<Guid> initialHosts;
-    // time that took the actual migration (from Engine point of view)
-    protected Date startTime;
-    // Total time for migration (including retries)
-    protected Date totalMigrationTime;
+
+    private boolean forceMigrationForNonMigratableVm;
+    private ArrayList<Guid> initialHosts;
+    /** Start time of the actual migration (from Engine point of view) */
+    private Date startTime;
+    /** Start time of the whole migration process (including retries) */
+    private Date totalMigrationTime;
     private Guid targetClusterId;
     private String reason;
 
     public MigrateVmParameters() {
     }
 
-    public MigrateVmParameters(boolean forceMigrationForNonMigratableVM, Guid vmId) {
-        this(forceMigrationForNonMigratableVM, vmId, null);
+    public MigrateVmParameters(boolean forceMigrationForNonMigratableVm, Guid vmId) {
+        this(forceMigrationForNonMigratableVm, vmId, null);
     }
 
-    public MigrateVmParameters(boolean forceMigrationForNonMigratableVM, Guid vmId, Guid targetClusterId) {
+    public MigrateVmParameters(boolean forceMigrationForNonMigratableVm, Guid vmId, Guid targetClusterId) {
         super(vmId);
 
-        this.targetClusterId = targetClusterId;
-        setForceMigrationForNonMigratableVm(forceMigrationForNonMigratableVM);
+        setForceMigrationForNonMigratableVm(forceMigrationForNonMigratableVm);
+        setTargetClusterId(targetClusterId);
     }
 
     @Override
@@ -83,14 +85,23 @@ public class MigrateVmParameters extends VmOperationParameterBase {
     }
 
     public void setStartTime(Date startTime) {
-        this.startTime = startTime;
-        if (this.totalMigrationTime == null) {
-            this.totalMigrationTime = this.startTime;
+        if (this.startTime == null) {
+            this.startTime = startTime;
         }
     }
 
+    public void resetStartTime() {
+        startTime = null;
+    }
+
     public Date getTotalMigrationTime() {
-        return startTime;
+        return totalMigrationTime;
+    }
+
+    public void setTotalMigrationTime(Date totalMigrationTime) {
+        if (this.totalMigrationTime == null) {
+            this.totalMigrationTime = totalMigrationTime;
+        }
     }
 
     public Guid getTargetClusterId() {
@@ -108,4 +119,5 @@ public class MigrateVmParameters extends VmOperationParameterBase {
     public void setReason(String reason) {
         this.reason = reason;
     }
+
 }

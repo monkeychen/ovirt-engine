@@ -185,65 +185,8 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
 
         // set the source domain and check that it is ImportExport type and active
         setSourceDomainId(getParameters().getSourceDomainId());
-        StorageDomainValidator sourceDomainValidator = new StorageDomainValidator(getSourceDomain());
-        if (!validate(sourceDomainValidator.isDomainExistAndActive())) {
+        if (!validateSourceStorageDomain()) {
             return false;
-        }
-
-        if ((getSourceDomain().getStorageDomainType() != StorageDomainType.ImportExport)
-                && !getParameters().isImagesExistOnTargetStorageDomain()) {
-            return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
-        }
-
-        if (!getParameters().isImagesExistOnTargetStorageDomain()) {
-            // Set the template images from the Export domain and change each image id storage is to the import domain
-            GetAllFromExportDomainQueryParameters tempVar = new GetAllFromExportDomainQueryParameters(getParameters()
-                    .getStoragePoolId(), getParameters().getSourceDomainId());
-            QueryReturnValue qretVal = runInternalQuery(
-                    QueryType.GetTemplatesFromExportDomain, tempVar);
-            if (!qretVal.getSucceeded()) {
-                return false;
-            }
-
-            Map<VmTemplate, List<DiskImage>> templates = qretVal.getReturnValue();
-            ArrayList<DiskImage> images = new ArrayList<>();
-            for (Map.Entry<VmTemplate, List<DiskImage>> entry : templates.entrySet()) {
-                if (entry.getKey().getId().equals(getVmTemplate().getId())) {
-                    images = new ArrayList<>(entry.getValue());
-                    getVmTemplate().setInterfaces(entry.getKey().getInterfaces());
-                    getVmTemplate().setOvfVersion(entry.getKey().getOvfVersion());
-                    break;
-                }
-            }
-            getParameters().setImages(images);
-            getVmTemplate().setImages(images);
-            ensureDomainMap(getImages(), getParameters().getDestDomainId());
-            HashMap<Guid, DiskImage> imageMap = new HashMap<>();
-            for (DiskImage image : images) {
-                if (Guid.Empty.equals(image.getVmSnapshotId())) {
-                    return failValidation(EngineMessage.ACTION_TYPE_FAILED_CORRUPTED_VM_SNAPSHOT_ID);
-                }
-
-                StorageDomain storageDomain =
-                        getStorageDomain(imageToDestinationDomainMap.get(image.getId()));
-                StorageDomainValidator validator = new StorageDomainValidator(storageDomain);
-                if (!validate(validator.isDomainExistAndActive()) ||
-                        !validate(validator.domainIsValidDestination())) {
-                    return false;
-                }
-
-                StorageDomainStatic targetDomain = storageDomain.getStorageStaticData();
-                changeRawToCowIfSparseOnBlockDevice(targetDomain.getStorageType(), image);
-                if (!ImagesHandler.checkImageConfiguration(targetDomain, image,
-                        getReturnValue().getValidationMessages())) {
-                    return false;
-                }
-
-                image.setStoragePoolId(getParameters().getStoragePoolId());
-                image.setStorageIds(new ArrayList<>(Collections.singletonList(storageDomain.getId())));
-                imageMap.put(image.getImageId(), image);
-            }
-            getVmTemplate().setDiskImageMap(imageMap);
         }
 
         sourceTemplateId = getVmTemplateId();
@@ -300,6 +243,70 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
         List<EngineMessage> msgs = openStackMetadataAdapter.validate(getVmTemplate().getVmInit());
         if (!CollectionUtils.isEmpty(msgs)) {
             return failValidation(msgs);
+        }
+
+        return true;
+    }
+
+    protected boolean validateSourceStorageDomain() {
+        if (!validate(new StorageDomainValidator(getSourceDomain()).isDomainExistAndActive())) {
+            return false;
+        }
+
+        if ((getSourceDomain().getStorageDomainType() != StorageDomainType.ImportExport)
+                && !getParameters().isImagesExistOnTargetStorageDomain()) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+        }
+
+        if (!getParameters().isImagesExistOnTargetStorageDomain()) {
+            // Set the template images from the Export domain and change each image id storage is to the import domain
+            GetAllFromExportDomainQueryParameters tempVar = new GetAllFromExportDomainQueryParameters(getParameters()
+                    .getStoragePoolId(), getParameters().getSourceDomainId());
+            QueryReturnValue qretVal = runInternalQuery(
+                    QueryType.GetTemplatesFromExportDomain, tempVar);
+            if (!qretVal.getSucceeded()) {
+                return false;
+            }
+
+            Map<VmTemplate, List<DiskImage>> templates = qretVal.getReturnValue();
+            ArrayList<DiskImage> images = new ArrayList<>();
+            for (Map.Entry<VmTemplate, List<DiskImage>> entry : templates.entrySet()) {
+                if (entry.getKey().getId().equals(getVmTemplate().getId())) {
+                    images = new ArrayList<>(entry.getValue());
+                    getVmTemplate().setInterfaces(entry.getKey().getInterfaces());
+                    getVmTemplate().setOvfVersion(entry.getKey().getOvfVersion());
+                    break;
+                }
+            }
+            getParameters().setImages(images);
+            getVmTemplate().setImages(images);
+            ensureDomainMap(getImages(), getParameters().getDestDomainId());
+            Map<Guid, DiskImage> imageMap = new HashMap<>();
+            for (DiskImage image : images) {
+                if (Guid.Empty.equals(image.getVmSnapshotId())) {
+                    return failValidation(EngineMessage.ACTION_TYPE_FAILED_CORRUPTED_VM_SNAPSHOT_ID);
+                }
+
+                StorageDomain storageDomain =
+                        getStorageDomain(imageToDestinationDomainMap.get(image.getId()));
+                StorageDomainValidator validator = new StorageDomainValidator(storageDomain);
+                if (!validate(validator.isDomainExistAndActive()) ||
+                        !validate(validator.domainIsValidDestination())) {
+                    return false;
+                }
+
+                StorageDomainStatic targetDomain = storageDomain.getStorageStaticData();
+                changeRawToCowIfSparseOnBlockDevice(targetDomain.getStorageType(), image);
+                if (!ImagesHandler.checkImageConfiguration(targetDomain, image,
+                        getReturnValue().getValidationMessages())) {
+                    return false;
+                }
+
+                image.setStoragePoolId(getParameters().getStoragePoolId());
+                image.setStorageIds(new ArrayList<>(Collections.singletonList(storageDomain.getId())));
+                imageMap.put(image.getImageId(), image);
+            }
+            getVmTemplate().setDiskImageMap(imageMap);
         }
 
         return true;
@@ -426,7 +433,7 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
     }
 
     protected void addPermissionsToDB() {
-        // Left empty to be overriden in ImportVmTemplateFromConfigurationCommand
+        // Left empty to be overridden in ImportVmTemplateFromConfigurationCommand
     }
 
     private void updateOriginalTemplateNameOnDerivedVms() {
@@ -439,8 +446,7 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
     private void checkTrustedService() {
         if (getVmTemplate().isTrustedService() && !getCluster().supportsTrustedService()) {
             auditLogDirector.log(this, AuditLogType.IMPORTEXPORT_IMPORT_TEMPLATE_FROM_TRUSTED_TO_UNTRUSTED);
-        }
-        else if (!getVmTemplate().isTrustedService() && getCluster().supportsTrustedService()) {
+        } else if (!getVmTemplate().isTrustedService() && getCluster().supportsTrustedService()) {
             auditLogDirector.log(this, AuditLogType.IMPORTEXPORT_IMPORT_TEMPLATE_FROM_UNTRUSTED_TO_TRUSTED);
         }
     }
@@ -451,37 +457,10 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
             for (DiskImage disk : disks) {
                 Guid originalDiskId = newDiskIdForDisk.get(disk.getId()).getId();
                 Guid destinationDomain = imageToDestinationDomainMap.get(originalDiskId);
-                MoveOrCopyImageGroupParameters p =
-                        new MoveOrCopyImageGroupParameters(containerID,
-                                originalDiskId,
-                                newDiskIdForDisk.get(disk.getId()).getImageId(),
-                                disk.getId(),
-                                disk.getImageId(),
-                                destinationDomain,
-                                ImageOperation.Copy);
 
-                p.setParentCommand(getActionType());
-                p.setUseCopyCollapse(true);
-                p.setVolumeType(disk.getVolumeType());
-                p.setVolumeFormat(disk.getVolumeFormat());
-                p.setCopyVolumeType(CopyVolumeType.SharedVol);
-                p.setSourceDomainId(getParameters().getSourceDomainId());
-                p.setForceOverride(getParameters().getForceOverride());
-                p.setImportEntity(true);
-                p.setEntityInfo(new EntityInfo(VdcObjectType.VmTemplate, containerID));
-                p.setRevertDbOperationScope(ImageDbOperationScope.IMAGE);
-                for (DiskImage diskImage : getParameters().getVmTemplate().getDiskList()) {
-                    if (originalDiskId.equals(diskImage.getId())) {
-                        p.setQuotaId(diskImage.getQuotaId());
-                        p.setDiskProfileId(diskImage.getDiskProfileId());
-                        break;
-                    }
-                }
-
-                p.setParentParameters(getParameters());
                 ActionReturnValue vdcRetValue = runInternalActionWithTasksContext(
                         ActionType.CopyImageGroup,
-                        p);
+                        buildMoveOrCopyImageGroupParameters(containerID, disk, originalDiskId, destinationDomain));
 
                 if (!vdcRetValue.getSucceeded()) {
                     throw vdcRetValue.getFault() != null ? new EngineException(vdcRetValue.getFault().getError())
@@ -492,6 +471,41 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
             }
             return null;
         });
+    }
+
+    private MoveOrCopyImageGroupParameters buildMoveOrCopyImageGroupParameters(final Guid containerID,
+            DiskImage disk,
+            Guid originalDiskId,
+            Guid destinationDomain) {
+        MoveOrCopyImageGroupParameters p =
+                new MoveOrCopyImageGroupParameters(containerID,
+                        originalDiskId,
+                        newDiskIdForDisk.get(disk.getId()).getImageId(),
+                        disk.getId(),
+                        disk.getImageId(),
+                        destinationDomain,
+                        ImageOperation.Copy);
+
+        p.setParentCommand(getActionType());
+        p.setUseCopyCollapse(true);
+        p.setVolumeType(disk.getVolumeType());
+        p.setVolumeFormat(disk.getVolumeFormat());
+        p.setCopyVolumeType(CopyVolumeType.SharedVol);
+        p.setSourceDomainId(getParameters().getSourceDomainId());
+        p.setForceOverride(getParameters().getForceOverride());
+        p.setImportEntity(true);
+        p.setEntityInfo(new EntityInfo(VdcObjectType.VmTemplate, containerID));
+        p.setRevertDbOperationScope(ImageDbOperationScope.IMAGE);
+        for (DiskImage diskImage : getParameters().getVmTemplate().getDiskList()) {
+            if (originalDiskId.equals(diskImage.getId())) {
+                p.setQuotaId(diskImage.getQuotaId());
+                p.setDiskProfileId(diskImage.getDiskProfileId());
+                break;
+            }
+        }
+
+        p.setParentParameters(getParameters());
+        return p;
     }
 
     protected void addVmTemplateToDb() {
@@ -507,6 +521,10 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
         vmHandler.autoSelectResumeBehavior(getVmTemplate(), getCluster());
         vmTemplateDao.save(getVmTemplate());
         getCompensationContext().snapshotNewEntity(getVmTemplate());
+        addDisksToDb();
+    }
+
+    protected void addDisksToDb() {
         int count = 1;
         for (DiskImage image : getImages()) {
             image.setActive(true);
@@ -579,10 +597,8 @@ public class ImportVmTemplateCommand<T extends ImportVmTemplateParameters> exten
     }
 
     protected void removeNetwork() {
-        List<VmNic> list = vmNicDao.getAllForTemplate(getVmTemplateId());
-        for (VmNic iface : list) {
-            vmNicDao.remove(iface.getId());
-        }
+        List<VmNic> nics = vmNicDao.getAllForTemplate(getVmTemplateId());
+        nics.stream().map(VmNic::getId).forEach(vmNicDao::remove);
     }
 
     @Override

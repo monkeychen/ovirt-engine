@@ -16,7 +16,12 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Watchdog;
 import org.ovirt.engine.api.model.WatchdogAction;
 import org.ovirt.engine.api.model.WatchdogModel;
@@ -29,6 +34,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTemplateWatchdogResourceTest
         extends AbstractBackendSubResourceTest<Watchdog, VmWatchdog, BackendTemplateWatchdogResource> {
 
@@ -40,7 +46,7 @@ public class BackendTemplateWatchdogResourceTest
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
         Watchdog watchdog = resource.get();
@@ -48,7 +54,7 @@ public class BackendTemplateWatchdogResourceTest
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpEntityQueryExpectations(2);
         setUriInfo(
             setUpActionExpectations(
@@ -65,7 +71,7 @@ public class BackendTemplateWatchdogResourceTest
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpEntityQueryExpectations(1);
         setUriInfo(
             setUpActionExpectations(
@@ -80,7 +86,7 @@ public class BackendTemplateWatchdogResourceTest
         verifyRemove(resource.remove());
     }
 
-    private void setUpEntityQueryExpectations(int cnt) throws Exception {
+    private void setUpEntityQueryExpectations(int cnt) {
         for (int i = 0; i < cnt; i++) {
             setUpGetEntityExpectations(
                 QueryType.GetWatchdog,

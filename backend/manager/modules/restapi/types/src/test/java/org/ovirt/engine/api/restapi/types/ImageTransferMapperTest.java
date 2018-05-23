@@ -1,6 +1,10 @@
 package org.ovirt.engine.api.restapi.types;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.ovirt.engine.api.model.ImageTransfer;
 import org.ovirt.engine.api.model.ImageTransferPhase;
 
@@ -22,15 +26,11 @@ public class ImageTransferMapperTest extends AbstractInvertibleMappingTest<Image
         assertEquals(model.getImage().getId(), transform.getImage().getId());
     }
 
-    @Test
-    public void testPhasesCorrelation() {
-        for (org.ovirt.engine.core.common.businessentities.storage.ImageTransferPhase phase :
-                org.ovirt.engine.core.common.businessentities.storage.ImageTransferPhase.values()) {
-            try {
-                ImageTransferPhase.valueOf(phase.name());
-            } catch (Exception ex) {
-                fail();
-            }
-        }
+    @ParameterizedTest
+    @EnumSource(value = org.ovirt.engine.core.common.businessentities.storage.ImageTransferPhase.class)
+    public void testPhasesCorrelation(org.ovirt.engine.core.common.businessentities.storage.ImageTransferPhase phase) {
+
+        // IllegalArgumentException will be thrown if the phase can't be parsed
+        ImageTransferPhase.valueOf(phase.name());
     }
 }

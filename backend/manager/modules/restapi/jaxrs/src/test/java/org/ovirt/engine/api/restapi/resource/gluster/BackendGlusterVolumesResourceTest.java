@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource.gluster;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,9 +12,10 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cluster;
-import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.GlusterBrick;
 import org.ovirt.engine.api.model.GlusterBricks;
 import org.ovirt.engine.api.model.GlusterVolume;
@@ -27,6 +31,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendGlusterVolumesResourceTest extends AbstractBackendCollectionResourceTest<GlusterVolume, GlusterVolumeEntity, BackendGlusterVolumesResource> {
     private static final Guid clusterId = GUIDS[0];
     private static final Guid volumeId = GUIDS[1];
@@ -85,12 +90,7 @@ public class BackendGlusterVolumesResourceTest extends AbstractBackendCollection
         setUpQueryExpectations(defaultQuery, t);
 
         collection.setParent(parentMock);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     /**
@@ -105,14 +105,7 @@ public class BackendGlusterVolumesResourceTest extends AbstractBackendCollection
         setUpQueryExpectations(defaultQuery, t);
 
         collection.setParent(parentMock);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        } finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     /**
@@ -125,13 +118,7 @@ public class BackendGlusterVolumesResourceTest extends AbstractBackendCollection
         setUpQueryExpectations(defaultQuery, FAILURE);
 
         collection.setParent(parentMock);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Override

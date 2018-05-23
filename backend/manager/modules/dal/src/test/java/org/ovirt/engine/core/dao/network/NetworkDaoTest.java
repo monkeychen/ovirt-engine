@@ -1,16 +1,19 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.DnsResolverConfiguration;
 import org.ovirt.engine.core.common.businessentities.network.NameServer;
 import org.ovirt.engine.core.common.businessentities.network.Network;
@@ -19,10 +22,9 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class NetworkDaoTest extends BaseDaoTestCase {
+public class NetworkDaoTest extends BaseDaoTestCase<NetworkDao> {
     private static final Guid MANAGEMENT_NETWORK_ID = new Guid("58d5c1c6-cb15-4832-b2a4-1234567890ab");
 
-    private NetworkDao dao;
     private Network newNet;
     private static final String EXISTING_NETWORK_NAME1 = "engine";
     private static final String EXISTING_NETWORK_NAME2 = "engine3";
@@ -30,11 +32,17 @@ public class NetworkDaoTest extends BaseDaoTestCase {
     private static final int NUM_OF_MANAGEMENT_NETWORKS = 1;
     private static final String NETWORK_LABEL = "lbl1";
 
+    @Inject
+    private NetworkDao dao;
+    @Inject
+    private NetworkClusterDao networkClusterDao;
+    @Inject
+    private DnsResolverConfigurationDao dnsResolverConfigurationDao;
+
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        dao = dbFacade.getNetworkDao();
 
         newNet = new Network();
         newNet.setName("newnet1");
@@ -351,9 +359,10 @@ public class NetworkDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testSave() {
-        List<NetworkCluster> clustersFromDB = dbFacade.getNetworkClusterDao().getAllForCluster(FixturesTool.CLUSTER);
+        List<NetworkCluster> clustersFromDB = networkClusterDao.getAllForCluster(FixturesTool.CLUSTER);
         DnsResolverConfiguration dnsResolverConfiguration =
-                dbFacade.getDnsResolverConfigurationDao().get(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION);
+                dnsResolverConfigurationDao.get(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION);
+        dnsResolverConfiguration.setId(null);
 
         NetworkCluster clusterFromDB = clustersFromDB.get(0);
         assertNotNull(clusterFromDB);
@@ -389,16 +398,28 @@ public class NetworkDaoTest extends BaseDaoTestCase {
      */
     @Test
     public void testRemove() {
-        DnsResolverConfigurationDao dnsResolverConfigurationDao = dbFacade.getDnsResolverConfigurationDao();
-
         Network result = dao.getByNameAndDataCenter(EXISTING_NETWORK_NAME2, FixturesTool.DATA_CENTER);
 
         assertNotNull(result);
-        assertEquals(result.getDnsResolverConfiguration().getId(), FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION_TO_REMOVE);
+        assertEquals(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION_TO_REMOVE,
+                result.getDnsResolverConfiguration().getId());
 
         dao.remove(result.getId());
 
         assertNull(dao.getByNameAndDataCenter(EXISTING_NETWORK_NAME2, FixturesTool.DATA_CENTER));
         assertNull(dnsResolverConfigurationDao.get(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION_TO_REMOVE));
+    }
+
+    @Test
+    public void testGetAllExternalNetworksLinkedToPhysicalNetworkNonEmpty() {
+        List<Network> linkedNetworks = dao.getAllExternalNetworksLinkedToPhysicalNetwork(FixturesTool.NETWORK_ENGINE_2);
+        assertFalse(linkedNetworks.isEmpty());
+
+    }
+
+    @Test
+    public void testGetAllExternalNetworksLinkedToPhysicalNetworkEmpty() {
+        List<Network> linkedNetworks = dao.getAllExternalNetworksLinkedToPhysicalNetwork(FixturesTool.NETWORK_ENGINE);
+        assertTrue(linkedNetworks.isEmpty());
     }
 }

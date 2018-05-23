@@ -70,7 +70,6 @@ import org.ovirt.engine.core.common.utils.SimpleDependencyInjector;
 import org.ovirt.engine.core.common.utils.customprop.VmPropertiesUtils;
 import org.ovirt.engine.core.compat.DateTime;
 import org.ovirt.engine.core.dal.dbbroker.DbConnectionUtil;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dal.dbbroker.generic.DBConfigUtils;
 import org.ovirt.engine.core.dal.job.ExecutionMessageDirector;
 import org.ovirt.engine.core.dal.utils.CacheManager;
@@ -80,7 +79,6 @@ import org.ovirt.engine.core.dao.VdsDao;
 import org.ovirt.engine.core.dao.VdsDynamicDao;
 import org.ovirt.engine.core.dao.VmIconDao;
 import org.ovirt.engine.core.dao.dwh.OsInfoDao;
-import org.ovirt.engine.core.di.Injector;
 import org.ovirt.engine.core.searchbackend.BaseConditionFieldAutoCompleter;
 import org.ovirt.engine.core.searchbackend.OsValueAutoCompleter;
 import org.ovirt.engine.core.utils.CorrelationIdTracker;
@@ -118,8 +116,6 @@ public class Backend implements BackendInternal, BackendCommandObjectsHandler {
 
     @Inject
     private ServiceLoader serviceLoader;
-    @Inject
-    private DbFacade dbFacade;
     @Inject
     @Any
     private Instance<SchedulerUtil> taskSchedulers;
@@ -162,9 +158,8 @@ public class Backend implements BackendInternal, BackendCommandObjectsHandler {
     @Inject
     private CommandCompensator compensator;
 
-    public static BackendInternal getInstance() {
-        return Injector.get(BackendInternal.class);
-    }
+    @Inject
+    private DBConfigUtils dbConfigUtils;
 
     private void initHandlers() {
         BaseConditionFieldAutoCompleter.tagsHandler = tagsDirector;
@@ -172,17 +167,6 @@ public class Backend implements BackendInternal, BackendCommandObjectsHandler {
         serviceLoader.load(VdsHandler.class);
         serviceLoader.load(VmTemplateHandler.class);
         log.info("Completed initializing handlers");
-    }
-
-    /**
-     * TODO remove this after moving all places to use CDI.
-     * kept for backward compatibility.
-     */
-    @Deprecated
-    @Override
-    @ExcludeClassInterceptors
-    public VDSBrokerFrontend getResourceManager() {
-        return resourceManger;
     }
 
     /**
@@ -257,7 +241,7 @@ public class Backend implements BackendInternal, BackendCommandObjectsHandler {
         // initialize CDI services
         serviceLoader.load(CacheManager.class);
         // initialize configuration utils to use DB
-        Config.setConfigUtils(new DBConfigUtils());
+        Config.setConfigUtils(dbConfigUtils);
 
         // we need to initialize os-info before the compensations take place because of VmPoolCommandBase#osRepository
         initOsRepository();
@@ -411,8 +395,7 @@ public class Backend implements BackendInternal, BackendCommandObjectsHandler {
                         ConfigCommon.defaultConfigurationVersion).getOptionValue();
         if (EngineWorkingMode.MAINTENANCE.name().equalsIgnoreCase(mode)) {
             return getErrorCommandReturnValue(EngineMessage.ENGINE_IS_RUNNING_IN_MAINTENANCE_MODE);
-        }
-        else if (EngineWorkingMode.PREPARE.name().equalsIgnoreCase(mode)) {
+        } else if (EngineWorkingMode.PREPARE.name().equalsIgnoreCase(mode)) {
             return notAllowedInPrepForMaintMode(actionType);
         }
         return null;
@@ -441,8 +424,7 @@ public class Backend implements BackendInternal, BackendCommandObjectsHandler {
             result.getValidationMessages().add(EngineMessage.ACTION_TYPE_NON_MONITORED.toString());
             result.setValid(false);
             result.setSucceeded(false);
-        }
-        else {
+        } else {
             if (!runAsInternal) {
                 logExecution(parameters.getSessionId(), String.format("command %s", actionType));
             }

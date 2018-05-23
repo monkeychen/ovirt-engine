@@ -2,16 +2,18 @@ package org.ovirt.engine.core.bll.network.cluster;
 
 import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.replacements;
 
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.network.Network;
@@ -24,6 +26,7 @@ import org.ovirt.engine.core.dao.network.InterfaceDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.utils.RandomUtils;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterValidatorBase> {
 
     private static final Guid TEST_DC_ID1 = Guid.newGuid();
@@ -48,7 +51,7 @@ public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterVa
 
     protected T validator;
 
-    @Before
+    @BeforeEach
     public void setup() {
         network = createNetwork();
         networkCluster = createNetworkCluster();
@@ -93,7 +96,7 @@ public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterVa
     }
 
     @Test
-    public void testDefaultRouteNetworkCannotBeExternal() throws Exception {
+    public void testDefaultRouteNetworkCannotBeExternal() {
         networkCluster.setDefaultRoute(true);
         setNetworkExternal(network, true);
 
@@ -103,7 +106,7 @@ public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterVa
     }
 
     @Test
-    public void testDefaultRouteNetworkCannotBeExternalWhenNotDefaultRoute() throws Exception {
+    public void testDefaultRouteNetworkCannotBeExternalWhenNotDefaultRoute() {
         networkCluster.setDefaultRoute(false);
         setNetworkExternal(network, true);
 
@@ -111,7 +114,7 @@ public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterVa
     }
 
     @Test
-    public void testDefaultRouteNetworkCannotBeExternalWhenNotExternalNetwork() throws Exception {
+    public void testDefaultRouteNetworkCannotBeExternalWhenNotExternalNetwork() {
         networkCluster.setDefaultRoute(true);
         setNetworkExternal(network, false);
 
@@ -163,7 +166,7 @@ public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterVa
     }
 
     @Test
-    public void networkBelongsToClusterDataCenterValid() throws Exception {
+    public void networkBelongsToClusterDataCenterValid() {
         cluster.setStoragePoolId(TEST_DC_ID1);
         network.setDataCenterId(TEST_DC_ID1);
 
@@ -171,7 +174,7 @@ public abstract class NetworkClusterValidatorTestBase<T extends NetworkClusterVa
     }
 
     @Test
-    public void networkBelongsToClusterDataCenterNotValid() throws Exception {
+    public void networkBelongsToClusterDataCenterNotValid() {
         cluster.setStoragePoolId(TEST_DC_ID1);
         network.setDataCenterId(TEST_DC_ID2);
 

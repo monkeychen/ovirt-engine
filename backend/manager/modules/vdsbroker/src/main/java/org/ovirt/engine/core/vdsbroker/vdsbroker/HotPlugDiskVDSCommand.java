@@ -67,12 +67,9 @@ public class HotPlugDiskVDSCommand<P extends HotPlugDiskVDSParameters> extends V
             }
 
             List<DiskVmElement> diskVmElements = diskVmElementDao.getAllPluggedToVm(getParameters().getVmId());
-            int numOfAttachedVirtioInterfaces = 0;
-            for (DiskVmElement dve : diskVmElements) {
-                if (dve.getDiskInterface() == DiskInterface.VirtIO) {
-                    numOfAttachedVirtioInterfaces ++;
-                }
-            }
+            int numOfAttachedVirtioInterfaces = (int) diskVmElements.stream()
+                    .filter(dve -> dve.getDiskInterface() == DiskInterface.VirtIO)
+                    .count();
 
             int pinToIoThread = numOfAttachedVirtioInterfaces % numOfIoThreads + 1;
             vmDevice.getSpecParams().put(VdsProperties.pinToIoThread, pinToIoThread);
@@ -87,7 +84,7 @@ public class HotPlugDiskVDSCommand<P extends HotPlugDiskVDSParameters> extends V
         switch (disk.getDiskStorageType()) {
             case IMAGE:
                 DiskImage diskImage = (DiskImage) disk;
-                drive.put(VdsProperties.DiskType, vmInfoBuildUtils.getDiskType(getParameters().getVm(), diskImage));
+                drive.put(VdsProperties.DiskType, vmInfoBuildUtils.getDiskType(getParameters().getVm(), diskImage, vmDevice));
                 drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
                 drive.put(VdsProperties.Format, diskImage.getVolumeFormat().toString().toLowerCase());
                 drive.put(VdsProperties.DomainId, diskImage.getStorageIds().get(0).toString());
@@ -113,12 +110,10 @@ public class HotPlugDiskVDSCommand<P extends HotPlugDiskVDSParameters> extends V
                     if (isScsiPassthrough) {
                         drive.put(VdsProperties.Device, VmDeviceType.LUN.getName());
                         drive.put(VdsProperties.Sgio, getParameters().getDisk().getSgio().toString().toLowerCase());
-                    }
-                    else {
+                    } else {
                         drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
                     }
-                }
-                else {
+                } else {
                     drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
                 }
 

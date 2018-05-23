@@ -1,9 +1,15 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.DataCenter;
 import org.ovirt.engine.api.model.Permission;
 import org.ovirt.engine.api.model.Role;
@@ -11,6 +17,7 @@ import org.ovirt.engine.api.model.User;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendUserAssignedPermissionsResourceTest
         extends AbstractBackendAssignedPermissionsResourceTest {
 
@@ -24,7 +31,7 @@ public class BackendUserAssignedPermissionsResourceTest
     }
 
     @Test
-    public void testAddIncompletePermission() throws Exception {
+    public void testAddIncompletePermission() {
         Permission model = new Permission();
         model.setUser(new User());
         model.getUser().setId(GUIDS[1].toString());
@@ -32,14 +39,11 @@ public class BackendUserAssignedPermissionsResourceTest
         model.getRole().setId(GUIDS[3].toString());
 
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae,
-                                       "Permission",
-                                       "add",
-                                       "dataCenter|cluster|host|storageDomain|vm|vmPool|template.id");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Permission",
+                "add",
+                "dataCenter|cluster|host|storageDomain|vm|vmPool|template.id");
     }
 
     @Override

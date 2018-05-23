@@ -1,10 +1,9 @@
 package org.ovirt.engine.core.bll.validator;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,12 +15,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.common.businessentities.OriginType;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -33,10 +33,12 @@ import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.osinfo.OsRepository;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.di.InjectorRule;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, InjectorExtension.class })
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class VmNicValidatorTest {
 
     private static final Guid VNIC_PROFILE_ID = Guid.newGuid();
@@ -44,9 +46,6 @@ public class VmNicValidatorTest {
             Arrays.asList("rtl8139", "pv"));
 
     private final Guid OTHER_GUID = Guid.newGuid();
-
-    @Rule
-    public InjectorRule injectorRule = new InjectorRule();
 
     @Mock
     private VmNic nic;
@@ -62,59 +61,61 @@ public class VmNicValidatorTest {
     @Mock
     private Network network;
 
+    @Mock
+    @InjectedMock
+    public OsRepository osRepository;
+
     private VM vm;
 
-    @Before
+    @BeforeEach
     public void setup() {
         validator = spy(new VmNicValidator(nic, version));
         vm = new VM();
     }
 
     @Test
-    public void e1000VmInterfaceTypeWhenNotIsCompatibleWithOs() throws Exception {
+    public void e1000VmInterfaceTypeWhenNotIsCompatibleWithOs() {
         isCompatibleWithOsTest(failsWith(EngineMessage.ACTION_TYPE_FAILED_VM_INTERFACE_TYPE_IS_NOT_SUPPORTED_BY_OS),
                 VmInterfaceType.e1000.getValue());
     }
 
     @Test
-    public void pvVmInterfaceTypeWhenIsCompatibleWithOs() throws Exception {
+    public void pvVmInterfaceTypeWhenIsCompatibleWithOs() {
         isCompatibleWithOsTest(isValid(), VmInterfaceType.pv.getValue());
     }
 
     @Test
-    public void rtl8139VmInterfaceTypeWhenIsCompatibleWithOs() throws Exception {
+    public void rtl8139VmInterfaceTypeWhenIsCompatibleWithOs() {
         isCompatibleWithOsTest(isValid(), VmInterfaceType.rtl8139.getValue());
     }
 
     private void isCompatibleWithOsTest(Matcher<ValidationResult> matcher, int vmInterfaceType) {
         VmNicValidator validator = spy(new VmNicValidator(nic, version, 0));
-        OsRepository osRepository = mock(OsRepository.class);
         when(osRepository.getNetworkDevices(anyInt(), any())).thenReturn(NETWORK_DEVICES);
         when(nic.getType()).thenReturn(vmInterfaceType);
-        injectorRule.bind(OsRepository.class, osRepository);
 
         assertThat(validator.isCompatibleWithOs(), matcher);
     }
 
     @Test
-    public void vnicProfileExist() throws Exception {
+    public void vnicProfileExist() {
         vnicProfileValidationTest(isValid(), true, true);
     }
 
     @Test
-    public void vnicProfileNotExist() throws Exception {
+    public void vnicProfileNotExist() {
         vnicProfileValidationTest(failsWith(EngineMessage.ACTION_TYPE_FAILED_VNIC_PROFILE_NOT_EXISTS),
                 false,
                 false);
     }
 
     @Test
-    public void networkInCluster() throws Exception {
+    public void networkInCluster() {
         vnicProfileValidationTest(isValid(), true, true);
     }
 
     @Test
-    public void networkNotInCluster() throws Exception {
+    public void networkNotInCluster() {
         vnicProfileValidationTest(failsWith(EngineMessage.NETWORK_NOT_EXISTS_IN_CURRENT_CLUSTER),
                 true,
                 false);

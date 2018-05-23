@@ -19,10 +19,13 @@ import org.ovirt.engine.core.vdsbroker.TransportRunTimeException;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterHookContentInfoReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterHooksListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterHostsPubKeyReturn;
+import org.ovirt.engine.core.vdsbroker.gluster.GlusterLocalLogicalVolumeListReturn;
+import org.ovirt.engine.core.vdsbroker.gluster.GlusterLocalPhysicalVolumeListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterServersListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterServicesReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterTaskInfoReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterTasksListReturn;
+import org.ovirt.engine.core.vdsbroker.gluster.GlusterVDOVolumeListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterVolumeGeoRepConfigList;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterVolumeGeoRepStatus;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterVolumeGeoRepStatusDetail;
@@ -40,7 +43,6 @@ import org.ovirt.engine.core.vdsbroker.gluster.StorageDeviceListReturn;
 import org.ovirt.engine.core.vdsbroker.irsbroker.OneUuidReturn;
 import org.ovirt.engine.core.vdsbroker.irsbroker.StatusReturn;
 import org.ovirt.engine.core.vdsbroker.irsbroker.StoragePoolInfo;
-import org.ovirt.engine.core.vdsbroker.vdsbroker.AlignmentScanReturn;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.BooleanReturn;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.DevicesVisibilityMapReturn;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.DomainXmlListReturn;
@@ -236,14 +238,6 @@ public class JsonRpcVdsServer implements IVdsServer {
         JsonRpcRequest request = new RequestBuilder("VM.setDestroyOnReboot").withParameter("vmID", vmId).build();
         Map<String, Object> response = new FutureMap(this.client, request);
         return new StatusOnlyReturn(response);
-    }
-
-    @Override
-    public OneVmReturn pause(String vmId) {
-        JsonRpcRequest request = new RequestBuilder("VM.pause").withParameter("vmID", vmId).build();
-        Map<String, Object> response =
-                new FutureMap(this.client, request).withResponseKey("vmList");
-        return new OneVmReturn(response);
     }
 
     @Override
@@ -1052,17 +1046,6 @@ public class JsonRpcVdsServer implements IVdsServer {
     }
 
     @Override
-    public AlignmentScanReturn getDiskAlignment(String vmId, Map<String, String> driveSpecs) {
-        JsonRpcRequest request =
-                new RequestBuilder("VM.getDiskAlignment").withParameter("vmID", vmId)
-                        .withParameter("disk", driveSpecs)
-                        .build();
-        Map<String, Object> response =
-                new FutureMap(this.client, request).withResponseKey("alignment");
-        return new AlignmentScanReturn(response);
-    }
-
-    @Override
     public ImageSizeReturn diskSizeExtend(String vmId, Map<String, String> diskParams, String newSize) {
         JsonRpcRequest request =
                 new RequestBuilder("VM.diskSizeExtend").withParameter("vmID", vmId)
@@ -1524,6 +1507,29 @@ public class JsonRpcVdsServer implements IVdsServer {
     }
 
     @Override
+    public GlusterLocalLogicalVolumeListReturn glusterLogicalVolumeList() {
+        JsonRpcRequest request = new RequestBuilder("GlusterHost.logicalVolumeList").build();
+        Map<String, Object> response =
+                new FutureMap(this.client, request).withIgnoreResponseKey();
+        return new GlusterLocalLogicalVolumeListReturn(response);
+    }
+
+    @Override
+    public GlusterLocalPhysicalVolumeListReturn glusterPhysicalVolumeList() {
+        JsonRpcRequest request = new RequestBuilder("GlusterHost.physicalVolumeList").build();
+        Map<String, Object> response =
+                new FutureMap(this.client, request).withIgnoreResponseKey();
+        return new GlusterLocalPhysicalVolumeListReturn(response);
+    }
+
+    @Override public GlusterVDOVolumeListReturn glusterVDOVolumeList() {
+        JsonRpcRequest request = new RequestBuilder("GlusterHost.vdoVolumeList").build();
+        Map<String, Object> response =
+                new FutureMap(this.client, request).withIgnoreResponseKey();
+        return new GlusterVDOVolumeListReturn(response);
+    }
+
+    @Override
     public GlusterVolumesListReturn glusterVolumesList(Guid clusterId) {
         JsonRpcRequest request = new RequestBuilder("GlusterVolume.list").build();
         Map<String, Object> response =
@@ -1821,7 +1827,7 @@ public class JsonRpcVdsServer implements IVdsServer {
     @Override
     public StatusOnlyReturn add_image_ticket(String ticketId, String[] ops, long timeout,
             long size, String url, String filename) {
-        HashMap<String, Object> ticketDict = new HashMap<>();
+        Map<String, Object> ticketDict = new HashMap<>();
         ticketDict.put("uuid", ticketId);
         ticketDict.put("timeout", timeout);
         ticketDict.put("ops", ops);

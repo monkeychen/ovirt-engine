@@ -1,21 +1,22 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.StorageDomainDR;
 
-public class StorageDomainDRDaoTest extends BaseDaoTestCase {
+public class StorageDomainDRDaoTest extends BaseDaoTestCase<StorageDomainDRDao> {
 
-    private StorageDomainDRDao dao;
     private StorageDomainDR storageDomainDR;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        dao = dbFacade.getStorageDomainDRDao();
 
         storageDomainDR = new StorageDomainDR();
         storageDomainDR.setStorageDomainId(FixturesTool.POSIX_STORAGE_DOMAIN_ID);
@@ -63,7 +64,7 @@ public class StorageDomainDRDaoTest extends BaseDaoTestCase {
     public void testRemoveAndSave() {
         dao.remove(FixturesTool.POSIX_STORAGE_DOMAIN_ID, FixturesTool.GLUSTER_GEOREP_SESSION_ID2);
         StorageDomainDR result = dao.get(FixturesTool.POSIX_STORAGE_DOMAIN_ID, FixturesTool.GLUSTER_GEOREP_SESSION_ID2);
-        assertEquals(null, result);
+        assertNull(result);
         dao.save(storageDomainDR);
         result = dao.get(FixturesTool.POSIX_STORAGE_DOMAIN_ID, FixturesTool.GLUSTER_GEOREP_SESSION_ID2);
         assertEquals(storageDomainDR, result);

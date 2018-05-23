@@ -1,27 +1,27 @@
 package org.ovirt.engine.core.bll.scheduling;
 
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.bll.scheduling.pending.PendingResourceManager;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.scheduling.PolicyUnit;
 import org.ovirt.engine.core.common.scheduling.PolicyUnitType;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockConfigExtension.class)
 public class InternalPolicyUnitsTest {
-
-    @Rule
-    public MockConfigRule mockConfigRule = new MockConfigRule(
-        mockConfig(ConfigValues.MaxSchedulerWeight, 1000),
-        mockConfig(ConfigValues.SpmVmGraceForEvenGuestDistribute, 5),
-        mockConfig(ConfigValues.MigrationThresholdForEvenGuestDistribute, 5),
-        mockConfig(ConfigValues.HighVmCountForEvenGuestDistribute, 10)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.SpmVmGraceForEvenGuestDistribute, 5),
+                MockConfigDescriptor.of(ConfigValues.MigrationThresholdForEvenGuestDistribute, 5),
+                MockConfigDescriptor.of(ConfigValues.HighVmCountForEvenGuestDistribute, 10)
+        );
+    }
 
     public class DummyUnit extends PolicyUnitImpl {
         public DummyUnit(PolicyUnit policyUnit,
@@ -43,14 +43,15 @@ public class InternalPolicyUnitsTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void instantiateNonUnit() throws Exception {
-        InternalPolicyUnits.instantiate(DummyUnit.class, null);
+    @Test
+    public void instantiateNonUnit() {
+        assertThrows(IllegalArgumentException.class, () -> InternalPolicyUnits.instantiate(DummyUnit.class, null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void instantiateDisabledUnit() throws Exception {
-        InternalPolicyUnits.instantiate(NotEnabledDummyUnit.class, null);
+    @Test
+    public void instantiateDisabledUnit() {
+        assertThrows(IllegalArgumentException.class,
+                () -> InternalPolicyUnits.instantiate(NotEnabledDummyUnit.class, null));
     }
 
     @Test

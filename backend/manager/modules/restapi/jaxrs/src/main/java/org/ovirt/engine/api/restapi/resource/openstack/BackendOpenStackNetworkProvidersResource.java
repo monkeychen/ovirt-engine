@@ -64,8 +64,7 @@ public class BackendOpenStackNetworkProvidersResource
                 QueryType.GetAllProviders,
                 new GetAllProvidersParameters(ProviderType.OPENSTACK_NETWORK, ProviderType.EXTERNAL_NETWORK)
             );
-        }
-        else {
+        } else {
             List<Provider> openstackCollection = getBackendCollection(SearchType.Provider, getConstraint(ProviderType.OPENSTACK_NETWORK.name()));
             List<Provider> externalCollection =  getBackendCollection(SearchType.Provider, getConstraint(ProviderType.EXTERNAL_NETWORK.name()));
             openstackCollection.addAll(externalCollection);
@@ -79,9 +78,7 @@ public class BackendOpenStackNetworkProvidersResource
         buffer.append(providerType);
         String query = QueryHelper.getConstraint(httpHeaders, uriInfo, null, modelType, false);
         if (StringUtils.isNotBlank(query)) {
-            buffer.append(" AND (");
-            buffer.append(query);
-            buffer.append(")");
+            buffer.append(String.format(" AND %1$s", query));
         }
         return buffer.toString();
     }

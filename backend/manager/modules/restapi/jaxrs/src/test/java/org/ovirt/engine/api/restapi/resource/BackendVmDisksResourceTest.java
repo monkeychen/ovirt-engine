@@ -16,6 +16,11 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +31,9 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.CreationStatus;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.DiskFormat;
@@ -55,6 +62,7 @@ import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmDisksResourceTest
         extends AbstractBackendCollectionResourceTest<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk, BackendVmDisksResource> {
 
@@ -69,20 +77,20 @@ public class BackendVmDisksResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         setUpEntityQueryExpectations(times, null);
     }
 
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetAllDisksByVmId,
@@ -178,22 +186,22 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddAsyncPending() throws Exception {
+    public void testAddAsyncPending() {
         doTestAddAsync(AsyncTaskStatusEnum.init, CreationStatus.PENDING);
     }
 
     @Test
-    public void testAddAsyncInProgress() throws Exception {
+    public void testAddAsyncInProgress() {
         doTestAddAsync(AsyncTaskStatusEnum.running, CreationStatus.IN_PROGRESS);
     }
 
     @Test
-    public void testAddAsyncFinished() throws Exception {
+    public void testAddAsyncFinished() {
         doTestAddAsync(AsyncTaskStatusEnum.finished, CreationStatus.COMPLETE);
     }
 
     @Test
-    public void testAttachDisk() throws Exception {
+    public void testAttachDisk() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(
             ActionType.AttachDiskToVm,
@@ -219,7 +227,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAttachDiskSnapshot() throws Exception {
+    public void testAttachDiskSnapshot() {
         setUriInfo(setUpBasicUriExpectations());
         Guid snapshotId = Guid.newGuid();
         Disk model = getModel();
@@ -246,7 +254,7 @@ public class BackendVmDisksResourceTest
         assertEquals(201, response.getStatus());
     }
 
-    private void doTestAddAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus creationStatus) throws Exception {
+    private void doTestAddAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus creationStatus) {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(
             QueryType.GetStorageDomainById,
@@ -284,7 +292,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddDiskWithJobId() throws Exception {
+    public void testAddDiskWithJobId() {
 
         Disk model = getModel();
 
@@ -307,7 +315,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddDiskWithStepId() throws Exception {
+    public void testAddDiskWithStepId() {
 
         Disk model = getModel();
 
@@ -377,7 +385,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddDisk() throws Exception {
+    public void testAddDisk() {
         testAddDiskImpl(getModel());
     }
 
@@ -393,7 +401,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddDiskIdentifyStorageDomainByName() throws Exception {
+    public void testAddDiskIdentifyStorageDomainByName() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
         setUpGetDiskExpectations();
@@ -456,7 +464,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddDiskWithinStorageDomain() throws Exception {
+    public void testAddDiskWithinStorageDomain() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
         setUpGetDiskExpectations();
@@ -498,16 +506,16 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testAddDiskCantDo() throws Exception {
+    public void testAddDiskCantDo() {
         doTestBadAddDisk(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddDiskFailure() throws Exception {
+    public void testAddDiskFailure() {
         doTestBadAddDisk(true, false, FAILURE);
     }
 
-    private void doTestBadAddDisk(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddDisk(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(
             QueryType.GetStorageDomainById,
             IdQueryParameters.class,
@@ -528,39 +536,26 @@ public class BackendVmDisksResourceTest
         Disk model = getModel();
         model.setProvisionedSize(1024 * 1024L);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         Disk model = new Disk();
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "Disk", "testAddIncompleteParameters", "provisionedSize|size", "format");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Disk", "lambda$testAddIncompleteParameters$1", "provisionedSize|size", "format");
     }
 
     @Test
-    public void testAddIncompleteParameters2() throws Exception {
+    public void testAddIncompleteParameters2() {
         Disk model = getModel();
         model.setProvisionedSize(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "Disk", "testAddIncompleteParameters2", "provisionedSize|size");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Disk", "lambda$testAddIncompleteParameters2$2", "provisionedSize|size");
     }
 
     @Test
@@ -568,13 +563,9 @@ public class BackendVmDisksResourceTest
         Disk model = createIscsiLunDisk();
         model.getLunStorage().setType(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "HostStorage", "testAddLunDiskMissingType", "type");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "HostStorage", "lambda$testAddLunDiskMissingType$3", "type");
     }
 
     @Test
@@ -582,13 +573,9 @@ public class BackendVmDisksResourceTest
         Disk model = createIscsiLunDisk();
         model.getLunStorage().getLogicalUnits().getLogicalUnits().get(0).setId(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "LogicalUnit", "testAddLunDiskMissingId", "id");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "LogicalUnit", "lambda$testAddLunDiskMissingId$4", "id");
     }
 
     @Test
@@ -596,13 +583,9 @@ public class BackendVmDisksResourceTest
         Disk model = createIscsiLunDisk();
         model.getLunStorage().getLogicalUnits().getLogicalUnits().get(0).setAddress(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "LogicalUnit", "testAddIscsiLunDiskIncompleteParametersConnectionAddress", "address");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "LogicalUnit", "lambda$testAddIscsiLunDiskIncompleteParametersConnectionAddress$5", "address");
     }
 
     @Test
@@ -610,13 +593,9 @@ public class BackendVmDisksResourceTest
         Disk model = createIscsiLunDisk();
         model.getLunStorage().getLogicalUnits().getLogicalUnits().get(0).setTarget(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "LogicalUnit", "testAddIscsiLunDiskIncompleteParametersConnectionTarget", "target");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "LogicalUnit", "lambda$testAddIscsiLunDiskIncompleteParametersConnectionTarget$6", "target");
     }
 
     @Test
@@ -624,13 +603,9 @@ public class BackendVmDisksResourceTest
         Disk model = createIscsiLunDisk();
         model.getLunStorage().getLogicalUnits().getLogicalUnits().get(0).setPort(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            // Because of extra frame offset used current method name in test, while in real world used "add" method name
-            verifyIncompleteException(wae, "LogicalUnit", "testAddIscsiLunDiskIncompleteParametersConnectionPort", "port");
-        }
+        // Because of extra frame offset used current method name in test, while in real world used "add" method name
+        verifyIncompleteException(assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "LogicalUnit", "lambda$testAddIscsiLunDiskIncompleteParametersConnectionPort$7", "port");
     }
 
     private Disk createIscsiLunDisk() {
@@ -662,12 +637,7 @@ public class BackendVmDisksResourceTest
     }
 
     @Test
-    public void testSubResourceLocatorBadGuid() throws Exception {
-        try {
-            collection.getDiskResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testSubResourceLocatorBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> collection.getDiskResource("foo")));
     }
 }

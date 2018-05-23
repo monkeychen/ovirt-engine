@@ -1,23 +1,16 @@
 package org.ovirt.engine.core.bll.scheduling.policyunits;
 
-import static org.junit.Assert.assertEquals;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.ovirt.engine.core.common.config.ConfigValues;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
 public class RankSelectorPolicyUnitTest {
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule(mockConfig(ConfigValues.MaxSchedulerWeight, 1000));
-
     private Guid unit1;
     private Guid unit2;
     private Guid host1;
@@ -25,8 +18,8 @@ public class RankSelectorPolicyUnitTest {
     private Guid host3;
     private List<Guid> hosts;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         unit1 = Guid.newGuid();
         unit2 = Guid.newGuid();
 

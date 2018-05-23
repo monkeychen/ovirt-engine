@@ -1,17 +1,17 @@
 package org.ovirt.engine.core.dao;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VmDeviceId;
 import org.ovirt.engine.core.common.businessentities.storage.DiskVmElement;
 import org.ovirt.engine.core.compat.Guid;
@@ -41,7 +41,7 @@ public class DiskVmElementDaoTest extends BaseReadDaoTestCase<VmDeviceId, DiskVm
     public void testGetAllDiskElementsByDisksIds() {
         List<DiskVmElement> vmElements = dao.getAllDiskVmElementsByDisksIds(Arrays.asList(
                 FixturesTool.DISK_ID, FixturesTool.DISK_ID_2, FixturesTool.BOOTABLE_DISK_ID));
-        assertEquals(vmElements.size(), 2);
+        assertEquals(2, vmElements.size());
     }
 
     @Test
@@ -107,11 +107,6 @@ public class DiskVmElementDaoTest extends BaseReadDaoTestCase<VmDeviceId, DiskVm
     @Override
     protected VmDeviceId getExistingEntityId() {
         return new VmDeviceId(PLUGGED_DISK_ID, FixturesTool.VM_RHEL5_POOL_57);
-    }
-
-    @Override
-    protected DiskVmElementDao prepareDao() {
-        return dbFacade.getDiskVmElementDao();
     }
 
     @Override

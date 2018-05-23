@@ -172,11 +172,16 @@ public abstract class VmModelBehaviorBase<TModel extends UnitVmModel> {
         boolean vmLeasesSupported = AsyncDataProvider.getInstance().isVmLeasesFeatureSupported(compVer);
         if (!vmLeasesSupported) {
             model.getLease().setIsChangeable(false, constants.vmLeasesSupported());
-        }
-        else {
-            model.getLease().setIsChangeable(model.getIsHighlyAvailable().getEntity());
+        } else {
+            StorageDomain leaseStorageDomain = model.getLease().getSelectedItem();
             if (!model.getIsHighlyAvailable().getEntity()) {
+                model.getLease().setIsChangeable(false);
                 model.getLease().setChangeProhibitionReason(constants.vmLeasesNotSupportedWithoutHA());
+            } else if (leaseStorageDomain != null && leaseStorageDomain.getStatus() != StorageDomainStatus.Active) {
+                model.getLease().setIsChangeable(false);
+                model.getLease().setChangeProhibitionReason(constants.cannotEditNotActiveLeaseDomain());
+            } else {
+                model.getLease().setIsChangeable(true);
             }
         }
     }
@@ -628,8 +633,7 @@ public abstract class VmModelBehaviorBase<TModel extends UnitVmModel> {
 
         if (templateWithVersion != null && !templateWithVersion.getTemplateVersion().getId().equals(Guid.Empty)) {
             postInitStorageDomains();
-        }
-        else {
+        } else {
             getModel().getStorageDomain().setItems(new ArrayList<>());
             getModel().getStorageDomain().setSelectedItem(null);
             getModel().getStorageDomain().setIsChangeable(false);
@@ -1188,9 +1192,9 @@ public abstract class VmModelBehaviorBase<TModel extends UnitVmModel> {
     }
 
     protected void updateLeaseStorageDomains(final Guid selectedStorageDomainId) {
-        setVmLeasesAvailability();
         AsyncDataProvider.getInstance().getStorageDomainList(new AsyncQuery<>(
                 returnValue -> {
+                    // initialize the list of storage domains that available for lease creation
                     List<StorageDomain> domains = new ArrayList<>();
                     domains.add(null);
                     for (StorageDomain domain : returnValue) {
@@ -1200,10 +1204,17 @@ public abstract class VmModelBehaviorBase<TModel extends UnitVmModel> {
                         }
                     }
                     getModel().getLease().setItems(domains);
+
+                    // initialize the storage domain that currently holds the lease.
+                    // VM lease storage domain can be on non-active domain, therefore we need to search
+                    // through all the data domains for the lease storage domain.
                     if (selectedStorageDomainId != null) {
-                        domains.stream().filter(d -> d != null && selectedStorageDomainId.equals(d.getId())).findFirst().
-                                ifPresent(d -> getModel().getLease().setSelectedItem(d));
+                        returnValue.stream()
+                                .filter(d -> d.getStorageDomainType().isDataDomain())
+                                .filter(d -> selectedStorageDomainId.equals(d.getId()))
+                                .findFirst().ifPresent(d -> getModel().getLease().setSelectedItem(d));
                     }
+                    setVmLeasesAvailability();
                 }), getModel().getSelectedDataCenter().getId());
     }
 

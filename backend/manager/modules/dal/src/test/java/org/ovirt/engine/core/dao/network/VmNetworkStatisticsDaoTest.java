@@ -1,32 +1,36 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.InterfaceStatus;
 import org.ovirt.engine.core.common.businessentities.network.VmNetworkInterface;
 import org.ovirt.engine.core.common.businessentities.network.VmNetworkStatistics;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class VmNetworkStatisticsDaoTest extends NetworkStatisticsDaoTest<VmNetworkStatistics> {
+public class VmNetworkStatisticsDaoTest extends NetworkStatisticsDaoTest<VmNetworkStatisticsDao, VmNetworkStatistics> {
     private static final Guid NEW_INTERFACE_ID = new Guid("14550e82-1e1f-47b5-ae41-b009348dabfa");
     private static final Guid VM_ID = FixturesTool.VM_RHEL5_POOL_57;
 
-    private VmNetworkStatisticsDao dao;
+    @Inject
+    private VmNetworkInterfaceDao vmNetworkInterfaceDao;
 
     private VmNetworkStatistics newVmStatistics;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        dao = dbFacade.getVmNetworkStatisticsDao();
 
         newVmStatistics = new VmNetworkStatistics();
         newVmStatistics.setId(NEW_INTERFACE_ID);
@@ -79,7 +83,7 @@ public class VmNetworkStatisticsDaoTest extends NetworkStatisticsDaoTest<VmNetwo
 
     @Override
     protected List<VmNetworkInterface> getAllInterfaces() {
-        return dbFacade.getVmNetworkInterfaceDao().getAllForVm(VM_ID);
+        return vmNetworkInterfaceDao.getAllForVm(VM_ID);
     }
 
     @Override
@@ -109,13 +113,13 @@ public class VmNetworkStatisticsDaoTest extends NetworkStatisticsDaoTest<VmNetwo
         assertNull(dao.get(FixturesTool.VM_NETWORK_INTERFACE));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGetAll() throws Exception {
-        dao.getAll();
+    @Test
+    public void testGetAll() {
+        assertThrows(UnsupportedOperationException.class, () -> dao.getAll());
     }
 
     @Test
-    public void testUpdateAll() throws Exception {
+    public void testUpdateAll() {
         VmNetworkStatistics existingStats = dao.get(FixturesTool.VM_NETWORK_INTERFACE);
         VmNetworkStatistics existingStats2 = dao.get(new Guid("e2817b12-f873-4046-b0da-0098293c0000"));
         existingStats.setReceiveDropRate(10.0);

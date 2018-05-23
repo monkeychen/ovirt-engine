@@ -1,14 +1,21 @@
 package org.ovirt.engine.api.restapi.resource;
 
-import java.util.HashMap;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.Test;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Hook;
 import org.ovirt.engine.api.model.Hooks;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
-public class BackendHostHooksResourceTest extends AbstractBackendResourceTest<Hook, HashMap<String, HashMap<String, HashMap<String, String>>>> {
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class BackendHostHooksResourceTest extends AbstractBackendResourceTest<Hook, Map<String, Map<String, Map<String, String>>>> {
 
     BackendHostHooksResource resource = new BackendHostHooksResource(GUIDS[0].toString());
 
@@ -23,8 +30,8 @@ public class BackendHostHooksResourceTest extends AbstractBackendResourceTest<Ho
     static final String MD5_3 = "ccc";
 
     @Override
-    protected HashMap<String, HashMap<String, HashMap<String, String>>> getEntity(int index) {
-        HashMap<String, HashMap<String, HashMap<String, String>>> events = new HashMap<>();
+    protected Map<String, Map<String, Map<String, String>>> getEntity(int index) {
+        Map<String, Map<String, Map<String, String>>> events = new HashMap<>();
 
         events.put(ON_VM_START_EVENT, new HashMap<>());
         events.put(ON_VM_STOP_EVENT, new HashMap<>());
@@ -47,7 +54,7 @@ public class BackendHostHooksResourceTest extends AbstractBackendResourceTest<Ho
     }
 
     @Test
-    public void testList() throws Exception {
+    public void testList() {
         resource.setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(QueryType.GetVdsHooksById,
                 IdQueryParameters.class,

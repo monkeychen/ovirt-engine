@@ -1,7 +1,8 @@
 package org.ovirt.engine.core.bll.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -13,9 +14,11 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.AbstractQueryTest;
 import org.ovirt.engine.core.bll.utils.GlusterUtil;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -38,6 +41,7 @@ import org.ovirt.engine.core.dao.VdsDao;
 import org.ovirt.engine.core.dao.gluster.GlusterBrickDao;
 import org.ovirt.engine.core.dao.gluster.GlusterVolumeDao;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class GetGlusterVolumeAdvancedDetailsQueryTest extends
         AbstractQueryTest<GlusterVolumeAdvancedDetailsParameters, GetGlusterVolumeAdvancedDetailsQuery<GlusterVolumeAdvancedDetailsParameters>> {
 
@@ -60,7 +64,7 @@ public class GetGlusterVolumeAdvancedDetailsQueryTest extends
     @Mock
     private GlusterBrickDao brickDao;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -81,9 +85,15 @@ public class GetGlusterVolumeAdvancedDetailsQueryTest extends
     }
 
     private GlusterBrickEntity getBrick() {
+        BrickProperties brickProperties = new BrickProperties();
+        brickProperties.setConfirmedFreeSize(1.0);
+        BrickDetails details = new BrickDetails();
+        details.setBrickProperties(brickProperties);
+
         GlusterBrickEntity brick = new GlusterBrickEntity();
         brick.setId(BRICK_ID);
         brick.setServerId(SERVER_ID);
+        brick.setBrickDetails(details);
         return brick;
     }
 
@@ -97,7 +107,7 @@ public class GetGlusterVolumeAdvancedDetailsQueryTest extends
 
     private BrickProperties getBrickProperties() {
         BrickProperties brickProperties = new BrickProperties();
-        brickProperties.setBrickId(Guid.newGuid());
+        brickProperties.setBrickId(BRICK_ID);
         brickProperties.setPort(24009);
         brickProperties.setStatus(GlusterStatus.UP);
         brickProperties.setPid(1459);
@@ -187,11 +197,11 @@ public class GetGlusterVolumeAdvancedDetailsQueryTest extends
         verifyZeroInteractions(glusterUtils);
     }
 
-    @Test (expected = RuntimeException.class)
+    @Test
     public void testQueryForInvalidVolumeId() {
         doReturn(Guid.Empty).when(getQueryParameters()).getVolumeId();
 
-        getQuery().executeQueryCommand();
+        assertThrows(RuntimeException.class, () -> getQuery().executeQueryCommand());
     }
 
     @Test

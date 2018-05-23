@@ -14,6 +14,8 @@ TAR_BLOCK_SIZE = 512
 NUL = b"\0"
 BUF_SIZE = 8 * 1024**2
 
+python2 = sys.version_info < (3, 0)
+
 
 def create_tar_info(name, size):
     info = tarfile.TarInfo(name)
@@ -30,7 +32,6 @@ def pad_to_block_size(file):
 
 
 def write_ovf(ova_path, ovf):
-    ovf = ovf.encode('utf-8')
     print ("writing ovf: %s" % ovf)
     with io.open(ova_path, "r+b") as ova_file:
         tar_info = create_tar_info("vm.ovf", len(ovf))
@@ -51,7 +52,7 @@ def write_disk(ova_path, disk_path, disk_size):
 
     try:
         fd = os.open(ova_path, os.O_RDWR | os.O_DIRECT | os.O_APPEND)
-    except:
+    except OSError:
         fd = os.open(ova_path, os.O_RDWR | os.O_APPEND)
 
     with io.FileIO(fd, "a+", closefd=True) as ova_file:
@@ -66,7 +67,10 @@ def write_disk(ova_path, disk_path, disk_size):
                     break  # done
                 written = 0
                 while written < read:
-                    wbuf = memoryview(buf, written, read - written)
+                    if python2:
+                        wbuf = buffer(buf, written, read - written)
+                    else:
+                        wbuf = memoryview(buf)[written:read - written]
                     written += ova_file.write(wbuf)
         os.fsync(ova_file.fileno())
 

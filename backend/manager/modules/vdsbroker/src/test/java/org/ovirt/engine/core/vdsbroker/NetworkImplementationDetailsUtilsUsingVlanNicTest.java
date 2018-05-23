@@ -2,21 +2,23 @@ package org.ovirt.engine.core.vdsbroker;
 
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkInterface;
-import org.ovirt.engine.core.common.config.ConfigValues;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NetworkImplementationDetailsUtilsUsingVlanNicTest extends BaseNetworkImplementationDetailsUtilsTest {
 
     private VdsNetworkInterface baseIface;
 
     @Override
-    @Before
+    @BeforeEach
     public void setUpBefore() throws Exception {
         super.setUpBefore();
 
@@ -24,7 +26,6 @@ public class NetworkImplementationDetailsUtilsUsingVlanNicTest extends BaseNetwo
         VdsNetworkInterface vlanIface = createVlanInterface(baseIface, networkName, qosA);
 
         setTestIface(vlanIface);
-        mcr.mockConfigValue(ConfigValues.DefaultMTU, 1500);
         when(calculateBaseNic.getBaseNic(vlanIface)).thenReturn(baseIface);
     }
 
@@ -32,13 +33,13 @@ public class NetworkImplementationDetailsUtilsUsingVlanNicTest extends BaseNetwo
      * Cover a case when MTU is unset & other network parameters out of sync, which is not covered by other tests.
      */
     @Test
-    public void calculateNetworkImplementationDetailsNetworkVlanOutOfSyncNicAndNetworkHasDifferentVlanId() throws Exception {
+    public void calculateNetworkImplementationDetailsNetworkVlanOutOfSyncNicAndNetworkHasDifferentVlanId() {
         Network network = createNetwork(getTestIface().isBridged(), getTestIface().getMtu(), getTestIface().getVlanId() + 1);
         calculateNetworkImplementationDetailsAndAssertSync(getTestIface(), false, qosA, network);
     }
 
     @Test
-    public void calculateNetworkImplementationDetailsNetworkVlanOutOfSyncNicAndNetworkHasNoVlanId() throws Exception {
+    public void calculateNetworkImplementationDetailsNetworkVlanOutOfSyncNicAndNetworkHasNoVlanId() {
         Network network = createNetwork(getTestIface().isBridged(), getTestIface().getMtu(), null);
         calculateNetworkImplementationDetailsAndAssertSync(getTestIface(), false, qosA, network);
     }

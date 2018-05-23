@@ -1,23 +1,25 @@
 package org.ovirt.engine.core.bll.network.cluster;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.businessentities.network.NetworkCluster;
 import org.ovirt.engine.core.common.businessentities.network.NetworkClusterId;
@@ -25,9 +27,11 @@ import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.network.NetworkClusterDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ManagementNetworkUtilImplTest {
 
     private static final String TEST_NETWORK_NAME = "test network name";
@@ -48,14 +52,11 @@ public class ManagementNetworkUtilImplTest {
     @Mock
     private NetworkCluster mockNetworkCluster;
 
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule(
-            MockConfigRule.mockConfig(ConfigValues.DefaultManagementNetwork, TEST_NETWORK_NAME));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.DefaultManagementNetwork, TEST_NETWORK_NAME));
+    }
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
+    @BeforeEach
     public void setUp() {
         underTest = new ManagementNetworkUtilImpl(mockNetworkDao, mockNetworkClusterDao);
     }
@@ -78,7 +79,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(Guid)} .
      */
     @Test
-    public void testIsManagementNetworkInAClusterPositive() throws Exception {
+    public void testIsManagementNetworkInAClusterPositive() {
         testIsManagementNetworkInAClusterCommon(true);
     }
 
@@ -86,7 +87,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(Guid)} .
      */
     @Test
-    public void testIsManagementNetworkInAClusterNegative() throws Exception {
+    public void testIsManagementNetworkInAClusterNegative() {
         testIsManagementNetworkInAClusterCommon(false);
     }
 
@@ -105,7 +106,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(Guid, Guid)} .
      */
     @Test
-    public void testIsManagementNetworkInGivenClusterPositive() throws Exception {
+    public void testIsManagementNetworkInGivenClusterPositive() {
         testIsManagementNetworkInGivenClusterCommon(true);
     }
 
@@ -113,7 +114,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(Guid, Guid)} .
      */
     @Test
-    public void testIsManagementNetworkInGivenClusterNegative() throws Exception {
+    public void testIsManagementNetworkInGivenClusterNegative() {
         testIsManagementNetworkInGivenClusterCommon(false);
     }
 
@@ -130,7 +131,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(String, Guid)} .
      */
     @Test
-    public void testIsManagementNetworkNameInGivenClusterPositive() throws Exception {
+    public void testIsManagementNetworkNameInGivenClusterPositive() {
         testIsManagementNetworkNameInGivenClusterCommon(TEST_NETWORK_NAME, TEST_CLUSTER_ID, true);
     }
 
@@ -138,7 +139,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(String, Guid)} .
      */
     @Test
-    public void testIsManagementNetworkNameInGivenClusterNegative() throws Exception {
+    public void testIsManagementNetworkNameInGivenClusterNegative() {
         testIsManagementNetworkNameInGivenClusterCommon("not" + TEST_NETWORK_NAME, TEST_CLUSTER_ID, false);
     }
 
@@ -146,7 +147,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(String, Guid)} .
      */
     @Test
-    public void testIsManagementNetworkNameInGivenClusterNull() throws Exception {
+    public void testIsManagementNetworkNameInGivenClusterNull() {
         testIsManagementNetworkNameInGivenClusterCommon(TEST_NETWORK_NAME, null, false);
     }
 
@@ -154,7 +155,7 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#isManagementNetwork(String, Guid)} .
      */
     @Test
-    public void testIsManagementNetworkNameNullInGivenCluster() throws Exception {
+    public void testIsManagementNetworkNameNullInGivenCluster() {
         testIsManagementNetworkNameInGivenClusterCommon(null, TEST_CLUSTER_ID, false);
     }
 
@@ -175,32 +176,32 @@ public class ManagementNetworkUtilImplTest {
      * Test method for {@link ManagementNetworkUtilImpl#getDefaultManagementNetworkName()}.
      */
     @Test
-    public void testGetDefaultManagementNetworkName() throws Exception {
+    public void testGetDefaultManagementNetworkName() {
         assertEquals(TEST_NETWORK_NAME, underTest.getDefaultManagementNetworkName());
     }
 
     @Test
-    public void testGetManagementNetworkWhenInstancesDoesNotContainOne() throws Exception {
+    public void testGetManagementNetworkWhenInstancesDoesNotContainOne() {
         List<Network> networks = Arrays.asList(createNetwork(false, "a"), createNetwork(false, "b"));
         Guid clusterId = Guid.newGuid();
 
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage(underTest.createFailureMessage(clusterId, networks));
-        underTest.getManagementNetwork(networks, clusterId);
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> underTest.getManagementNetwork(networks, clusterId));
+        assertEquals(underTest.createFailureMessage(clusterId, networks), e.getMessage());
     }
 
     @Test
-    public void testGetManagementNetworkWhenInstancesContainMultipleOnes() throws Exception {
+    public void testGetManagementNetworkWhenInstancesContainMultipleOnes() {
         List<Network> networks = Arrays.asList(createNetwork(true, "a"), createNetwork(true, "b"));
 
         Guid clusterId = Guid.newGuid();
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage(underTest.createFailureMessage(clusterId, networks));
-        underTest.getManagementNetwork(networks, clusterId);
+        IllegalStateException e =
+                assertThrows(IllegalStateException.class, () -> underTest.getManagementNetwork(networks, clusterId));
+        assertEquals(underTest.createFailureMessage(clusterId, networks), e.getMessage());
     }
 
     @Test
-    public void testGetManagementNetworkWhenInstancesContainOne() throws Exception {
+    public void testGetManagementNetworkWhenInstancesContainOne() {
         Network network = createNetwork(true, "a");
         List<Network> networks = Arrays.asList(network, createNetwork(false, "b"));
         assertThat(underTest.getManagementNetwork(networks, Guid.newGuid()), is(network));

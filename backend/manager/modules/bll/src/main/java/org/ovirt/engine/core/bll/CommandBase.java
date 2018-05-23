@@ -143,7 +143,7 @@ public abstract class CommandBase<T extends ActionParametersBase>
     protected BackendInternal backend;
 
     @Inject
-    private VDSBrokerFrontend vdsBroker;
+    protected VDSBrokerFrontend vdsBroker;
 
     @Inject
     protected ExecutionHandler executionHandler;
@@ -1555,7 +1555,7 @@ public abstract class CommandBase<T extends ActionParametersBase>
      * DB right away. call this method only you have a good reason for it and
      * the current transaction is short.
      *
-     * @see {@link #createTask(Guid, AsyncTaskCreationInfo, ActionType, VdcObjectType, Guid...)}
+     * @see #createTask(Guid, AsyncTaskCreationInfo, ActionType, VdcObjectType, Guid...)
      */
     protected Guid createTaskInCurrentTransaction(Guid taskId,
             AsyncTaskCreationInfo asyncTaskCreationInfo,
@@ -1984,7 +1984,7 @@ public abstract class CommandBase<T extends ActionParametersBase>
      * @param message   the message to add
      * @param variableReplacements variable replacements
      * @return  false always
-     * @see {@link #addValidationMessage(String)}
+     * @see #addValidationMessage(String)
      */
     protected final boolean failValidation(EngineMessage message, String ... variableReplacements) {
         return failValidation(message, Arrays.asList(variableReplacements));
@@ -2043,7 +2043,7 @@ public abstract class CommandBase<T extends ActionParametersBase>
      */
     protected VDSReturnValue runVdsCommand(VDSCommandType commandType, VDSParametersBase parameters)
             throws EngineException {
-        return getVdsBroker().runVdsCommand(commandType, parameters);
+        return vdsBroker.runVdsCommand(commandType, parameters);
     }
 
     /**
@@ -2368,10 +2368,6 @@ public abstract class CommandBase<T extends ActionParametersBase>
 
     protected SessionDataContainer getSessionDataContainer() {
         return sessionDataContainer;
-    }
-
-    public VDSBrokerFrontend getVdsBroker() {
-        return vdsBroker;
     }
 
     protected long getEngineSessionSeqId() {

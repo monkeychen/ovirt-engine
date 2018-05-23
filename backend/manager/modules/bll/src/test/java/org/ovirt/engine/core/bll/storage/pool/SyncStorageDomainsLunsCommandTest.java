@@ -1,30 +1,28 @@
 package org.ovirt.engine.core.bll.storage.pool;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.action.SyncStorageDomainsLunsParameters;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.compat.Guid;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SyncStorageDomainsLunsCommandTest {
 
     private SyncStorageDomainsLunsParameters parameters =
             new SyncStorageDomainsLunsParameters(Guid.newGuid(), Collections.emptyList());
 
     @Spy
-    @InjectMocks
     private SyncStorageDomainsLunsCommand<SyncStorageDomainsLunsParameters> command =
             new SyncStorageDomainsLunsCommand<>(parameters, null);
 

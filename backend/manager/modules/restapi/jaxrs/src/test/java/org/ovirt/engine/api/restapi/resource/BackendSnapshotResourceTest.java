@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,8 +12,10 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.ConfigurationType;
 import org.ovirt.engine.api.model.Snapshot;
@@ -23,6 +28,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendSnapshotResourceTest
     extends AbstractBackendSubResourceTest<Snapshot, org.ovirt.engine.core.common.businessentities.Snapshot, BackendSnapshotResource> {
 
@@ -39,20 +45,20 @@ public class BackendSnapshotResourceTest
         return snapshotsResource;
     }
 
-    @Before
+    @BeforeEach
     public void initParentResource() {
         resource.setCollectionResource(getSnapshotsResource());
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(asList(getEntity(1)));
         verifyModel(resource.get(), 1);
     }
 
     @Test
-    public void testGetWithPopulate() throws Exception {
+    public void testGetWithPopulate() {
         List<String> populates = new ArrayList<>();
         populates.add("true");
         String ovfData = "data";
@@ -77,29 +83,19 @@ public class BackendSnapshotResourceTest
 
     @Test
     //empty list of snapshots returned from Backend.
-    public void testGetNotFound1() throws Exception {
+    public void testGetNotFound1() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(new ArrayList<>());
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
     //non-empty list of snapshots returned from Backend,
     //but this specific snapshot is not there.
-    public void testGetNotFound2() throws Exception {
+    public void testGetNotFound2() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(asList(getEntity(2)));
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
@@ -111,7 +107,7 @@ public class BackendSnapshotResourceTest
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(asList(getEntity(1)));
         setUpActionExpectations(
@@ -126,16 +122,16 @@ public class BackendSnapshotResourceTest
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(asList(getEntity(1)));
         setUriInfo(
             setUpActionExpectations(
@@ -147,13 +143,8 @@ public class BackendSnapshotResourceTest
                 success
             )
         );
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, () -> resource.remove()), detail);
     }
 
     protected UriInfo setUpTryBackExpectations() {
@@ -179,7 +170,7 @@ public class BackendSnapshotResourceTest
                 null);
     }
 
-    protected void setUpGetEntityExpectations(List<org.ovirt.engine.core.common.businessentities.Snapshot> result) throws Exception {
+    protected void setUpGetEntityExpectations(List<org.ovirt.engine.core.common.businessentities.Snapshot> result) {
         setUpGetEntityExpectations(QueryType.GetAllVmSnapshotsByVmId,
                                    IdQueryParameters.class,
                                    new String[] { "Id" },

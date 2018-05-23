@@ -196,9 +196,8 @@ final class VmInfoBuilderImpl implements VmInfoBuilder {
         if (hasPayload) {
             Map<String, Object>struct = vmInfoBuildUtils.buildFloppyDetails(vmPayload);
             addDevice(struct, vmPayload, "");
-        }
         // check first if Floppy was given as a parameter
-        else if (vm.isRunOnce() && !StringUtils.isEmpty(vm.getFloppyPath())) {
+        } else if (vm.isRunOnce() && !StringUtils.isEmpty(vm.getFloppyPath())) {
             VmDevice vmDevice = vmInfoBuildUtils.createFloppyDevice(vm);
             Map<String, Object> struct = vmInfoBuildUtils.buildFloppyDetails(vmDevice);
             addDevice(struct, vmDevice, vm.getFloppyPath());
@@ -295,7 +294,7 @@ final class VmInfoBuilderImpl implements VmInfoBuilder {
                 switch (disk.getDiskStorageType()) {
                 case IMAGE:
                     DiskImage diskImage = (DiskImage) disk;
-                    struct.put(VdsProperties.DiskType, vmInfoBuildUtils.getDiskType(vm, diskImage));
+                    struct.put(VdsProperties.DiskType, vmInfoBuildUtils.getDiskType(vm, diskImage, vmDevice));
                     struct.put(VdsProperties.PoolId, diskImage.getStoragePoolId().toString());
                     struct.put(VdsProperties.DomainId, diskImage.getStorageIds().get(0).toString());
                     struct.put(VdsProperties.ImageId, diskImage.getId().toString());

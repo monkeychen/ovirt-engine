@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterGeoRepNonEligibilityReason;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterGeoRepSession;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterStatus;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterVolumeEntity;
+import org.ovirt.engine.core.common.interfaces.VDSBrokerFrontend;
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.common.vdscommands.gluster.GlusterVolumeVDSParameters;
@@ -33,6 +33,9 @@ public class GlusterGeoRepUtil {
 
     @Inject
     private GlusterGeoRepDao glusterGeoRepDao;
+
+    @Inject
+    private VDSBrokerFrontend resourceManager;
 
     public Map<GlusterGeoRepNonEligibilityReason, Predicate<GlusterVolumeEntity>> getEligibilityPredicates(final GlusterVolumeEntity masterVolume) {
         Map<GlusterGeoRepNonEligibilityReason, Predicate<GlusterVolumeEntity>> eligibilityPredicates = new HashMap<>();
@@ -61,7 +64,6 @@ public class GlusterGeoRepUtil {
         eligibilityPredicates.put(GlusterGeoRepNonEligibilityReason.SLAVE_VOLUME_SHOULD_NOT_BE_SLAVE_OF_ANOTHER_GEO_REP_SESSION, slaveVolume -> !existingSessionSlavesIds.contains(slaveVolume.getId()));
 
         eligibilityPredicates.put(GlusterGeoRepNonEligibilityReason.SLAVE_CLUSTER_AND_MASTER_CLUSTER_COMPATIBILITY_VERSIONS_DO_NOT_MATCH, slaveVolume -> {
-            ClusterDao clusterDao = getClusterDao();
             Version slaveCompatibilityVersion = clusterDao.get(slaveVolume.getClusterId()).getCompatibilityVersion();
             Version masterCompatibilityVersion = clusterDao.get(masterVolume.getClusterId()).getCompatibilityVersion();
             return masterCompatibilityVersion.equals(slaveCompatibilityVersion);
@@ -83,14 +85,13 @@ public class GlusterGeoRepUtil {
     }
 
     private List<Guid> getSessionSlaveVolumeIds() {
-        List<GlusterGeoRepSession> existingSessions = getGeoRepDao().getAllSessions();
+        List<GlusterGeoRepSession> existingSessions = glusterGeoRepDao.getAllSessions();
         return existingSessions.stream().map(GlusterGeoRepSession::getSlaveVolumeId).collect(Collectors.toList());
     }
 
     public boolean checkEmptyGlusterVolume(Guid slaveUpserverId, String slaveVolumeName) {
         VDSReturnValue returnValue =
-                Backend.getInstance()
-                        .getResourceManager()
+                resourceManager
                         .runVdsCommand(VDSCommandType.CheckEmptyGlusterVolume,
                                 new GlusterVolumeVDSParameters(slaveUpserverId, slaveVolumeName));
         return returnValue.getSucceeded() && (boolean) returnValue.getReturnValue();
@@ -99,13 +100,5 @@ public class GlusterGeoRepUtil {
     public Guid getUpServerId(Guid clusterId) {
         VDS randomUpServer = glusterUtil.getRandomUpServer(clusterId);
         return randomUpServer == null ? null : randomUpServer.getId();
-    }
-
-    public ClusterDao getClusterDao() {
-        return clusterDao;
-    }
-
-    public GlusterGeoRepDao getGeoRepDao() {
-        return glusterGeoRepDao;
     }
 }

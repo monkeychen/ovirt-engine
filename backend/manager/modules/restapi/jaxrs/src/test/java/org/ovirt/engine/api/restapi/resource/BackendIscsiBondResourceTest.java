@@ -1,14 +1,19 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.IscsiBond;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.RemoveIscsiBondParameters;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIscsiBondResourceTest
     extends AbstractBackendSubResourceTest<IscsiBond, org.ovirt.engine.core.common.businessentities.IscsiBond, BackendIscsiBondResource> {
 
@@ -17,7 +22,7 @@ public class BackendIscsiBondResourceTest
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations(0, getEntity(0));
         setUriInfo(
             setUpActionExpectations(
@@ -33,21 +38,13 @@ public class BackendIscsiBondResourceTest
     }
 
     @Test
-    public void testRemoveNonExistant() throws Exception {
+    public void testRemoveNonExistant() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(0, null);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
-    private void setUpGetEntityExpectations(int index, org.ovirt.engine.core.common.businessentities.IscsiBond result)
-            throws Exception {
+    private void setUpGetEntityExpectations(int index, org.ovirt.engine.core.common.businessentities.IscsiBond result) {
         setUpGetEntityExpectations(
             QueryType.GetIscsiBondById,
             IdQueryParameters.class,

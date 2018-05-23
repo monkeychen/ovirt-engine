@@ -1,19 +1,19 @@
 package org.ovirt.engine.core.dal.dbbroker.auditloghandling;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.compat.Guid;
 
 public class EventKeyComposerTest {
     @Test
-    public void composeObjectIdForAnEmptyAuditLogForInjectedImpl() throws Exception {
+    public void composeObjectIdForAnEmptyAuditLogForInjectedImpl() {
         composeObjectIdForAnEmptyAuditLog(new AuditLogableBase());
     }
 
     @Test
-    public void composeObjectIdForAnEmptyAuditLogForNonInjectedImpl() throws Exception {
+    public void composeObjectIdForAnEmptyAuditLogForNonInjectedImpl() {
         composeObjectIdForAnEmptyAuditLog(new AuditLogableImpl());
     }
 
@@ -31,13 +31,13 @@ public class EventKeyComposerTest {
     }
 
     @Test
-    public void composeObjectIdWithAuditLogableBase() throws Exception {
+    public void composeObjectIdWithAuditLogableBase() {
         AuditLogableBase event = new AuditLogableBase();
         createEventAndAssert(event);
     }
 
     @Test
-    public void composeObjectIdWithAuditLogableImpl() throws Exception {
+    public void composeObjectIdWithAuditLogableImpl() {
         AuditLogable event = new AuditLogableImpl();
         createEventAndAssert(event);
     }

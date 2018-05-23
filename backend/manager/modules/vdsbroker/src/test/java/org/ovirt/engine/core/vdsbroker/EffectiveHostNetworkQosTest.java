@@ -2,17 +2,18 @@ package org.ovirt.engine.core.vdsbroker;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.businessentities.network.AnonymousHostNetworkQos;
 import org.ovirt.engine.core.common.businessentities.network.HostNetworkQos;
 import org.ovirt.engine.core.common.businessentities.network.Network;
@@ -20,7 +21,7 @@ import org.ovirt.engine.core.common.businessentities.network.NetworkAttachment;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.network.HostNetworkQosDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EffectiveHostNetworkQosTest {
 
     @Mock
@@ -30,12 +31,12 @@ public class EffectiveHostNetworkQosTest {
     private EffectiveHostNetworkQos effectiveHostNetworkQos;
 
     @Test
-    public void testGetQosWithNullNetworkAttachmentAndNetworkWithoutQos() throws Exception {
+    public void testGetQosWithNullNetworkAttachmentAndNetworkWithoutQos() {
         assertThat(effectiveHostNetworkQos.getQos(null, new Network()), nullValue());
     }
 
     @Test
-    public void testGetQosWithNullNetworkAttachmentAndNetworkWithQos() throws Exception {
+    public void testGetQosWithNullNetworkAttachmentAndNetworkWithQos() {
         HostNetworkQos hostNetworkQos = createHostNetworkQos();
         Network network = createNetworkWithQos(hostNetworkQos);
         when(hostNetworkQosDao.get(network.getQosId())).thenReturn(hostNetworkQos);
@@ -43,13 +44,14 @@ public class EffectiveHostNetworkQosTest {
         assertThat(effectiveHostNetworkQos.getQos(null, network), is(hostNetworkQos));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testGetQosWithNullNetwork() throws Exception {
-        effectiveHostNetworkQos.getQos(createNetworkAttachmentWithoutOverriddenQos(), null);
+    @Test
+    public void testGetQosWithNullNetwork() {
+        assertThrows(NullPointerException.class,
+                () -> effectiveHostNetworkQos.getQos(createNetworkAttachmentWithoutOverriddenQos(), null));
     }
 
     @Test
-    public void testGetQosWhenNetworkAttachmentDoesNotHaveOverriddenQos() throws Exception {
+    public void testGetQosWhenNetworkAttachmentDoesNotHaveOverriddenQos() {
         HostNetworkQos hostNetworkQos = createHostNetworkQos();
         Network network = createNetworkWithQos(hostNetworkQos);
         NetworkAttachment networkAttachment = createNetworkAttachmentWithoutOverriddenQos();
@@ -62,7 +64,7 @@ public class EffectiveHostNetworkQosTest {
     }
 
     @Test
-    public void testGetQosWhenNetworkAttachmentHasOverriddenQos() throws Exception {
+    public void testGetQosWhenNetworkAttachmentHasOverriddenQos() {
         Network network = createNetworkWithQos(createHostNetworkQos());
         NetworkAttachment networkAttachment = createNetworkAttachentWithOverriddenQos();
         HostNetworkQos networkAttachmentHostNetworkQos = HostNetworkQos.fromAnonymousHostNetworkQos(networkAttachment.getHostNetworkQos());

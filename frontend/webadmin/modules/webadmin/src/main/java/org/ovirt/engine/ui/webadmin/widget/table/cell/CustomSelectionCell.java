@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.ovirt.engine.ui.common.widget.table.cell.AbstractInputCell;
@@ -38,7 +39,7 @@ public class CustomSelectionCell extends AbstractInputCell<String, String> {
 
     private static CellTemplate template = GWT.create(CellTemplate.class);
 
-    private final HashMap<String, Integer> indexForOption = new HashMap<>();
+    private final Map<String, Integer> indexForOption = new HashMap<>();
 
     private List<String> options;
 
@@ -102,8 +103,7 @@ public class CustomSelectionCell extends AbstractInputCell<String, String> {
 
         if (isEnabled) {
             sb.append(template.selectEnabled(id, style));
-        }
-        else {
+        } else {
             sb.append(template.selectDisabled(id, style));
         }
 
@@ -120,11 +120,7 @@ public class CustomSelectionCell extends AbstractInputCell<String, String> {
     }
 
     private int getSelectedIndex(String value) {
-        Integer index = indexForOption.get(value);
-        if (index == null) {
-            return -1;
-        }
-        return index.intValue();
+        return indexForOption.getOrDefault(value, -1);
     }
 
     public void setEnabled(boolean isEnabled) {

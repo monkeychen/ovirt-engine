@@ -1,12 +1,12 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VmIconDefault;
 import org.ovirt.engine.core.compat.Guid;
 
@@ -38,11 +38,6 @@ public class VmIconDefaultDaoTest extends BaseGenericDaoTestCase<Guid, VmIconDef
     }
 
     @Override
-    protected VmIconDefaultDao prepareDao() {
-        return getDbFacade().getVmIconsDefaultDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return NONEXISTING_ID;
     }
@@ -54,26 +49,26 @@ public class VmIconDefaultDaoTest extends BaseGenericDaoTestCase<Guid, VmIconDef
 
     @Test
     public void testRemoveAll() {
-        prepareDao().removeAll();
-        final List<VmIconDefault> result = prepareDao().getAll();
+        dao.removeAll();
+        final List<VmIconDefault> result = dao.getAll();
         assertTrue(result.isEmpty());
     }
 
     @Test
     public void testGetByLargeIconId() {
-        final List<VmIconDefault> result = prepareDao().getByLargeIconId(FixturesTool.LARGE_ICON_ID);
+        final List<VmIconDefault> result = dao.getByLargeIconId(FixturesTool.LARGE_ICON_ID);
         assertTrue(result.contains(OTHER_OS_VM_ICON_DEFAULT));
     }
 
     @Test
     public void testGetByOperatingSystemIdExisting() {
-        final VmIconDefault vmIconDefault = prepareDao().getByOperatingSystemId(OTHER_OS_VM_ICON_DEFAULT.getOsId());
+        final VmIconDefault vmIconDefault = dao.getByOperatingSystemId(OTHER_OS_VM_ICON_DEFAULT.getOsId());
         assertEquals(OTHER_OS_VM_ICON_DEFAULT, vmIconDefault);
     }
 
     @Test
     public void testGetByOperatingSystemIdNonExisting() {
-        final VmIconDefault vmIconDefault = prepareDao().getByOperatingSystemId(-1);
+        final VmIconDefault vmIconDefault = dao.getByOperatingSystemId(-1);
         assertNull(vmIconDefault);
     }
 }

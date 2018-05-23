@@ -32,6 +32,7 @@ import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.ProcessDownVmParameters;
 import org.ovirt.engine.core.common.action.VmOperationParameterBase;
 import org.ovirt.engine.core.common.businessentities.IVdsAsyncCommand;
+import org.ovirt.engine.core.common.businessentities.OpenstackNetworkProviderProperties;
 import org.ovirt.engine.core.common.businessentities.Provider;
 import org.ovirt.engine.core.common.businessentities.StorageServerConnections;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -56,6 +57,7 @@ import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.StorageServerConnectionDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
+import org.ovirt.engine.core.dao.provider.HostProviderBindingDao;
 import org.ovirt.engine.core.dao.provider.ProviderDao;
 import org.ovirt.engine.core.utils.threadpool.ThreadPoolUtil;
 import org.ovirt.engine.core.vdsbroker.ResourceManager;
@@ -97,6 +99,8 @@ public abstract class RunVmCommandBase<T extends VmOperationParameterBase> exten
     private ProviderDao providerDao;
     @Inject
     private ProviderProxyFactory providerProxyFactory;
+    @Inject
+    private HostProviderBindingDao hostProviderBindingDao;
 
     protected RunVmCommandBase(Guid commandId) {
         super(commandId);
@@ -193,7 +197,7 @@ public abstract class RunVmCommandBase<T extends VmOperationParameterBase> exten
     protected void runningFailed() {
         try {
             decreasePendingVm();
-            getVdsBroker().removeAsyncRunningCommand(getVmId());
+            vdsBroker.removeAsyncRunningCommand(getVmId());
             setCommandShouldBeLogged(false);
             _isRerun = false;
             setSucceeded(false);
@@ -201,8 +205,7 @@ public abstract class RunVmCommandBase<T extends VmOperationParameterBase> exten
             processVmOnDown();
             ExecutionHandler.setAsyncJob(getExecutionContext(), false);
             executionHandler.endJob(getExecutionContext(), false);
-        }
-        finally {
+        } finally {
             freeLock();
         }
     }
@@ -227,8 +230,7 @@ public abstract class RunVmCommandBase<T extends VmOperationParameterBase> exten
             log();
             ExecutionHandler.setAsyncJob(getExecutionContext(), false);
             executionHandler.endJob(getExecutionContext(), true);
-        }
-        finally {
+        } finally {
             freeLock();
         }
     }
@@ -244,8 +246,7 @@ public abstract class RunVmCommandBase<T extends VmOperationParameterBase> exten
                     && !executionContext.isCompleted()) {
                 endExecutionMonitoring();
             }
-        }
-        finally {
+        } finally {
             freeLock();
         }
     }
@@ -439,8 +440,11 @@ public abstract class RunVmCommandBase<T extends VmOperationParameterBase> exten
             if (network != null && network.isExternal() && iface.isPlugged()) {
                 Provider<?> provider = providerDao.get(network.getProvidedBy().getProviderId());
                 NetworkProviderProxy providerProxy = providerProxyFactory.create(provider);
+                String pluginType = ((OpenstackNetworkProviderProperties) provider.
+                    getAdditionalProperties()).getPluginType();
+                String hostBindingId = hostProviderBindingDao.get(vds.getId(), pluginType);
                 Map<String, String> deviceProperties = providerProxy.allocate(
-                    network, vnicProfile, iface, vds, isMigration);
+                    network, vnicProfile, iface, vds, isMigration, hostBindingId);
                 getVm().getRuntimeDeviceCustomProperties().put(
                     new VmDeviceId(iface.getId(), getVmId()), deviceProperties);
             }

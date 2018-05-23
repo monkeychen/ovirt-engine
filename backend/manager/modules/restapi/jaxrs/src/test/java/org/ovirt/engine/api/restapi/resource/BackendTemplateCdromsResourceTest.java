@@ -16,17 +16,25 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cdrom;
 import org.ovirt.engine.core.common.businessentities.VmTemplate;
 import org.ovirt.engine.core.common.queries.GetVmTemplateParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTemplateCdromsResourceTest
     extends AbstractBackendCollectionResourceTest<Cdrom, VmTemplate, BackendTemplateCdromsResource> {
 
@@ -37,19 +45,19 @@ public class BackendTemplateCdromsResourceTest
         super(new BackendTemplateCdromsResource(TEMPLATE_ID), null, null);
     }
 
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 
-    private void setUpEntityQueryExpectations(int times) throws Exception {
+    private void setUpEntityQueryExpectations(int times) {
         setUpEntityQueryExpectations(times, null);
     }
 
-    private void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    private void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetVmTemplate,
@@ -74,18 +82,12 @@ public class BackendTemplateCdromsResourceTest
     }
 
     @Test
-    public void testSubResourceLocatorBadGuid() throws Exception {
-        try {
-            collection.getCdromResource("foo");
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testSubResourceLocatorBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> collection.getCdromResource("foo")));
     }
 
     @Override
-    protected void verifyCollection(List<Cdrom> collection) throws Exception {
+    protected void verifyCollection(List<Cdrom> collection) {
         assertNotNull(collection);
         assertEquals(1, collection.size());
         verifyModel(collection.get(0));

@@ -1,5 +1,10 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
@@ -16,7 +21,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Configuration;
 import org.ovirt.engine.api.model.CreationStatus;
 import org.ovirt.engine.api.model.Disk;
@@ -68,6 +75,7 @@ import org.ovirt.engine.core.common.utils.VmDeviceType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmsResourceTest
         extends AbstractBackendCollectionResourceTest<Vm, org.ovirt.engine.core.common.businessentities.VM, BackendVmsResource> {
 
@@ -123,21 +131,21 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddAsyncPending() throws Exception {
+    public void testAddAsyncPending() {
         doTestAddAsync(AsyncTaskStatusEnum.init, CreationStatus.PENDING);
     }
 
     @Test
-    public void testAddAsyncInProgress() throws Exception {
+    public void testAddAsyncInProgress() {
         doTestAddAsync(AsyncTaskStatusEnum.running, CreationStatus.IN_PROGRESS);
     }
 
     @Test
-    public void testAddAsyncFinished() throws Exception {
+    public void testAddAsyncFinished() {
         doTestAddAsync(AsyncTaskStatusEnum.finished, CreationStatus.COMPLETE);
     }
 
-    private void doTestAddAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus creationStatus) throws Exception {
+    private void doTestAddAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus creationStatus) {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 0);
         setUpGetBallooningExpectations(1, 0);
@@ -189,7 +197,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddFromScratch() throws Exception {
+    public void testAddFromScratch() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
         setUpGetPayloadExpectations(2, 0);
@@ -245,7 +253,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddFromScratchNamedCluster() throws Exception {
+    public void testAddFromScratchNamedCluster() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(2, 0);
         setUpGetBallooningExpectations(2, 0);
@@ -301,17 +309,16 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddFromScratchCantDo() throws Exception {
+    public void testAddFromScratchCantDo() {
         doTestBadAddFromScratch(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddFromScratchFailure() throws Exception {
+    public void testAddFromScratchFailure() {
         doTestBadAddFromScratch(true, false, FAILURE);
     }
 
-    private void doTestBadAddFromScratch(boolean valid, boolean success, String detail)
-            throws Exception {
+    private void doTestBadAddFromScratch(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(QueryType.GetVmTemplate,
                                      GetVmTemplateParameters.class,
                                      new String[] { "Id" },
@@ -338,16 +345,11 @@ public class BackendVmsResourceTest
         model.setTemplate(new Template());
         model.getTemplate().setId(DEFAULT_TEMPLATE_ID);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testCloneWithDisk() throws Exception {
+    public void testCloneWithDisk() {
         setUriInfo(addMatrixParameterExpectations(setUpBasicUriExpectations(), BackendVmsResource.CLONE, "true"));
         setUpTemplateDisksExpectations(GUIDS[1]);
         setUpGetPayloadExpectations(1, 2);
@@ -389,7 +391,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testCloneVmFromSnapshot() throws Exception {
+    public void testCloneVmFromSnapshot() {
         setUriInfo(setUpBasicUriExpectations());
 
         org.ovirt.engine.core.common.businessentities.VM vmConfiguration = getEntity(0);
@@ -433,7 +435,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testClone() throws Exception {
+    public void testClone() {
         setUriInfo(addMatrixParameterExpectations(setUpBasicUriExpectations(), BackendVmsResource.CLONE, "true"));
         setUpGetPayloadExpectations(1, 2);
         setUpGetBallooningExpectations(1, 2);
@@ -474,7 +476,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddStatelessWithLatestTemplateVersion() throws Exception {
+    public void testAddStatelessWithLatestTemplateVersion() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 2);
         setUpGetBallooningExpectations(1, 2);
@@ -524,7 +526,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUpGetConsoleExpectations(1);
         setUpEntityQueryExpectations(QueryType.GetVmTemplate,
                 GetVmTemplateParameters.class,
@@ -551,7 +553,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddPassTemplateByName() throws Exception {
+    public void testAddPassTemplateByName() {
         setUpGetConsoleExpectations(1);
         setUpEntityQueryExpectations(QueryType.GetVmTemplate,
                 GetVmTemplateParameters.class,
@@ -580,7 +582,7 @@ public class BackendVmsResourceTest
         verifyModel((Vm) response.getEntity(), 2);
     }
 
-    private void setupAddExpectations() throws Exception {
+    private void setupAddExpectations() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 2);
         setUpGetBallooningExpectations(1, 2);
@@ -600,7 +602,7 @@ public class BackendVmsResourceTest
 
 
     @Test
-    public void testAddFromConfigurationWithRegenerateTrue() throws Exception {
+    public void testAddFromConfigurationWithRegenerateTrue() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 3);
         setUpGetBallooningExpectations(1, 3);
@@ -646,7 +648,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddFromConfiguration() throws Exception {
+    public void testAddFromConfiguration() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 2);
         setUpGetBallooningExpectations(1, 2);
@@ -687,7 +689,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddFromConfigurationNamedCluster() throws Exception {
+    public void testAddFromConfigurationNamedCluster() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 2);
         setUpGetBallooningExpectations(1, 2);
@@ -735,17 +737,16 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddFromConfigurationCantDo() throws Exception {
+    public void testAddFromConfigurationCantDo() {
         testBadAddFromConfiguration(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddFromConfigurationFailure() throws Exception {
+    public void testAddFromConfigurationFailure() {
         testBadAddFromConfiguration(true, false, FAILURE);
     }
 
-    private void testBadAddFromConfiguration(boolean valid, boolean success, String detail)
-            throws Exception {
+    private void testBadAddFromConfiguration(boolean valid, boolean success, String detail) {
         Vm model = createModel(null);
         org.ovirt.engine.core.common.businessentities.VM returnedVM = getEntity(2);
         model.setInitialization(new Initialization());
@@ -763,30 +764,23 @@ public class BackendVmsResourceTest
                 new Object[] { returnedVM, Guid.createGuidFromString(model.getCluster().getId())},
                 valid,
                 success));
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void doTestBadAddFromConfigurationMissingParameters() throws Exception {
+    public void doTestBadAddFromConfigurationMissingParameters() {
         setUriInfo(setUpBasicUriExpectations());
         Vm model = createModel(null);
         model.setInitialization(new Initialization());
         model.getInitialization().setConfiguration(new Configuration());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Vm", "add", "initialization.configuration.type", "initialization.configuration.data");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Vm", "add", "initialization.configuration.type", "initialization.configuration.data");
     }
 
     @Test
-    public void testAddWithPlacementPolicySingleHostName() throws Exception {
+    public void testAddWithPlacementPolicySingleHostName() {
         setUpAddVm();
         setUpGetHostByNameExpectations(1);
         setUpGetConsoleExpectations(1);
@@ -815,7 +809,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddWithPlacementPolicySingleHostId() throws Exception {
+    public void testAddWithPlacementPolicySingleHostId() {
         setUpAddVm();
         setUpGetConsoleExpectations(1);
         setUpCreationExpectations(ActionType.AddVm,
@@ -843,7 +837,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddWithPlacementPolicyHostsIds() throws Exception {
+    public void testAddWithPlacementPolicyHostsIds() {
         setUpAddVm();
         setUpCreationExpectations(ActionType.AddVm,
                 AddVmParameters.class,
@@ -874,7 +868,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddWithPlacementPolicyHostsNames() throws Exception {
+    public void testAddWithPlacementPolicyHostsNames() {
         setUpAddVm();
         for (int i =0; i < NAMES.length; i++){
             setUpGetHostByNameExpectations(i);
@@ -907,7 +901,7 @@ public class BackendVmsResourceTest
         verifyModel((Vm) response.getEntity(), 2);
     }
 
-    private void setUpAddVm() throws Exception {
+    private void setUpAddVm() {
         setUriInfo(setUpBasicUriExpectations());
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 2);
@@ -932,7 +926,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddWithStorageDomain() throws Exception {
+    public void testAddWithStorageDomain() {
         setUpAddVm();
         setUpCreationExpectations(ActionType.AddVm,
                                   AddVmParameters.class,
@@ -956,7 +950,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddNamedCluster() throws Exception {
+    public void testAddNamedCluster() {
         setUriInfo(setUpBasicUriExpectations());
         setUriInfo(setUpBasicUriExpectations());
         setUpGetPayloadExpectations(1, 2);
@@ -1005,18 +999,18 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddWithClonePermissionsDontClone() throws Exception {
+    public void testAddWithClonePermissionsDontClone() {
         doTestAddWithClonePermissions(createModel(null), false);
     }
 
     @Test
-    public void testAddWithClonePermissionsClone() throws Exception {
+    public void testAddWithClonePermissionsClone() {
         Vm model = createModel(null);
 
         doTestAddWithClonePermissions(model, true);
     }
 
-    private void doTestAddWithClonePermissions(Vm model, boolean copy) throws Exception {
+    private void doTestAddWithClonePermissions(Vm model, boolean copy) {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, BackendVmsResource.CLONE_PERMISSIONS, Boolean.toString(copy));
         setUriInfo(uriInfo);
@@ -1058,17 +1052,17 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testCloneFromTemplateWithClonePermissionsDontClone() throws Exception {
+    public void testCloneFromTemplateWithClonePermissionsDontClone() {
         doTestCloneFromTemplateWithClonePermissions(createModel(createDiskAttachmentsCollection()), false);
     }
 
     @Test
-    public void testCloneFromTemplateWithClonePermissionsClone() throws Exception {
+    public void testCloneFromTemplateWithClonePermissionsClone() {
         Vm model = createModel(createDiskAttachmentsCollection());
         doTestCloneFromTemplateWithClonePermissions(model, true);
     }
 
-    private void doTestCloneFromTemplateWithClonePermissions(Vm model, boolean copy) throws Exception {
+    private void doTestCloneFromTemplateWithClonePermissions(Vm model, boolean copy) {
         UriInfo uriInfo = setUpBasicUriExpectations();
         Map<String, String> matrixParameters = new HashMap<>();
         matrixParameters.put(BackendVmsResource.CLONE, Boolean.toString(true));
@@ -1117,12 +1111,12 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddCantDo() throws Exception {
+    public void testAddCantDo() {
         doTestBadAdd(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddFailed() throws Exception {
+    public void testAddFailed() {
         doTestBadAdd(true, false, FAILURE);
     }
 
@@ -1189,7 +1183,7 @@ public class BackendVmsResourceTest
         verifyCollection(getCollection());
     }
 
-    private void setUpGetCertuficateExpectations(int times) throws Exception {
+    private void setUpGetCertuficateExpectations(int times) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetVdsCertificateSubjectByVmId,
                     IdQueryParameters.class,
@@ -1199,7 +1193,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    private void setUpGetCertuficateExpectations(int times, int index) throws Exception {
+    private void setUpGetCertuficateExpectations(int times, int index) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetVdsCertificateSubjectByVmId,
                     IdQueryParameters.class,
@@ -1220,8 +1214,7 @@ public class BackendVmsResourceTest
         verifyCollection(getCollection());
     }
 
-    private void doTestBadAdd(boolean valid, boolean success, String detail)
-            throws Exception {
+    private void doTestBadAdd(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(QueryType.GetVmTemplate,
                                      GetVmTemplateParameters.class,
                                      new String[] { "Id" },
@@ -1243,42 +1236,31 @@ public class BackendVmsResourceTest
                                            valid,
                                            success));
 
-        try {
-            collection.add(createModel(null));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(createModel(null))), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         Vm model = new Vm();
         model.setName(NAMES[0]);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Vm", "add", "cluster.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Vm", "add", "cluster.id|name");
     }
 
     @Test
-    public void testAddIncompleteParameters2() throws Exception {
+    public void testAddIncompleteParameters2() {
         Vm model = createModel(null);
         model.setTemplate(null);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Vm", "add", "template.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Vm", "add", "template.id|name");
     }
 
     @Test
-    public void testAddUploadIcon() throws Exception {
+    public void testAddUploadIcon() {
         setUpEntityQueryExpectations(QueryType.GetVmTemplate,
                 GetVmTemplateParameters.class,
                 new String[] { "Id" },
@@ -1308,7 +1290,7 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddUseExistingIcons() throws Exception {
+    public void testAddUseExistingIcons() {
         setUpEntityQueryExpectations(QueryType.GetVmTemplate,
                 GetVmTemplateParameters.class,
                 new String[] { "Id" },
@@ -1337,16 +1319,11 @@ public class BackendVmsResourceTest
     }
 
     @Test
-    public void testAddSetAndUploadIconFailure() throws Exception {
+    public void testAddSetAndUploadIconFailure() {
         final Vm model = createModel(null);
         model.setLargeIcon(IconTestHelpler.createIconWithData());
         model.setSmallIcon(IconTestHelpler.createIcon(GUIDS[2]));
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BAD_REQUEST);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), BAD_REQUEST);
     }
 
     private void setUpTemplateDisksExpectations(Guid templateId) {
@@ -1548,7 +1525,7 @@ public class BackendVmsResourceTest
                 template);
     }
 
-    protected void setUpGetPayloadExpectations(int times) throws Exception {
+    protected void setUpGetPayloadExpectations(int times) {
         VmPayload payload = new VmPayload();
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetVmPayload,
@@ -1559,7 +1536,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    protected void setUpGetPayloadExpectations(int times, int index) throws Exception {
+    protected void setUpGetPayloadExpectations(int times, int index) {
         VmPayload payload = new VmPayload();
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetVmPayload,
@@ -1570,7 +1547,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    private void setUpGetBallooningExpectations(int times) throws Exception {
+    private void setUpGetBallooningExpectations(int times) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.IsBalloonEnabled,
                     IdQueryParameters.class,
@@ -1580,7 +1557,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    private void setUpGetBallooningExpectations(int times, int index) throws Exception {
+    private void setUpGetBallooningExpectations(int times, int index) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.IsBalloonEnabled,
                     IdQueryParameters.class,
@@ -1590,7 +1567,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    private void setUpGetVirtioScsiExpectations(int ... idxs) throws Exception {
+    private void setUpGetVirtioScsiExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetVirtioScsiControllers,
                     IdQueryParameters.class,
@@ -1600,7 +1577,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    private void setUpGetSoundcardExpectations(int ... idxs) throws Exception {
+    private void setUpGetSoundcardExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetSoundDevices,
                     IdQueryParameters.class,
@@ -1610,7 +1587,7 @@ public class BackendVmsResourceTest
         }
     }
 
-    private void setUpGetVmOvfExpectations(int ... idxs) throws Exception {
+    private void setUpGetVmOvfExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetVmOvfByVmId,
                     GetVmOvfByVmIdParameters.class,
@@ -1638,7 +1615,7 @@ public class BackendVmsResourceTest
         super.setUpQueryExpectations(query, failure);
     }
 
-    protected void setUpGetGraphicsMultipleExpectations(int times) throws Exception {
+    protected void setUpGetGraphicsMultipleExpectations(int times) {
         Map<Guid, List<GraphicsDevice>> vmDevices = new HashMap<>();
         for (int i = 0; i < times; i++) {
             vmDevices.put(GUIDS[i], Collections.singletonList(new GraphicsDevice(VmDeviceType.SPICE)));
@@ -1651,7 +1628,7 @@ public class BackendVmsResourceTest
                 vmDevices);
     }
 
-    protected void setUpGetGraphicsExpectations(int times) throws Exception {
+    protected void setUpGetGraphicsExpectations(int times) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetGraphicsDevices,
                     IdQueryParameters.class,
@@ -1670,7 +1647,7 @@ public class BackendVmsResourceTest
         return vminits;
     }
 
-    protected void setUpGetHostByNameExpectations(int idx) throws Exception {
+    protected void setUpGetHostByNameExpectations(int idx) {
         VDS host = BackendHostsResourceTest.setUpEntityExpectations(spy(new VDS()), idx);
         setUpGetEntityExpectations(QueryType.GetVdsByName,
                 NameQueryParameters.class,

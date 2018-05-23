@@ -14,7 +14,7 @@ public class AddHostNetworkQosCommand extends AddQosCommand<HostNetworkQos, Host
 
     @Override
     protected HostNetworkQosDao getQosDao() {
-        return dbFacade.getHostNetworkQosDao();
+        return hostNetworkQosDao;
     }
 
     @Override

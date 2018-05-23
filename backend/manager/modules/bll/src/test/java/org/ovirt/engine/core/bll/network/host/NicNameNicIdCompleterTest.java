@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.bll.network.host;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -11,10 +11,8 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.bll.network.host.NicNameNicIdCompleter.NicNameAndNicIdAccessors;
 import org.ovirt.engine.core.common.action.CreateOrUpdateBond;
 import org.ovirt.engine.core.common.businessentities.network.NetworkAttachment;
@@ -25,11 +23,8 @@ public class NicNameNicIdCompleterTest {
     private VdsNetworkInterface nic;
     private NicNameNicIdCompleter completer;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         nic = new VdsNetworkInterface();
         nic.setId(Guid.newGuid());
         nic.setName("existingNic");
@@ -71,7 +66,7 @@ public class NicNameNicIdCompleterTest {
     }
 
     @Test
-    public void testCompleteWhenUnsetIdAndName() throws Exception {
+    public void testCompleteWhenUnsetIdAndName() {
         NicNameAndNicIdAccessors withoutNameOrIdSet = mock(NicNameAndNicIdAccessors.class);
         completer.complete(withoutNameOrIdSet);
         verify(withoutNameOrIdSet, never()).setName(any());
@@ -79,7 +74,7 @@ public class NicNameNicIdCompleterTest {
     }
 
     @Test
-    public void testCompleteWhenBothIdAndNameDoesNotReferenceExistingNic() throws Exception {
+    public void testCompleteWhenBothIdAndNameDoesNotReferenceExistingNic() {
         NicNameAndNicIdAccessors accessors = mock(NicNameAndNicIdAccessors.class);
 
         Guid guidOfNotExistingNic = Guid.newGuid();
@@ -92,7 +87,7 @@ public class NicNameNicIdCompleterTest {
     }
 
     @Test
-    public void testCompleteWhenNicIdReferencesExistingNic() throws Exception {
+    public void testCompleteWhenNicIdReferencesExistingNic() {
         TestAccessors withIdSet = new TestAccessors();
         withIdSet.setId(nic.getId());
 
@@ -102,7 +97,7 @@ public class NicNameNicIdCompleterTest {
     }
 
     @Test
-    public void testCompleteWhenNicNameReferencesExistingNic() throws Exception {
+    public void testCompleteWhenNicNameReferencesExistingNic() {
         TestAccessors withNameSet = new TestAccessors();
         withNameSet.setName(nic.getName());
 
@@ -112,7 +107,7 @@ public class NicNameNicIdCompleterTest {
     }
 
     @Test
-    public void testCompleteWhenNicNameAndNicIdAreIncoherent() throws Exception {
+    public void testCompleteWhenNicNameAndNicIdAreIncoherent() {
         TestAccessors accessors = new TestAccessors();
         Guid id = Guid.newGuid();
         String name = nic.getName();

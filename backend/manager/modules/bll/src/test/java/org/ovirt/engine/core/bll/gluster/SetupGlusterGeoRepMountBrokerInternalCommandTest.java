@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.bll.gluster;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 import java.util.Collections;
 import java.util.HashSet;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.common.action.gluster.SetUpMountBrokerParameters;
@@ -55,7 +55,6 @@ public class SetupGlusterGeoRepMountBrokerInternalCommandTest extends BaseComman
                         new HashSet<>(Collections.singletonList(Guid.newGuid())),
                         null,
                         null), null));
-        doReturn(vds).when(command).getUpServer();
         doReturn(null).when(command).getSlaveVolume();
         assertFalse(command.validate());
     }
@@ -67,7 +66,6 @@ public class SetupGlusterGeoRepMountBrokerInternalCommandTest extends BaseComman
                         new HashSet<>(Collections.singletonList(Guid.newGuid())),
                         null,
                         null), null));
-        doReturn(vds).when(command).getUpServer();
         doReturn(volume).when(command).getSlaveVolume();
         doReturn(GlusterStatus.DOWN).when(volume).getStatus();
         assertFalse(command.validate());

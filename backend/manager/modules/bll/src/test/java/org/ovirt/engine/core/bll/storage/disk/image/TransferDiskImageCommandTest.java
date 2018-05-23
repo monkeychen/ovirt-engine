@@ -1,18 +1,31 @@
 package org.ovirt.engine.core.bll.storage.disk.image;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.utils.PermissionSubject;
@@ -24,58 +37,116 @@ import org.ovirt.engine.core.common.action.TransferDiskImageParameters;
 import org.ovirt.engine.core.common.businessentities.ActionGroup;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
+import org.ovirt.engine.core.common.businessentities.storage.TransferType;
+import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.DiskImageDao;
+import org.ovirt.engine.core.dao.ImageTransferDao;
 import org.ovirt.engine.core.dao.StorageDomainDao;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TransferDiskImageCommandTest extends TransferImageCommandTest {
-
-    @Mock
-    DiskValidator diskValidator;
-
-    @Mock
-    DiskImagesValidator diskImagesValidator;
+@ExtendWith(MockConfigExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class TransferDiskImageCommandTest extends BaseCommandTest {
 
     @Mock
-    StorageDomainValidator storageDomainValidator;
+    private DiskValidator diskValidator;
 
     @Mock
-    StorageDomainDao storageDomainDao;
+    private DiskImagesValidator diskImagesValidator;
 
     @Mock
-    DiskImageDao diskImageDao;
+    private StorageDomainValidator storageDomainValidator;
 
-    @Override
-    protected TransferDiskImageCommand spyCommand() {
-        return new TransferDiskImageCommand(new TransferDiskImageParameters(), null);
+    @Mock
+    private StorageDomainDao storageDomainDao;
+
+    @Mock
+    private DiskImageDao diskImageDao;
+
+    @Mock
+    private ImageTransferDao imageTransferDao;
+
+    @Spy
+    @InjectMocks
+    private  TransferDiskImageCommand<TransferDiskImageParameters> transferImageCommand =
+            new TransferDiskImageCommand<>(new TransferDiskImageParameters(), null);
+
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.TransferImageClientInactivityTimeoutInSeconds, 600));
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        initCommand();
+        doNothing().when(transferImageCommand).createImage();
+        doNothing().when(transferImageCommand).persistCommand(any(), anyBoolean());
+        doNothing().when(transferImageCommand).lockImage();
+        doNothing().when(transferImageCommand).startImageTransferSession();
     }
 
-    protected void initializeSuppliedImage() {
-        super.initSuppliedImage(transferImageCommand);
+    private void initializeSuppliedImage() {
+        Guid imageId = Guid.newGuid();
+        transferImageCommand.getParameters().setImageId(imageId);
 
         DiskImage diskImage = new DiskImage();
         diskImage.setActive(true);
-        diskImage.setImageId(transferImageCommand.getParameters().getImageId());
-        diskImage.setStorageIds(new ArrayList<>(Collections.singletonList(Guid.newGuid())));
-        diskImage.setStorageTypes(new ArrayList<>(Collections.singletonList(StorageType.NFS)));
+        diskImage.setImageId(imageId);
+        diskImage.setStorageIds(Collections.singletonList(Guid.newGuid()));
+        diskImage.setStorageTypes(Collections.singletonList(StorageType.NFS));
         doReturn(diskImage).when(diskImageDao).get(any());
 
-        doReturn(diskValidator).when(getCommand()).getDiskValidator(any());
-        doReturn(diskImagesValidator).when(getCommand()).getDiskImagesValidator(any());
-        doReturn(storageDomainValidator).when(getCommand()).getStorageDomainValidator(any());
+        doReturn(diskValidator).when(transferImageCommand).getDiskValidator(any());
+        doReturn(diskImagesValidator).when(transferImageCommand).getDiskImagesValidator(any());
+        doReturn(storageDomainValidator).when(transferImageCommand).getStorageDomainValidator(any());
+    }
+
+    private DiskImage initReadyImageForUpload() {
+        Guid imageId = Guid.newGuid();
+        Guid sdId = Guid.newGuid();
+
+        DiskImage readyImage = new DiskImage();
+        readyImage.setImageId(imageId);
+        readyImage.setStorageIds(Collections.singletonList(sdId));
+        readyImage.setStorageTypes(Collections.singletonList(StorageType.NFS));
+        readyImage.setSize(1024L);
+
+        doReturn(readyImage).when(transferImageCommand).getDiskImage();
+        return readyImage;
+    }
+
+    /************
+     * Validation
+     ************/
+    @Test
+    public void testValidationCallOnCreateImage() {
+        doReturn(true).when(transferImageCommand).validateCreateImage();
+        transferImageCommand.validate();
+        verify(transferImageCommand, times(1)).validateCreateImage();
+    }
+
+    @Test
+    public void testValidationCallOnSuppliedImage() {
+        Guid imageId = Guid.newGuid();
+        transferImageCommand.getParameters().setImageId(imageId);
+        doReturn(true).when(transferImageCommand).validateImageTransfer();
+
+        transferImageCommand.validate();
+        verify(transferImageCommand, times(1)).validateImageTransfer();
+    }
+
+    @Test
+    public void testFailOnDownloadWithoutImage() {
+        transferImageCommand.getParameters().setTransferType(TransferType.Download);
+        ValidateTestUtils.runAndAssertValidateFailure(transferImageCommand,
+                EngineMessage.ACTION_TYPE_FAILED_IMAGE_NOT_SPECIFIED_FOR_DOWNLOAD);
     }
 
     @Test
     public void validate() {
         initializeSuppliedImage();
-        assertTrue(getCommand().validate());
+        assertTrue(transferImageCommand.validate());
     }
 
     @Test
@@ -85,10 +156,10 @@ public class TransferDiskImageCommandTest extends TransferImageCommandTest {
                 .when(diskImagesValidator)
                 .diskImagesNotLocked();
 
-        getCommand().validate();
+        transferImageCommand.validate();
         ValidateTestUtils.assertValidationMessages(
                 "Can't start a transfer for a locked image.",
-                getCommand(),
+                transferImageCommand,
                 EngineMessage.ACTION_TYPE_FAILED_DISKS_LOCKED);
     }
 
@@ -99,10 +170,10 @@ public class TransferDiskImageCommandTest extends TransferImageCommandTest {
                 .when(diskValidator)
                 .isDiskPluggedToAnyNonDownVm(false);
 
-        getCommand().validate();
+        transferImageCommand.validate();
         ValidateTestUtils.assertValidationMessages(
                 "Can't start a transfer for an image that is attached to any VMs.",
-                getCommand(),
+                transferImageCommand,
                 EngineMessage.ACTION_TYPE_FAILED_DISK_PLUGGED_TO_NON_DOWN_VMS);
     }
 
@@ -113,10 +184,10 @@ public class TransferDiskImageCommandTest extends TransferImageCommandTest {
                 .when(diskValidator)
                 .isDiskExists();
 
-        getCommand().validate();
+        transferImageCommand.validate();
         ValidateTestUtils.assertValidationMessages(
                 "Can't start a transfer for image that doesn't exist.",
-                getCommand(),
+                transferImageCommand,
                 EngineMessage.ACTION_TYPE_FAILED_DISK_NOT_EXIST);
     }
 
@@ -127,10 +198,10 @@ public class TransferDiskImageCommandTest extends TransferImageCommandTest {
                 .when(diskImagesValidator)
                 .diskImagesNotIllegal();
 
-        getCommand().validate();
+        transferImageCommand.validate();
         ValidateTestUtils.assertValidationMessages(
                 "Can't start a transfer for an illegal image.",
-                getCommand(),
+                transferImageCommand,
                 EngineMessage.ACTION_TYPE_FAILED_DISKS_ILLEGAL);
     }
 
@@ -143,28 +214,101 @@ public class TransferDiskImageCommandTest extends TransferImageCommandTest {
 
         ValidateTestUtils.runAndAssertValidateFailure(
                 "Can't start a transfer to a non-active storage domain.",
-                getCommand(),
+                transferImageCommand,
                 EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL2);
+    }
+
+    /*****************
+     Command execution
+     *****************/
+    @Test
+    public void testCreatingImageIfNotSupplied() {
+        transferImageCommand.executeCommand();
+
+        // Make sure an image is created.
+        verify(transferImageCommand, times(1)).createImage();
+
+        // Make sure that a transfer session won't start yet.
+        verify(transferImageCommand, never()).handleImageIsReadyForTransfer();
+    }
+
+    @Test
+    public void testNotCreatingImageIfSupplied() {
+        Guid suppliedImageId = Guid.newGuid();
+        doNothing().when(transferImageCommand).handleImageIsReadyForTransfer();
+        transferImageCommand.getParameters().setImageId(suppliedImageId);
+        transferImageCommand.executeCommand();
+
+        // Make sure no image is created if an image Guid is supplied.
+        verify(transferImageCommand, never()).createImage();
+
+        // Make sure that a transfer session will start.
+        verify(transferImageCommand, times(1)).handleImageIsReadyForTransfer();
+    }
+
+    @Test
+    public void testFailsDownloadExecutionWithoutImage() {
+        transferImageCommand.getParameters().setTransferType(TransferType.Download);
+        transferImageCommand.executeCommand();
+
+        ValidateTestUtils.runAndAssertValidateFailure(transferImageCommand,
+                EngineMessage.ACTION_TYPE_FAILED_IMAGE_NOT_SPECIFIED_FOR_DOWNLOAD);
+    }
+
+    /*********************************
+     * Handling ready image to upload
+     ********************************/
+    @Test
+    public void testParamsUpdated() {
+        DiskImage readyImage = initReadyImageForUpload();
+
+        transferImageCommand.handleImageIsReadyForTransfer();
+
+        assertEquals(transferImageCommand.getParameters().getStorageDomainId(), readyImage.getStorageIds().get(0));
+        assertEquals(transferImageCommand.getParameters().getTransferSize(), readyImage.getSize());
+    }
+
+    @Test
+    public void testCommandPersistedWithParamUpdates() {
+        DiskImage readyImage = initReadyImageForUpload();
+
+        TransferDiskImageParameters params = spy(new TransferDiskImageParameters());
+        doReturn(params).when(transferImageCommand).getParameters();
+
+        transferImageCommand.handleImageIsReadyForTransfer();
+
+        // Verify that persistCommand is being called after each of the params changes.
+        InOrder inOrder = inOrder(params, transferImageCommand);
+        inOrder.verify(params).setStorageDomainId(any());
+        inOrder.verify(transferImageCommand).persistCommand(any(), anyBoolean());
+
+        inOrder = inOrder(params, transferImageCommand);
+        inOrder.verify(params).setTransferSize(anyLong());
+        inOrder.verify(transferImageCommand).persistCommand(any(), anyBoolean());
+    }
+
+    /**********
+     * Other
+     *********/
+    @Test
+    public void testUploadIsDefaultTransferType() {
+        assertEquals(TransferType.Upload, transferImageCommand.getParameters().getTransferType());
     }
 
     @Test
     public void testPermissionSubjectOnProvidedImage() {
         initializeSuppliedImage();
-        assertEquals(getCommand().getPermissionCheckSubjects().get(0),
-                new PermissionSubject(getCommand().getParameters().getImageGroupID(),
+        assertEquals(transferImageCommand.getPermissionCheckSubjects().get(0),
+                new PermissionSubject(transferImageCommand.getParameters().getImageGroupID(),
                         VdcObjectType.Disk,
                         ActionGroup.EDIT_DISK_PROPERTIES));
     }
 
     @Test
     public void testPermissionSubjectOnNewImage() {
-        assertEquals(getCommand().getPermissionCheckSubjects().get(0),
-                new PermissionSubject(getCommand().getParameters().getImageId(),
+        assertEquals(transferImageCommand.getPermissionCheckSubjects().get(0),
+                new PermissionSubject(transferImageCommand.getParameters().getImageId(),
                         VdcObjectType.Storage,
                         ActionGroup.CREATE_DISK));
-    }
-
-    private TransferDiskImageCommand<TransferDiskImageParameters> getCommand() {
-        return (TransferDiskImageCommand) transferImageCommand;
     }
 }

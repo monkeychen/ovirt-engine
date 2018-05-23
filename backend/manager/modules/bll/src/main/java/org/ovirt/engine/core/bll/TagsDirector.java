@@ -2,7 +2,6 @@ package org.ovirt.engine.core.bll;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -227,36 +226,14 @@ public class TagsDirector implements BackendService, ITagsHandler {
         if (tag == null) {
             return StringUtils.EMPTY;
         }
-        StringBuilder sb = tag.getTagIdAndChildrenIds();
+        StringBuilder sb = getTagIdAndChildrenIds(tag);
         return sb.toString();
     }
 
     @Override
     public String getTagNameAndChildrenNames(Guid tagId) {
         Tags tag = getTagById(tagId);
-        StringBuilder sb = tag.getTagNameAndChildrenNames();
-        return sb.toString();
-    }
-
-    public HashSet<Guid> getTagIdAndChildrenIdsAsSet(Guid tagId) {
-        Tags tag = getTagById(tagId);
-        HashSet<Guid> set = new HashSet<>();
-        tag.getTagIdAndChildrenIdsAsList(set);
-        return set;
-    }
-
-    /**
-     * This function will return the tag's ID and its children IDs. Its used to determine if a tag is assigned to an
-     * entity. Tag is determined as assigned to an entity if the entity is assigned to the tag or to one of its
-     * children.
-     *
-     * @param tagName
-     *            the name of the 'root' tag.
-     * @return a comma separated list of IDs.
-     */
-    public String getTagIdAndChildrenIds(String tagName) {
-        Tags tag = getTagByTagName(tagName);
-        StringBuilder sb = tag.getTagIdAndChildrenIds();
+        StringBuilder sb = getTagNameAndChildrenNames(tag);
         return sb.toString();
     }
 
@@ -283,15 +260,15 @@ public class TagsDirector implements BackendService, ITagsHandler {
                 // unnecessary).
                     if (sb.length() == 0) {
                         if (indicator == TagReturnValueIndicator.ID) {
-                            sb.append(child.getTagIdAndChildrenIds());
+                            sb.append(getTagIdAndChildrenIds(child));
                         } else {
-                            sb.append(child.getTagNameAndChildrenNames());
+                            sb.append(getTagNameAndChildrenNames(child));
                         }
                     } else {
                         if (indicator == TagReturnValueIndicator.ID) {
-                            sb.append(String.format(",%1$s", child.getTagIdAndChildrenIds()));
+                            sb.append(String.format(",%1$s", getTagIdAndChildrenIds(child)));
                         } else {
-                            sb.append(String.format(",%1$s", child.getTagNameAndChildrenNames()));
+                            sb.append(String.format(",%1$s", getTagNameAndChildrenNames(child)));
                         }
                     }
                 } else {
@@ -299,6 +276,26 @@ public class TagsDirector implements BackendService, ITagsHandler {
                 }
             }
         }
+    }
+
+    private static StringBuilder getTagIdAndChildrenIds(Tags tag) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("'").append(tag.getTagId()).append("'");
+
+        for (Tags child : tag.getChildren()) {
+            builder.append(",").append(getTagIdAndChildrenIds(child));
+        }
+        return builder;
+    }
+
+    private static StringBuilder getTagNameAndChildrenNames(Tags tag) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("'").append(tag.getTagName()).append("'");
+
+        for (Tags child : tag.getChildren()) {
+            builder.append("," + getTagNameAndChildrenNames(child));
+        }
+        return builder;
     }
 
     /**

@@ -2,12 +2,9 @@ package org.ovirt.engine.core.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.compat.Version;
 
-@RunWith(MockitoJUnitRunner.class)
 public class OSTest {
 
     @Test

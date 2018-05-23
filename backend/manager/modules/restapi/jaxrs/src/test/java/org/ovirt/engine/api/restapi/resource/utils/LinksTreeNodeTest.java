@@ -1,10 +1,12 @@
 package org.ovirt.engine.api.restapi.resource.utils;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Vm;
 
-public class LinksTreeNodeTest extends Assert{
+public class LinksTreeNodeTest {
 
     @Test
     public void testMarkAsFollowed() {

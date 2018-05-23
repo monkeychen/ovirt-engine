@@ -1,13 +1,13 @@
 package org.ovirt.engine.core.bll.storage.disk.image;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.ovirt.engine.core.bll.AbstractQueryTest;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -17,7 +17,6 @@ import org.ovirt.engine.core.common.businessentities.storage.UnregisteredDiskId;
 import org.ovirt.engine.core.common.queries.IdAndBooleanQueryParameters;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.UnregisteredDisksDao;
-import org.ovirt.engine.core.utils.ovf.OvfReaderException;
 
 public class GetUnregisteredDisksFromDBQueryTest extends AbstractQueryTest<IdAndBooleanQueryParameters, GetUnregisteredDisksFromDBQuery<? extends IdAndBooleanQueryParameters>> {
 
@@ -28,7 +27,7 @@ public class GetUnregisteredDisksFromDBQueryTest extends AbstractQueryTest<IdAnd
     @Mock
     private UnregisteredDisksDao unregisteredDisksDaoMock;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -37,12 +36,12 @@ public class GetUnregisteredDisksFromDBQueryTest extends AbstractQueryTest<IdAnd
     }
 
     @Test
-    public void testExecuteQueryGetAllEntitiesCommand() throws OvfReaderException {
+    public void testExecuteQueryGetAllEntitiesCommand() {
         getQuery().executeQueryCommand();
 
         @SuppressWarnings("unchecked")
         List<VM> result = getQuery().getQueryReturnValue().getReturnValue();
-        assertEquals("Wrong number of Disks in result", 1, result.size());
+        assertEquals(1, result.size(), "Wrong number of Disks in result");
     }
 
     private void mockQueryParameters() {
@@ -51,7 +50,7 @@ public class GetUnregisteredDisksFromDBQueryTest extends AbstractQueryTest<IdAnd
         when(getQueryParameters().isFilterResult()).thenReturn(true);
     }
 
-    private void setUpQueryEntities() throws OvfReaderException {
+    private void setUpQueryEntities() {
         // Set up the expected result
         UnregisteredDisk unregistedDisk = new UnregisteredDisk();
         unregistedDisk.setId(new UnregisteredDiskId(newDiskId, storageDomainId));

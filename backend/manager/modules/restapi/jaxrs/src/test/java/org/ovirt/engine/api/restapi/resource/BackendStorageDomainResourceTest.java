@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.api.restapi.resource.BackendStorageDomainsResourceTest.getModel;
@@ -17,7 +20,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.LogicalUnit;
 import org.ovirt.engine.api.model.LogicalUnits;
@@ -38,6 +43,7 @@ import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.StorageServerConnectionQueryParametersBase;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageDomainResourceTest
         extends AbstractBackendSubResourceTest<StorageDomain, org.ovirt.engine.core.common.businessentities.StorageDomain, BackendStorageDomainResource> {
 
@@ -52,29 +58,20 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendStorageDomainResource("foo", null);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendStorageDomainResource("foo", null)));
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true, getEntity(0));
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUpGetEntityExpectations(1, getEntity(0));
         setUpGetStorageServerConnectionExpectations(1);
         setUriInfo(setUpBasicUriExpectations());
@@ -83,7 +80,7 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testGetFcp() throws Exception {
+    public void testGetFcp() {
         setUpGetEntityExpectations(1, getFcpEntity());
         setUpGetEntityExpectations(QueryType.GetLunsByVgId,
                 GetLunsByVgIdParameters.class,
@@ -122,19 +119,14 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true, getEntity(0));
-        try {
-            resource.update(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getModel(0))));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(2, getEntity(0));
         setUpGetStorageServerConnectionExpectations(2);
 
@@ -149,16 +141,16 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testUpdateCantDo() throws Exception {
+    public void testUpdateCantDo() {
         doTestBadUpdate(false, true, CANT_DO);
     }
 
     @Test
-    public void testUpdateFailed() throws Exception {
+    public void testUpdateFailed() {
         doTestBadUpdate(true, false, FAILURE);
     }
 
-    private void doTestBadUpdate(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadUpdate(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(1, getEntity(0));
         setUpGetStorageServerConnectionExpectations(1);
 
@@ -169,45 +161,30 @@ public class BackendStorageDomainResourceTest
                                            valid,
                                            success));
 
-        try {
-            resource.update(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> resource.update(getModel(0))), detail);
     }
 
     @Test
-    public void testConflictedUpdate() throws Exception {
+    public void testConflictedUpdate() {
         setUpGetEntityExpectations(1, getEntity(0));
         setUpGetStorageServerConnectionExpectations(1);
         setUriInfo(setUpBasicUriExpectations());
 
         StorageDomain model = getModel(1);
         model.setId(GUIDS[1].toString());
-        try {
-            resource.update(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyImmutabilityConstraint(wae);
-        }
+        verifyImmutabilityConstraint(assertThrows(WebApplicationException.class, () -> resource.update(model)));
     }
 
     @Test
-    public void testRemoveStorageDomainNull() throws Exception {
+    public void testRemoveStorageDomainNull() {
         setUpGetEntityExpectations();
         UriInfo uriInfo = setUpBasicUriExpectations();
         setUriInfo(uriInfo);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertEquals(400, wae.getResponse().getStatus());
-        }
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
     @Test
-    public void testRemoveWithHostId() throws Exception {
+    public void testRemoveWithHostId() {
         setUpGetEntityExpectations();
         UriInfo uriInfo = setUpActionExpectations(
             ActionType.RemoveStorageDomain,
@@ -224,7 +201,7 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testRemoveWithFormat() throws Exception {
+    public void testRemoveWithFormat() {
         setUpGetEntityExpectations();
         UriInfo uriInfo = setUpActionExpectations(
             ActionType.RemoveStorageDomain,
@@ -244,7 +221,7 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testRemoveWithDestroy() throws Exception {
+    public void testRemoveWithDestroy() {
         setUpGetEntityExpectations();
         UriInfo uriInfo = setUpActionExpectations(
             ActionType.ForceRemoveStorageDomain,
@@ -263,7 +240,7 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testRemoveWithHostName() throws Exception {
+    public void testRemoveWithHostName() {
         setUpGetEntityExpectations();
         setUpGetEntityExpectations(
             QueryType.GetVdsStaticByName,
@@ -287,16 +264,16 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations();
         UriInfo uriInfo = setUpActionExpectations(
             ActionType.RemoveStorageDomain,
@@ -309,19 +286,13 @@ public class BackendStorageDomainResourceTest
         );
         uriInfo = addMatrixParameterExpectations(uriInfo, BackendStorageDomainResource.HOST, GUIDS[1].toString());
         setUriInfo(uriInfo);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
-    protected void setUpGetEntityExpectations(int times, org.ovirt.engine.core.common.businessentities.StorageDomain entity) throws Exception {
+    protected void setUpGetEntityExpectations(int times, org.ovirt.engine.core.common.businessentities.StorageDomain entity) {
         setUpGetEntityExpectations(times, false, entity);
     }
 
-    protected void setUpGetEntityExpectations(int times, boolean notFound, org.ovirt.engine.core.common.businessentities.StorageDomain entity) throws Exception {
+    protected void setUpGetEntityExpectations(int times, boolean notFound, org.ovirt.engine.core.common.businessentities.StorageDomain entity) {
         while (times-- > 0) {
             setUpGetEntityExpectations(QueryType.GetStorageDomainById,
                                        IdQueryParameters.class,
@@ -331,7 +302,7 @@ public class BackendStorageDomainResourceTest
         }
     }
 
-    protected void setUpGetStorageServerConnectionExpectations(int times) throws Exception {
+    protected void setUpGetStorageServerConnectionExpectations(int times) {
         while (times-- > 0) {
             setUpGetEntityExpectations(QueryType.GetStorageServerConnectionById,
                                        StorageServerConnectionQueryParametersBase.class,
@@ -341,7 +312,7 @@ public class BackendStorageDomainResourceTest
         }
     }
 
-    private void setUpGetEntityExpectations() throws Exception {
+    private void setUpGetEntityExpectations() {
         setUpGetEntityExpectations(QueryType.GetStorageDomainById,
                 IdQueryParameters.class,
                 new String[] { "Id" },
@@ -368,7 +339,7 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void testRefreshLunsSize() throws Exception {
+    public void testRefreshLunsSize() {
         List<String> lunsArray = new ArrayList();
         lunsArray.add(GUIDS[2].toString());
         setUriInfo(setUpActionExpectations(ActionType.RefreshLunsSize,
@@ -387,7 +358,7 @@ public class BackendStorageDomainResourceTest
     }
 
     @Test
-    public void reduceLuns() throws Exception {
+    public void reduceLuns() {
         List<String> paramsLuns = new LinkedList<>();
         paramsLuns.add(GUIDS[2].toString());
         paramsLuns.add(GUIDS[3].toString());
@@ -410,7 +381,7 @@ public class BackendStorageDomainResourceTest
         verifyActionResponse(resource.reduceLuns(action));
     }
 
-    private void verifyActionResponse(Response response) throws Exception {
+    private void verifyActionResponse(Response response) {
         verifyActionResponse(response, "storagedomains/" + GUIDS[0], false);
     }
 }

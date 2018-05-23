@@ -1,15 +1,16 @@
 package org.ovirt.engine.core.notifier.filter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.AuditLogSeverity;
 import org.ovirt.engine.core.notifier.dao.DispatchResult;
 import org.ovirt.engine.core.notifier.transport.Observer;
@@ -96,8 +97,8 @@ public class FirstMatchSimpleFilterTest {
         }
     }
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         filter = new FirstMatchSimpleFilter();
         /*
          * Here we register two transports into the filter logic.
@@ -112,13 +113,13 @@ public class FirstMatchSimpleFilterTest {
         filter.registerTransport(smtp);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    public void tearDown() {
 
     }
 
     @Test
-    public void testEmptyFilter() throws Exception {
+    public void testEmptyFilter() {
         filter.clearFilterEntries();
         filter.processEvent(new E("message0"));
         filter.processEvent(new E("message1"));
@@ -126,7 +127,7 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testConfigurationEntries() throws Exception {
+    public void testConfigurationEntries() {
         filter.clearFilterEntries();
         filter.addFilterEntries(
                 Collections.singletonList(
@@ -138,7 +139,7 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testSimpleParse() throws Exception {
+    public void testSimpleParse() {
         filter.clearFilterEntries();
         filter.addFilterEntries(
                 FirstMatchSimpleFilter.parse("include:VDC_STOP(snmp:) " +
@@ -170,7 +171,7 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testSeverity() throws Exception {
+    public void testSeverity() {
         String expected1 = "test1@example.com";
         String expected2 = "test2@example.com";
         filter.clearFilterEntries();
@@ -194,7 +195,7 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testSeverityAndEventCombo() throws Exception {
+    public void testSeverityAndEventCombo() {
         // These combinations aren't useful in the real world, but we want them to work anyway
         String expected = "test@example.com";
         filter.clearFilterEntries();
@@ -211,7 +212,7 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testAll() throws Exception {
+    public void testAll() {
         filter.clearFilterEntries();
         filter.addFilterEntries(Collections.singletonList(
                 new FirstMatchSimpleFilter.FilterEntry("kuku", null, false, "snmp", "pupu"))
@@ -230,7 +231,7 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testFilter() throws Exception {
+    public void testFilter() {
         filter.clearFilterEntries();
         /*
          * Add configuration filter
@@ -269,32 +270,33 @@ public class FirstMatchSimpleFilterTest {
     }
 
     @Test
-    public void testParsePositive() throws Exception {
+    public void testParsePositive() {
         // Should parse
         FirstMatchSimpleFilter.parse("include:message(kuku:pupu) include:message(kuku:pupu)");
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testParseNegative1() throws Exception {
+    @Test
+    public void testParseNegative1() {
         // No event
-        FirstMatchSimpleFilter.parse("include:(kuku:pupu)");
+        assertThrows(IllegalArgumentException.class, () -> FirstMatchSimpleFilter.parse("include:(kuku:pupu)"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testParseNegative2() throws Exception {
+    @Test
+    public void testParseNegative2() {
         // No Transport
-        FirstMatchSimpleFilter.parse("include:message(:pupu)");
+        assertThrows(IllegalArgumentException.class, () -> FirstMatchSimpleFilter.parse("include:message(:pupu)"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testParseNegative3() throws Exception {
+    @Test
+    public void testParseNegative3() {
         // Random text
-        FirstMatchSimpleFilter.parse("lorem ipsum");
+        assertThrows(IllegalArgumentException.class, () -> FirstMatchSimpleFilter.parse("lorem ipsum"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testParseNegative4() throws Exception {
+    @Test
+    public void testParseNegative4() {
         // Invalid severity
-        FirstMatchSimpleFilter.parse("include:message:_badSeverityTest_(kuku:pupu)");
+        assertThrows(IllegalArgumentException.class,
+                () -> FirstMatchSimpleFilter.parse("include:message:_badSeverityTest_(kuku:pupu)"));
     }
 }

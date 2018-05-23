@@ -3,7 +3,7 @@ package org.ovirt.engine.core.bll.provider;
 import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -16,11 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.provider.RemoveProviderCommand.RemoveProviderValidator;
 import org.ovirt.engine.core.bll.validator.NetworkValidator;
@@ -29,10 +31,10 @@ import org.ovirt.engine.core.common.businessentities.Provider;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.dao.ClusterDao;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RemoveProviderValidatorTest {
 
     @Mock
@@ -48,22 +50,19 @@ public class RemoveProviderValidatorTest {
     private NetworkDao networkDao;
 
     @Mock
-    private VmDao vmDao;
-
-    @Mock
     private ClusterDao clusterDao;
 
     /* --- Set up for tests --- */
 
-    @Before
-    public void setUp() throws Exception {
-        validator = spy(new RemoveProviderValidator(vmDao, networkDao, clusterDao, provider));
+    @BeforeEach
+    public void setUp() {
+        validator = spy(new RemoveProviderValidator(networkDao, clusterDao, provider));
         when(networkDao.getAllForProvider(any())).thenReturn(networks);
         when(clusterDao.getAllClustersByDefaultNetworkProviderId(any())).thenReturn(clusters);
     }
 
     @Test
-    public void networksNotUsedWhenNoNetworks() throws Exception {
+    public void networksNotUsedWhenNoNetworks() {
         assertThat(validator.providerNetworksNotUsed(), isValid());
     }
 
@@ -94,13 +93,13 @@ public class RemoveProviderValidatorTest {
     }
 
     @Test
-    public void networksNotUsedByVmsNorTemplates() throws Exception {
+    public void networksNotUsedByVmsNorTemplates() {
         mockNetwork();
         networksUsedTest(true, true, isValid());
     }
 
     @Test
-    public void networksUsedByAVm() throws Exception {
+    public void networksUsedByAVm() {
         Network net = mockNetwork();
 
         networksUsedTest(
@@ -111,7 +110,7 @@ public class RemoveProviderValidatorTest {
     }
 
     @Test
-    public void networksUsedByAVmMultipleNetworks() throws Exception {
+    public void networksUsedByAVmMultipleNetworks() {
         Network net = mockNetwork();
         Network net2 = mockNetwork();
 
@@ -124,7 +123,7 @@ public class RemoveProviderValidatorTest {
     }
 
     @Test
-    public void networksUsedByATemplate() throws Exception {
+    public void networksUsedByATemplate() {
         Network net = mockNetwork();
 
         networksUsedTest(
@@ -135,7 +134,7 @@ public class RemoveProviderValidatorTest {
     }
 
     @Test
-    public void networksUsedByATemplateMultipleNetworks() throws Exception {
+    public void networksUsedByATemplateMultipleNetworks() {
         Network net = mockNetwork();
         Network net2 = mockNetwork();
 
@@ -148,12 +147,12 @@ public class RemoveProviderValidatorTest {
     }
 
     @Test
-    public void providerIsNoDefaultProvider() throws Exception {
+    public void providerIsNoDefaultProvider() {
         assertThat(validator.providerIsNoDefaultProvider(), isValid());
     }
 
     @Test
-    public void providerIsDefaultProviderOfCluster() throws Exception {
+    public void providerIsDefaultProviderOfCluster() {
         Cluster cluster0 = mockCluster("0");
         Cluster cluster1 = mockCluster("1");
 

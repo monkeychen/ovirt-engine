@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Inject;
 
@@ -19,15 +20,19 @@ import org.ovirt.engine.core.bll.network.cluster.ManagementNetworkUtil;
 import org.ovirt.engine.core.bll.network.cluster.NetworkHelper;
 import org.ovirt.engine.core.bll.network.host.NetworkDeviceHelper;
 import org.ovirt.engine.core.bll.network.host.VfScheduler;
+import org.ovirt.engine.core.bll.network.macpool.MacsUsedAcrossWholeSystem;
 import org.ovirt.engine.core.bll.provider.ProviderProxyFactory;
 import org.ovirt.engine.core.bll.provider.network.NetworkProviderProxy;
+import org.ovirt.engine.core.bll.validator.MacAddressValidator;
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.FeatureSupported;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.ActivateDeactivateVmNicParameters;
 import org.ovirt.engine.core.common.action.PlugAction;
 import org.ovirt.engine.core.common.action.VdsActionParameters;
+import org.ovirt.engine.core.common.businessentities.OpenstackNetworkProviderProperties;
 import org.ovirt.engine.core.common.businessentities.Provider;
+import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VMStatus;
 import org.ovirt.engine.core.common.businessentities.VmDevice;
 import org.ovirt.engine.core.common.businessentities.VmDeviceGeneralType;
@@ -45,6 +50,7 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.VmDeviceDao;
 import org.ovirt.engine.core.dao.network.InterfaceDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
+import org.ovirt.engine.core.dao.provider.HostProviderBindingDao;
 import org.ovirt.engine.core.dao.provider.ProviderDao;
 import org.ovirt.engine.core.utils.ReplacementUtils;
 import org.ovirt.engine.core.utils.StringMapUtils;
@@ -72,6 +78,8 @@ public class ActivateDeactivateVmNicCommand<T extends ActivateDeactivateVmNicPar
 
     private NetworkProviderProxy providerProxy;
 
+    private Provider<?> provider;
+
     @Inject
     private ManagementNetworkUtil managementNetworkUtil;
 
@@ -94,12 +102,17 @@ public class ActivateDeactivateVmNicCommand<T extends ActivateDeactivateVmNicPar
     private InterfaceDao interfaceDao;
     @Inject
     private ProviderProxyFactory providerProxyFactory;
+    @Inject
+    private HostProviderBindingDao hostProviderBindingDao;
 
     @Inject
     private ExternalNetworkManagerFactory externalNetworkManagerFactory;
 
     @Inject
     private NetworkHelper networkHelper;
+
+    @Inject
+    private MacsUsedAcrossWholeSystem macsUsedAcrossWholeSystem;
 
     public ActivateDeactivateVmNicCommand(T parameters, CommandContext commandContext) {
         super(parameters, commandContext);
@@ -373,8 +386,15 @@ public class ActivateDeactivateVmNicCommand<T extends ActivateDeactivateVmNicPar
     }
 
     private void plugToExternalNetwork() {
+        Provider provider = getProvider();
+        if (provider == null) {
+            throw new RuntimeException("No provider for network");
+        }
+        String pluginType = ((OpenstackNetworkProviderProperties) provider.getAdditionalProperties()).getPluginType();
+        String hostBindingId = hostProviderBindingDao.get(getVds().getId(), pluginType);
         Map<String, String> runtimeProperties =
-                getProviderProxy().allocate(getNetwork(), vnicProfile, getParameters().getNic(), getVds(), false);
+                getProviderProxy().allocate(getNetwork(), vnicProfile, getParameters().getNic(), getVds(),
+                false, hostBindingId);
 
         if (runtimeProperties != null) {
             getVm().getRuntimeDeviceCustomProperties().put(vmDevice.getId(), runtimeProperties);
@@ -385,9 +405,19 @@ public class ActivateDeactivateVmNicCommand<T extends ActivateDeactivateVmNicPar
         externalNetworkManagerFactory.create(getParameters().getNic(), getNetwork()).deallocateIfExternal();
     }
 
+    private Provider<?> getProvider() {
+        if (provider == null ) {
+            Network network = getNetwork();
+            if (network != null && network.isExternal()) {
+                provider = providerDao.get(network.getProvidedBy().getProviderId());
+            }
+        }
+        return provider;
+    }
+
     private NetworkProviderProxy getProviderProxy() {
         if (providerProxy == null) {
-            Provider<?> provider = providerDao.get(getNetwork().getProvidedBy().getProviderId());
+            Provider<?> provider = getProvider();
             providerProxy = providerProxyFactory.create(provider);
         }
 
@@ -434,10 +464,14 @@ public class ActivateDeactivateVmNicCommand<T extends ActivateDeactivateVmNicPar
     protected ValidationResult macAvailable() {
         VmNic nic = getParameters().getNic();
 
-        EngineMessage failMessage = EngineMessage.NETWORK_MAC_ADDRESS_IN_USE;
-        return ValidationResult
-                .failWith(failMessage, ReplacementUtils.getVariableAssignmentString(failMessage, nic.getMacAddress()))
-                .when(new VmInterfaceManager().tooManyPluggedInterfaceWithSameMac(nic, getMacPool()));
+        Optional<VM> optionalVm = new VmInterfaceManager().getVmWithSameMacIfDuplicateIsNotAllowed(nic, getMacPool());
+        if (optionalVm.isPresent()) {
+            return new ValidationResult(EngineMessage.NETWORK_MAC_ADDRESS_IN_USE,
+                    ReplacementUtils.createSetVariableString(MacAddressValidator.VAR_MAC_ADDRESS, nic.getMacAddress()),
+                    ReplacementUtils.createSetVariableString(MacAddressValidator.VAR_VM_NAME,
+                            optionalVm.get().getName()));
+        }
+        return ValidationResult.VALID;
     }
 
     protected boolean checkSriovHotPlugSupported() {

@@ -1,5 +1,10 @@
 package org.ovirt.engine.api.restapi.resource.aaa;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,9 +12,10 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Domain;
-import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.Group;
 import org.ovirt.engine.api.restapi.resource.AbstractBackendCollectionResourceTest;
 import org.ovirt.engine.api.restapi.utils.DirectoryEntryIdUtils;
@@ -23,6 +29,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendGroupsResourceTest
     extends AbstractBackendCollectionResourceTest<Group, DbGroup, BackendGroupsResource> {
 
@@ -72,14 +79,7 @@ public class BackendGroupsResourceTest
         UriInfo uriInfo = setUpUriExpectations(null);
         setUpQueryExpectations(QUERY, FAILURE);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Test
@@ -88,13 +88,7 @@ public class BackendGroupsResourceTest
         Throwable t = new RuntimeException(FAILURE);
         setUpQueryExpectations(QUERY, t);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     @Test
@@ -104,16 +98,7 @@ public class BackendGroupsResourceTest
         Throwable t = new RuntimeException(FAILURE);
         setUpQueryExpectations(QUERY, t);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        }
-        finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     @Test
@@ -129,7 +114,7 @@ public class BackendGroupsResourceTest
      * to extract it from the name of the group.
      */
     @Test
-    public void testAddGroupWithExplicitDirectoryName() throws Exception {
+    public void testAddGroupWithExplicitDirectoryName() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
@@ -182,7 +167,7 @@ public class BackendGroupsResourceTest
      * it as part of the group name.
      */
     @Test
-    public void testAddGroupWithImplicitDirectoryName() throws Exception {
+    public void testAddGroupWithImplicitDirectoryName() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
@@ -222,7 +207,7 @@ public class BackendGroupsResourceTest
      * Test that a group can't be added if the directory name isn't provider explicitly or as part of the group name.
      */
     @Test
-    public void testAddGroupWithoutDirectoryName() throws Exception {
+    public void testAddGroupWithoutDirectoryName() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
@@ -233,21 +218,14 @@ public class BackendGroupsResourceTest
         Group model = new Group();
         model.setName(GROUP_NAMES_WITH_NO_DOMAIN[0]);
 
-        try {
-           collection.add(model);
-           fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(400, wae.getResponse().getStatus());
-        }
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> collection.add(model)));
     }
 
     /**
      * Test that if the group identifier is provided it is used to search in the directory instead of the name.
      */
     @Test
-    public void testAddGroupById() throws Exception {
+    public void testAddGroupById() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
@@ -291,7 +269,7 @@ public class BackendGroupsResourceTest
      * added.
      */
     @Test
-    public void testAddGroupByIdFailure() throws Exception {
+    public void testAddGroupByIdFailure() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetDomainList,
                 QueryParametersBase.class,
@@ -309,14 +287,7 @@ public class BackendGroupsResourceTest
         model.setName(GROUP_NAMES[0]);
         model.setId(NON_EXISTANT_EXTERNAL_ID);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> collection.add(model)));
     }
 
     @Override

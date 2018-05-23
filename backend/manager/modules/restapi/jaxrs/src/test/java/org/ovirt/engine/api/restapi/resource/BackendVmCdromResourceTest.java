@@ -16,6 +16,10 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,7 +27,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cdrom;
 import org.ovirt.engine.api.model.File;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -35,6 +41,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmCdromResourceTest
         extends AbstractBackendSubResourceTest<Cdrom, VM, BackendVmCdromResource> {
 
@@ -49,20 +56,14 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(null);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(getVm());
 
@@ -71,7 +72,7 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testGetCurrent() throws Exception {
+    public void testGetCurrent() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, "current");
         setUriInfo(uriInfo);
@@ -82,7 +83,7 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testGetCurrentWithMatrixTrue() throws Exception {
+    public void testGetCurrentWithMatrixTrue() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, "current", "true");
         setUriInfo(uriInfo);
@@ -93,7 +94,7 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testGetCurrentWithMatrixFalse() throws Exception {
+    public void testGetCurrentWithMatrixFalse() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, "current", "false");
         setUriInfo(uriInfo);
@@ -104,20 +105,14 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testChangeCdNotFound() throws Exception {
+    public void testChangeCdNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(null);
-        try {
-            resource.update(getCdrom(B_ISO));
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getCdrom(B_ISO))));
     }
 
     @Test
-    public void testEjectCd() throws Exception {
+    public void testEjectCd() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, "current");
         setUriInfo(uriInfo);
@@ -136,7 +131,7 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testChangeCdUsingQueryParameter() throws Exception {
+    public void testChangeCdUsingQueryParameter() {
         resource.setUriInfo(setUpChangeCdUriQueryExpectations());
         setUpEntityQueryExpectations(getVm());
         setUpActionExpectations(
@@ -153,7 +148,7 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testChangeCdUsingMatrixParameter() throws Exception {
+    public void testChangeCdUsingMatrixParameter() {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, "current");
         setUriInfo(uriInfo);
@@ -181,21 +176,15 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(null);
-        try {
-            Cdrom cdrom = getCdrom(A_ISO);
-            resource.update(cdrom);
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        Cdrom cdrom = getCdrom(A_ISO);
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(cdrom)));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpEntityQueryExpectations(getVm(A_ISO, A_ISO, VMStatus.Down));
         setUpEntityQueryExpectations(getVm(B_ISO, A_ISO, VMStatus.Down));
         setUriInfo(
@@ -214,21 +203,16 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testUpdateIncompleteParameters() throws Exception {
+    public void testUpdateIncompleteParameters() {
         setUriInfo(setUpBasicUriExpectations());
         Cdrom cdrom = new Cdrom();
         cdrom.setFile(null);
-        try {
-            resource.update(cdrom);
-            fail("expected WebApplicationException on incomplete parameters");
-        }
-        catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Cdrom", "update", "file");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> resource.update(cdrom)), "Cdrom", "update", "file");
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpEntityQueryExpectations(
             QueryType.GetVmByVmId,
             IdQueryParameters.class,
@@ -250,7 +234,7 @@ public class BackendVmCdromResourceTest
     }
 
     @Test
-    public void testRemoveNonExistant() throws Exception{
+    public void testRemoveNonExistant() {
         setUpEntityQueryExpectations(
             QueryType.GetVmByVmId,
             IdQueryParameters.class,
@@ -259,27 +243,20 @@ public class BackendVmCdromResourceTest
             null
         );
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    private void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(
             QueryType.GetVmByVmId,
             IdQueryParameters.class,
@@ -297,13 +274,8 @@ public class BackendVmCdromResourceTest
                 success
             )
         );
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
     private Cdrom getCdrom(String path) {
@@ -326,7 +298,7 @@ public class BackendVmCdromResourceTest
         return vm;
     }
 
-    private void setUpEntityQueryExpectations(VM result) throws Exception {
+    private void setUpEntityQueryExpectations(VM result) {
         setUpGetEntityExpectations(
             QueryType.GetVmByVmId,
             IdQueryParameters.class,

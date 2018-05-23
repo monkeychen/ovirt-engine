@@ -1,13 +1,13 @@
 package org.ovirt.engine.core.dao.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Date;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.gluster.GeoRepCrawlStatus;
 import org.ovirt.engine.core.common.businessentities.gluster.GeoRepSessionStatus;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterGeoRepSession;
@@ -17,13 +17,11 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class GlusterGeoRepDaoTest extends BaseDaoTestCase {
+public class GlusterGeoRepDaoTest extends BaseDaoTestCase<GlusterGeoRepDao> {
 
     private static final String GEOREP_CONFIG_CRAWL = "georep-crawl";
     private static final Guid SESSION_ID = new Guid("4f4f751e-549b-4e7a-aff6-32d36856c125");
     private static final Guid NONEXIST_SESSION_ID = new Guid("5e5e751e-549b-4e7a-aff6-32d36856c125");
-
-    private GlusterGeoRepDao dao;
 
     private GlusterGeoRepSession getGlusterGeoRepSession() {
         GlusterGeoRepSession georepSession = new GlusterGeoRepSession();
@@ -63,13 +61,6 @@ public class GlusterGeoRepDaoTest extends BaseDaoTestCase {
         sessionConfig.setDescription("Geo-replication session  crawl");
         sessionConfig.setValue("changelog");
         return sessionConfig;
-    }
-
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        dao = dbFacade.getGlusterGeoRepDao();
     }
 
     @Test

@@ -1,5 +1,10 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -13,8 +18,10 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Tag;
 import org.ovirt.engine.api.restapi.resource.BaseBackendResource.WebFaultException;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -25,6 +32,7 @@ import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTagsResourceTest
     extends AbstractBackendCollectionResourceTest<Tag, Tags, BackendTagsResource> {
 
@@ -36,9 +44,9 @@ public class BackendTagsResourceTest
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
@@ -51,8 +59,8 @@ public class BackendTagsResourceTest
         assertEquals(3, results.size());
     }
 
-    @Test(expected = WebFaultException.class)
-    public void testListLimitResultsBadFormat() throws Exception {
+    @Test
+    public void testListLimitResultsBadFormat() {
         UriInfo uriInfo = setUpUriExpectationsWithMax(true);
         setUpEntityQueryExpectations(QueryType.GetAllTags,
                                      QueryParametersBase.class,
@@ -61,12 +69,11 @@ public class BackendTagsResourceTest
                                      setUpTags(),
                                      null);
         collection.setUriInfo(uriInfo);
-        getCollection();
-        fail("Expected WebFaultException");
+        assertThrows(WebFaultException.class, this::getCollection);
     }
 
     @Test
-    public void testAddTag() throws Exception {
+    public void testAddTag() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddTag,
                                   TagsOperationParameters.class,
@@ -88,7 +95,7 @@ public class BackendTagsResourceTest
     }
 
     @Test
-    public void testAddTagNamedParent() throws Exception {
+    public void testAddTagNamedParent() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetTagByTagName,
@@ -121,7 +128,7 @@ public class BackendTagsResourceTest
     }
 
     @Test
-    public void testAddTagNoParent() throws Exception {
+    public void testAddTagNoParent() {
         setUriInfo(setUpBasicUriExpectations());
 
         Tags entity = getEntity(0);
@@ -149,43 +156,35 @@ public class BackendTagsResourceTest
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(new Tag());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Tag", "add", "name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(new Tag())), "Tag", "add", "name");
     }
 
     @Test
-    public void testAddTagCantDo() throws Exception {
+    public void testAddTagCantDo() {
         doTestBadAddTag(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddTagFailure() throws Exception {
+    public void testAddTagFailure() {
         doTestBadAddTag(true, false, FAILURE);
     }
 
-    private void doTestBadAddTag(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddTag(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(ActionType.AddTag,
                                            TagsOperationParameters.class,
                                            new String[] { "Tag.TagName", "Tag.ParentId" },
                                            new Object[] { NAMES[0], PARENT_GUID },
                                            valid,
                                            success));
-        try {
-            collection.add(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(getModel(0))), detail);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetAllTags,

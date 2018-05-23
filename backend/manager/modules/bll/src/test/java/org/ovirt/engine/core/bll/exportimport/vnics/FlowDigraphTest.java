@@ -2,15 +2,12 @@ package org.ovirt.engine.core.bll.exportimport.vnics;
 
 import static org.mockito.Mockito.mock;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.ovirt.engine.core.bll.exportimport.vnics.MapVnicHandlers.ApplyProfileById;
 import org.ovirt.engine.core.bll.exportimport.vnics.MapVnicHandlers.NetworkAttachedToCluster;
 import org.ovirt.engine.core.bll.exportimport.vnics.MapVnicHandlers.SourceNameExistsOnEngine;
@@ -22,29 +19,15 @@ import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
 import org.ovirt.engine.core.dao.network.VnicProfileViewDao;
 
-@RunWith(Parameterized.class)
 public class FlowDigraphTest {
 
-    private final String flowName;
-    @Rule
-    public MockitoRule initMocks = MockitoJUnit.rule();
+    private static final boolean GENERATE_DEBUG_INFO = false;
 
-    private Flow<MapVnicContext> underTest;
-    private final String circleSize;
-
-    public FlowDigraphTest(String flowName, Flow<MapVnicContext> underTest, String circleSize) {
-        this.flowName = flowName;
-        this.underTest = underTest;
-        this.circleSize = circleSize;
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> params() {
-
-        return Arrays.asList(new Object[][] {
-                { "Map single vnic", getMapVnicFlow(), "19" },
-                { "Map all vnics", getMapVnicsCollectionFlow(), "11" }
-        });
+    public static Stream<Arguments> printFlowAsDigraph() {
+        return Stream.of(
+                Arguments.of("Map single vnic", getMapVnicFlow(), "19"),
+                Arguments.of("Map all vnics", getMapVnicsCollectionFlow(), "11")
+        );
     }
 
     /**
@@ -54,8 +37,12 @@ public class FlowDigraphTest {
      * graph visually in order to analyze its correctness.
      *
      */
-    @Test
-    public void printFlowAsDigraph() {
+    @ParameterizedTest
+    @MethodSource
+    public void printFlowAsDigraph(String flowName, Flow<MapVnicContext> underTest, String circleSize) {
+        if (!GENERATE_DEBUG_INFO) {
+            return;
+        }
         StringBuilder sb = new StringBuilder();
         underTest.getHead().print(sb);
         String graph = sb.toString().replaceAll("([a-z]{1})([A-Z]{1})", "$1\\\\n$2");

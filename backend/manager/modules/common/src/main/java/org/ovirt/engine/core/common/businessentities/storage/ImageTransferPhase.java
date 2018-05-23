@@ -1,6 +1,7 @@
 package org.ovirt.engine.core.common.businessentities.storage;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.ovirt.engine.core.common.businessentities.Identifiable;
 
@@ -20,7 +21,7 @@ public enum ImageTransferPhase implements Identifiable {
 
     private int value;
     private String description;
-    private static final HashMap<Integer, ImageTransferPhase> valueToPhase = new HashMap<>();
+    private static final Map<Integer, ImageTransferPhase> valueToPhase = new HashMap<>();
 
     static {
         for (ImageTransferPhase phase : values()) {
@@ -51,11 +52,11 @@ public enum ImageTransferPhase implements Identifiable {
         return this == INITIALIZING || this == RESUMING || this == TRANSFERRING;
     }
 
-    public boolean canBeResumed() {
+    public boolean isPaused() {
         return this == PAUSED_SYSTEM || this == PAUSED_USER;
     }
 
     public boolean canBeCancelled() {
-        return canBePaused() || canBeResumed();
+        return canBePaused() || isPaused();
     }
 }

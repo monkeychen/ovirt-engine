@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.dao.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterServerService;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterServiceStatus;
 import org.ovirt.engine.core.common.businessentities.gluster.ServiceType;
@@ -19,7 +19,7 @@ import org.ovirt.engine.core.dao.FixturesTool;
 /**
  * Tests for Services Dao
  */
-public class GlusterServerServiceDaoTest extends BaseDaoTestCase {
+public class GlusterServerServiceDaoTest extends BaseDaoTestCase<GlusterServerServiceDao> {
     private static final Guid NEW_SERVICE_ID = new Guid("d1745ef8-8369-43e5-b55a-b4fceea63877");
     private static final Guid CLUSTER_ID = new Guid("ae956031-6be2-43d6-bb8f-5191c9253314");
     private static final Guid SERVICE1_ID = new Guid("c83c9ee3-b7d8-4709-ae4b-5d86a152e6b1");
@@ -35,13 +35,6 @@ public class GlusterServerServiceDaoTest extends BaseDaoTestCase {
     private static final Integer PID_1 = 11111;
     private static final Integer PID_2 = 22222;
     private static final Integer NEW_PID = 33333;
-    private GlusterServerServiceDao dao;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        dao = dbFacade.getGlusterServerServiceDao();
-    }
 
     @Test
     public void testGetByClusterId() {
@@ -121,7 +114,7 @@ public class GlusterServerServiceDaoTest extends BaseDaoTestCase {
         assertNotNull(modifiedService);
         assertEquals(GlusterServiceStatus.STOPPED, modifiedService.getStatus());
         assertEquals(GlusterServiceStatus.RUNNING, existingService.getStatus());
-        assertFalse(existingService.equals(modifiedService));
+        assertNotEquals(existingService, modifiedService);
     }
 
     @Test
@@ -138,7 +131,7 @@ public class GlusterServerServiceDaoTest extends BaseDaoTestCase {
         assertNotNull(modifiedService);
         assertEquals(GlusterServiceStatus.STOPPED, modifiedService.getStatus());
         assertEquals(GlusterServiceStatus.RUNNING, existingService.getStatus());
-        assertFalse(existingService.equals(modifiedService));
+        assertNotEquals(existingService, modifiedService);
     }
 
     private GlusterServerService insertTestService() {

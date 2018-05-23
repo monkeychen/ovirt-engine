@@ -1,15 +1,17 @@
 package org.ovirt.engine.core.bll.provider;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.OpenstackNetworkPluginType;
 import org.ovirt.engine.core.common.businessentities.OpenstackNetworkProviderProperties;
 import org.ovirt.engine.core.common.businessentities.OpenstackNetworkProviderProperties.AgentConfiguration;
@@ -18,7 +20,8 @@ import org.ovirt.engine.core.common.businessentities.ProviderType;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NetworkProviderValidatorTest extends ProviderValidatorTest {
 
     private static final ProviderType NON_NETWORK_PROVIDER_TYPE = ProviderType.FOREMAN;
@@ -41,39 +44,39 @@ public class NetworkProviderValidatorTest extends ProviderValidatorTest {
     }
 
     @Test
-    public void networkMappingsProvidedByParameters() throws Exception {
+    public void networkMappingsProvidedByParameters() {
         assertThat(validator.networkMappingsProvided(RandomUtils.instance().nextString(10)), isValid());
     }
 
     @Test
-    public void networkMappingsProvidedByProvider() throws Exception {
+    public void networkMappingsProvidedByProvider() {
         mockProviderAdditionalProperties();
         when(getProviderAgentConfiguration().getNetworkMappings()).thenReturn(RandomUtils.instance().nextString(10));
         assertThat(validator.networkMappingsProvided(null), isValid());
     }
 
     @Test
-    public void missingNetworkMappings() throws Exception {
+    public void missingNetworkMappings() {
         assertThat(validator.networkMappingsProvided(null),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_MISSING_NETWORK_MAPPINGS));
     }
 
     @Test
-    public void messagingBrokerProvided() throws Exception {
+    public void messagingBrokerProvided() {
         mockMessagingBrokerAddress("1.1.1.1");
 
         assertThat(validator.messagingBrokerProvided(), isValid());
     }
 
     @Test
-    public void missingAgentConfigurationForMessagingBrokerValidation() throws Exception {
+    public void missingAgentConfigurationForMessagingBrokerValidation() {
         mockProviderAdditionalProperties();
         assertThat(validator.messagingBrokerProvided(),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_MISSING_MESSAGING_BROKER_PROPERTIES));
     }
 
     @Test
-    public void missingMessagingConfigurationForMessagingBrokerValidation() throws Exception {
+    public void missingMessagingConfigurationForMessagingBrokerValidation() {
         mockMessagingConfiguration();
 
         assertThat(validator.messagingBrokerProvided(),

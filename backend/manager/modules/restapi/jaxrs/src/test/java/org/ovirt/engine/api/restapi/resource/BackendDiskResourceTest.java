@@ -1,11 +1,18 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.StorageDomain;
@@ -23,6 +30,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendDiskResourceTest
         extends AbstractBackendSubResourceTest<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk, BackendDiskResource>{
 
@@ -48,7 +56,7 @@ public class BackendDiskResourceTest
     }
 
     @Test
-    public void testExport() throws Exception {
+    public void testExport() {
         setUriInfo(setUpActionExpectations(ActionType.ExportRepoImage,
                 ExportRepoImageParameters.class,
                 new String[]{"ImageGroupID", "DestinationDomainId"},
@@ -62,7 +70,7 @@ public class BackendDiskResourceTest
     }
 
     @Test
-    public void testMoveById() throws  Exception {
+    public void testMoveById() {
         setUpEntityQueryExpectations(QueryType.GetDiskAndSnapshotsByDiskId,
                 IdQueryParameters.class,
                 new String[] {"Id"},
@@ -77,7 +85,7 @@ public class BackendDiskResourceTest
     }
 
     @Test
-    public void testCopyById() throws Exception {
+    public void testCopyById() {
         setUpEntityQueryExpectations(QueryType.GetDiskAndSnapshotsByDiskId,
                 IdQueryParameters.class,
                 new String[] {"Id"},
@@ -91,29 +99,22 @@ public class BackendDiskResourceTest
     }
 
 
-    private void verifyActionResponse(Response r) throws Exception {
+    private void verifyActionResponse(Response r) {
         verifyActionResponse(r, "/disks/" + DISK_ID, false);
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendStorageDomainVmResource(null, "foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendStorageDomainVmResource(null, "foo")));
     }
 
     @Test
-    public void testIncompleteExport() throws Exception {
+    public void testIncompleteExport() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.export(new Action());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Action", "export", "storageDomain.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> resource.export(new Action())),
+                "Action", "export", "storageDomain.id|name");
     }
 
     @Override

@@ -1,27 +1,26 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VdcOption;
 
-public class VdcOptionDaoTest extends BaseDaoTestCase {
+public class VdcOptionDaoTest extends BaseDaoTestCase<VdcOptionDao> {
     private static final int INVALID_ID = -1;
     private static final int OPTION_COUNT = 7;
-    private VdcOptionDao dao;
     private VdcOption existingOption;
     private VdcOption newOption;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        dao = dbFacade.getVdcOptionDao();
 
         existingOption = dao.getByNameAndVersion("UserDefinedVmPropertiesKey1", "general");
 

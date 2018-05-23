@@ -1,8 +1,8 @@
 package org.ovirt.engine.core.dao.dwh;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,20 +11,18 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.dal.dbbroker.CustomMapSqlParameterSource;
 import org.ovirt.engine.core.dal.dbbroker.SimpleJdbcCallsHandler;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
-public class OsInfoDaoImplTest extends BaseDaoTestCase {
+public class OsInfoDaoImplTest extends BaseDaoTestCase<OsInfoDao> {
 
     private static final String OS_NAME = "test os name";
     private static final int OS_ID = 666;
 
-    @Inject
-    private OsInfoDaoImpl underTest;
     @Inject
     private JdbcTemplate jdbcTemplate;
     @Inject
@@ -37,7 +35,7 @@ public class OsInfoDaoImplTest extends BaseDaoTestCase {
         emptyTable();
 
         final Map<Integer, String> expected = Collections.singletonMap(OS_ID, OS_NAME);
-        underTest.populateDwhOsInfo(expected);
+        dao.populateDwhOsInfo(expected);
 
         assertResult();
     }
@@ -47,7 +45,7 @@ public class OsInfoDaoImplTest extends BaseDaoTestCase {
         insertOldValues();
 
         final Map<Integer, String> expected = Collections.singletonMap(OS_ID, OS_NAME);
-        underTest.populateDwhOsInfo(expected);
+        dao.populateDwhOsInfo(expected);
 
         assertResult();
     }

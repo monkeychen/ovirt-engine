@@ -16,6 +16,7 @@
 
 package org.ovirt.engine.api.restapi.resource.externalhostproviders;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.api.restapi.utils.HexUtils.hex2string;
@@ -23,6 +24,8 @@ import static org.ovirt.engine.api.restapi.utils.HexUtils.hex2string;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.KatelloErratum;
 import org.ovirt.engine.api.restapi.resource.AbstractBackendCollectionResourceTest;
 import org.ovirt.engine.core.common.businessentities.ErrataData;
@@ -30,6 +33,7 @@ import org.ovirt.engine.core.common.businessentities.Erratum;
 import org.ovirt.engine.core.common.queries.GetErrataCountsParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmKatelloErrataResourceTest extends AbstractBackendCollectionResourceTest<KatelloErratum, Erratum, BackendVmKatelloErrataResource> {
 
     public BackendVmKatelloErrataResourceTest() {
@@ -42,7 +46,7 @@ public class BackendVmKatelloErrataResourceTest extends AbstractBackendCollectio
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(
                 QueryType.GetErrataForVm,
                 GetErrataCountsParameters.class,

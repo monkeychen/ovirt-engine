@@ -63,7 +63,7 @@ public class NetworkMtuValidator {
         for (Network net : ifaceNetworks) {
             mtuDiffNetworks.add(String.format("%s(%s)",
                 net.getName(),
-                net.getMtu() == 0 ? "default" : String.valueOf(net.getMtu())));
+                net.isDefaultMtu() ? "default" : String.valueOf(net.getMtu())));
         }
 
         return new ValidationResult(EngineMessage.NETWORK_MTU_DIFFERENCES,
@@ -81,12 +81,8 @@ public class NetworkMtuValidator {
             return true;
         }
 
-        int nonVlanNetworkActualMtu = getMtuActualValue(nonVlanNetwork);
-        return networksOnNic.stream().map(network -> getMtuActualValue(network)).noneMatch(
+        int nonVlanNetworkActualMtu = NetworkUtils.getHostMtuActualValue(nonVlanNetwork);
+        return networksOnNic.stream().map(network -> NetworkUtils.getHostMtuActualValue(network)).noneMatch(
                 networkMtu -> networkMtu != nonVlanNetworkActualMtu);
-    }
-
-    private int getMtuActualValue(Network network) {
-        return network.getMtu() == 0 ? NetworkUtils.getDefaultMtu() : network.getMtu();
     }
 }

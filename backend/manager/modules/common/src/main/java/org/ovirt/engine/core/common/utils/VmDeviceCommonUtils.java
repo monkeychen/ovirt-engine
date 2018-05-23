@@ -103,9 +103,7 @@ public class VmDeviceCommonUtils {
         int bootOrder = 0;
 
         // reset current boot order of all relevant devices before recomputing it.
-        for (VmDevice device : devices) {
-            device.setBootOrder(0);
-        }
+        devices.forEach(device -> device.setBootOrder(0));
 
         switch (bootSequence) {
         case C:
@@ -286,6 +284,10 @@ public class VmDeviceCommonUtils {
      * is special device - device which is managed, but contains the general properties
      */
     public static boolean isSpecialDevice(String device, VmDeviceGeneralType type) {
+        if (VmDeviceType.USB.getName().equals(device)) {
+            return true;
+        }
+
         switch(type) {
         case SOUND:
             return true;
@@ -305,7 +307,7 @@ public class VmDeviceCommonUtils {
             return VmDeviceType.VIRTIOSERIAL.getName().equals(device)
                     || VmDeviceType.VIRTIOSCSI.getName().equals(device);
         default:
-            return VmDeviceType.USB.getName().equals(device);
+            return false;
         }
     }
 

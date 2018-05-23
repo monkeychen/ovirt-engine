@@ -45,7 +45,8 @@ import org.slf4j.LoggerFactory;
 public class EngineMonitorService implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(EngineMonitorService.class);
-    private static final String ENGINE_NOT_RESPONDING_ERROR = "Engine server is not responding.";
+    private static final String ENGINE_NOT_RESPONDING_ERROR =
+            "ovirt-engine-notifier is not able to connect to engine server, engine might be down or not responding.";
     private static final String ENGINE_RESPONDING_MESSAGE = "Engine server is up and running.";
     private static final String HEALTH_SERVLET_PATH = "/services/health";
     private DataSource ds;
@@ -183,13 +184,11 @@ public class EngineMonitorService implements Runnable {
         try {
             if (isHttpsProtocol) {
                 serverUrl = config.getExternalHttpsUrl(HEALTH_SERVLET_PATH);
-            }
-            else {
+            } else {
                 serverUrl = config.getExternalHttpUrl(HEALTH_SERVLET_PATH);
             }
             log.info("Engine health servlet URL is \"{}\".", serverUrl);
-        }
-        catch (MalformedURLException exception) {
+        } catch(MalformedURLException exception) {
             throw new NotificationServiceException("Can't get engine health servlet URL.", exception);
         }
     }
@@ -395,8 +394,7 @@ public class EngineMonitorService implements Runnable {
     private void initConnectivity() throws NotificationServiceException {
         try {
             ds = new StandaloneDataSource();
-        }
-        catch (SQLException exception) {
+        } catch(SQLException exception) {
             throw new NotificationServiceException("Failed to obtain database connectivity", exception);
         }
     }

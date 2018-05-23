@@ -11,11 +11,9 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.CommandBase;
 import org.ovirt.engine.core.bll.CommandsFactory;
 import org.ovirt.engine.core.bll.context.CommandContext;
-import org.ovirt.engine.core.bll.interfaces.BackendInternal;
 import org.ovirt.engine.core.bll.tasks.interfaces.CommandCallback;
 import org.ovirt.engine.core.bll.tasks.interfaces.CommandCoordinator;
 import org.ovirt.engine.core.bll.tasks.interfaces.SPMTask;
@@ -33,6 +31,7 @@ import org.ovirt.engine.core.common.businessentities.CommandAssociatedEntity;
 import org.ovirt.engine.core.common.businessentities.CommandEntity;
 import org.ovirt.engine.core.common.config.Config;
 import org.ovirt.engine.core.common.config.ConfigValues;
+import org.ovirt.engine.core.common.interfaces.VDSBrokerFrontend;
 import org.ovirt.engine.core.common.vdscommands.IrsBaseVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.SPMTaskGuidBaseVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
@@ -61,6 +60,8 @@ public class CommandCoordinatorImpl implements BackendService, CommandCoordinato
     private Instance<CommandsRepository> commandsRepositoryInstance;
     @Inject
     private Instance<CommandExecutor> commandExecutorInstance;
+    @Inject
+    private VDSBrokerFrontend resourceManager;
 
     public <P extends ActionParametersBase> CommandBase<P> createCommand(ActionType action, P parameters) {
         return CommandsFactory.createCommand(action, parameters);
@@ -322,7 +323,7 @@ public class CommandCoordinatorImpl implements BackendService, CommandCoordinato
     }
 
     private VDSReturnValue runVdsCommand(VDSCommandType commandType, VDSParametersBase parameters) {
-        return Backend.getInstance().getResourceManager().runVdsCommand(commandType, parameters);
+        return resourceManager.runVdsCommand(commandType, parameters);
     }
 
     @Override
@@ -350,10 +351,6 @@ public class CommandCoordinatorImpl implements BackendService, CommandCoordinato
     @Override
     public CommandContext retrieveCommandContext(Guid cmdId) {
         return commandsRepositoryInstance.get().retrieveCommandContext(cmdId);
-    }
-
-    protected BackendInternal getBackend() {
-        return Backend.getInstance();
     }
 
     @Override

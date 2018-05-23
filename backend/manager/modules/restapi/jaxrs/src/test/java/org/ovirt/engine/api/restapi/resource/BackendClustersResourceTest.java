@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -8,7 +11,9 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cpu;
 import org.ovirt.engine.api.model.DataCenter;
 import org.ovirt.engine.api.model.Version;
@@ -22,6 +27,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendClustersResourceTest extends
         AbstractBackendCollectionResourceTest<org.ovirt.engine.api.model.Cluster, Cluster, BackendClustersResource> {
 
@@ -31,7 +37,7 @@ public class BackendClustersResourceTest extends
 
 
     @Test
-    public void testAddClusterFallbackVersion() throws Exception {
+    public void testAddClusterFallbackVersion() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(QueryType.GetStoragePoolById,
                                    IdQueryParameters.class,
@@ -68,7 +74,7 @@ public class BackendClustersResourceTest extends
     }
 
     @Test
-    public void testAddClusterSpecificVersion() throws Exception {
+    public void testAddClusterSpecificVersion() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(QueryType.GetStoragePoolById,
                                    IdQueryParameters.class,
@@ -108,17 +114,16 @@ public class BackendClustersResourceTest extends
     }
 
     @Test
-    public void testAddClusterCantDo() throws Exception {
+    public void testAddClusterCantDo() {
         doTestBadAddCluster(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddClusterFailure() throws Exception {
+    public void testAddClusterFailure() {
         doTestBadAddCluster(true, false, FAILURE);
     }
 
-    private void doTestBadAddCluster(boolean valid, boolean success, String detail)
-            throws Exception {
+    private void doTestBadAddCluster(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(QueryType.GetStoragePoolById,
                                    IdQueryParameters.class,
                                    new String[] { "Id" },
@@ -134,16 +139,11 @@ public class BackendClustersResourceTest extends
         org.ovirt.engine.api.model.Cluster model = getModel(0);
         model.getDataCenter().setId(GUIDS[1].toString());
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddClusterNamedDataCenter() throws Exception {
+    public void testAddClusterNamedDataCenter() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetStoragePoolByDatacenterName,
@@ -181,17 +181,16 @@ public class BackendClustersResourceTest extends
     }
 
     @Test
-    public void testAddClusterCantDoNamedDataCenter() throws Exception {
+    public void testAddClusterCantDoNamedDataCenter() {
         doTestBadAddClusterNamedDataCenter(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddClusterFailureNamedDataCenter() throws Exception {
+    public void testAddClusterFailureNamedDataCenter() {
         doTestBadAddClusterNamedDataCenter(true, false, FAILURE);
     }
 
-    private void doTestBadAddClusterNamedDataCenter(boolean valid, boolean success, String detail)
-            throws Exception {
+    private void doTestBadAddClusterNamedDataCenter(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(QueryType.GetStoragePoolByDatacenterName,
                 NameQueryParameters.class,
                 new String[] { "Name" },
@@ -207,25 +206,17 @@ public class BackendClustersResourceTest extends
         org.ovirt.engine.api.model.Cluster model = getModel(0);
         model.getDataCenter().setName(NAMES[1]);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         org.ovirt.engine.api.model.Cluster model = new org.ovirt.engine.api.model.Cluster();
         model.setName(NAMES[0]);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Cluster", "add", "dataCenter.name|id");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Cluster", "add", "dataCenter.name|id");
     }
 
     protected StoragePool setUpStoragePool(int index) {

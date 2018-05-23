@@ -37,9 +37,7 @@ public class HSMGetAllTasksStatusesVDSCommand<P extends VdsIdVDSCommandParameter
 
             try {
                 proceedProxyReturnValue();
-            }
-
-            catch (RuntimeException ex) {
+            } catch (RuntimeException ex) {
                 task.setException(ex);
             }
 
@@ -60,8 +58,8 @@ public class HSMGetAllTasksStatusesVDSCommand<P extends VdsIdVDSCommandParameter
         return task;
     }
 
-    protected HashMap<Guid, AsyncTaskStatus> parseTaskStatusList(Map<String, ?> taskStatusList) {
-        HashMap<Guid, AsyncTaskStatus> result = new HashMap<>(taskStatusList.size());
+    protected Map<Guid, AsyncTaskStatus> parseTaskStatusList(Map<String, ?> taskStatusList) {
+        Map<Guid, AsyncTaskStatus> result = new HashMap<>(taskStatusList.size());
         for (Map.Entry<String, ?> entry : taskStatusList.entrySet()) {
             try {
                 Guid taskGuid = new Guid(entry.getKey().toString());

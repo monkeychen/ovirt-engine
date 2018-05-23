@@ -1,13 +1,20 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.DiskFormat;
 import org.ovirt.engine.api.model.StorageDomain;
@@ -31,6 +38,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageDomainDisksResourceTest extends AbstractBackendCollectionResourceTest<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk, BackendStorageDomainDisksResource> {
 
     protected static final Guid storagePoolId = new Guid("44444444-4444-4444-4444-444444444444");
@@ -65,7 +73,7 @@ public class BackendStorageDomainDisksResourceTest extends AbstractBackendCollec
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
         setUpEntityQueryExpectations(QueryType.GetDiskByDiskId,
@@ -96,7 +104,7 @@ public class BackendStorageDomainDisksResourceTest extends AbstractBackendCollec
     }
 
     @Test
-    public void testAddUnregistered() throws Exception {
+    public void testAddUnregistered() {
         setUriInfo(addMatrixParameterExpectations(setUpBasicUriExpectations(), BackendStorageDomainDisksResource.UNREGISTERED));
         setUpHttpHeaderExpectations("Expect", "201-created");
         StoragePool storagePool = new StoragePool();
@@ -136,7 +144,7 @@ public class BackendStorageDomainDisksResourceTest extends AbstractBackendCollec
     }
 
     @Test
-    public void testAddIdentifyStorageDomainByName() throws Exception {
+    public void testAddIdentifyStorageDomainByName() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
         setUpEntityQueryExpectations(QueryType.GetDiskByDiskId,
@@ -170,8 +178,8 @@ public class BackendStorageDomainDisksResourceTest extends AbstractBackendCollec
 
     @Override
     @Test
-    @Ignore
-    public void testQuery() throws Exception {
+    @Disabled
+    public void testQuery() {
     }
 
     @Test
@@ -217,22 +225,22 @@ public class BackendStorageDomainDisksResourceTest extends AbstractBackendCollec
 
     @Test
     @Override
-    @Ignore
-    public void testListFailure() throws Exception {
+    @Disabled
+    public void testListFailure() {
 
     }
 
     @Test
     @Override
-    @Ignore
-    public void testListCrash() throws Exception {
+    @Disabled
+    public void testListCrash() {
 
     }
 
     @Test
     @Override
-    @Ignore
-    public void testListCrashClientLocale() throws Exception {
+    @Disabled
+    public void testListCrashClientLocale() {
 
     }
 

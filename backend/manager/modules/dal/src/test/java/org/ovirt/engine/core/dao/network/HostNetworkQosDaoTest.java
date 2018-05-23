@@ -1,9 +1,9 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.HostNetworkQos;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseGenericDaoTestCase;
@@ -34,11 +34,6 @@ public class HostNetworkQosDaoTest extends BaseGenericDaoTestCase<Guid, HostNetw
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.HOST_NETWORK_QOS_B;
-    }
-
-    @Override
-    protected HostNetworkQosDao prepareDao() {
-        return dbFacade.getHostNetworkQosDao();
     }
 
     @Override

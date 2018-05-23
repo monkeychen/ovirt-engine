@@ -1,5 +1,12 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -11,7 +18,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.CreationStatus;
 import org.ovirt.engine.api.model.Template;
 import org.ovirt.engine.api.model.TemplateVersion;
@@ -34,6 +43,7 @@ import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTemplatesResourceTest
     extends BackendTemplatesBasedResourceTest<Template, VmTemplate, BackendTemplatesResource> {
 
@@ -45,18 +55,18 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddWithClonePermissionsDontClone() throws Exception {
+    public void testAddWithClonePermissionsDontClone() {
         doTestAddWithClonePermissions(getModel(0), false);
     }
 
     @Test
-    public void testAddWithClonePermissionsClone() throws Exception {
+    public void testAddWithClonePermissionsClone() {
         Template model = getModel(0);
 
         doTestAddWithClonePermissions(model, true);
     }
 
-    private void doTestAddWithClonePermissions(Template model, boolean copy) throws Exception{
+    private void doTestAddWithClonePermissions(Template model, boolean copy) {
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(uriInfo, BackendTemplatesResource.CLONE_PERMISSIONS, Boolean.toString(copy));
         setUriInfo(uriInfo);
@@ -102,21 +112,21 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddAsyncPending() throws Exception {
+    public void testAddAsyncPending() {
         doTestAddAsync(AsyncTaskStatusEnum.init, CreationStatus.PENDING);
     }
 
     @Test
-    public void testAddAsyncInProgress() throws Exception {
+    public void testAddAsyncInProgress() {
         doTestAddAsync(AsyncTaskStatusEnum.running, CreationStatus.IN_PROGRESS);
     }
 
     @Test
-    public void testAddAsyncFinished() throws Exception {
+    public void testAddAsyncFinished() {
         doTestAddAsync(AsyncTaskStatusEnum.finished, CreationStatus.COMPLETE);
     }
 
-    private void doTestAddAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus creationStatus) throws Exception {
+    private void doTestAddAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus creationStatus) {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpGetGraphicsExpectations(1);
@@ -195,21 +205,15 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddVersionNoBaseTemplateId() throws Exception {
+    public void testAddVersionNoBaseTemplateId() {
         setUriInfo(setUpBasicUriExpectations());
         Template t = getModel(2);
         t.getVersion().setBaseTemplate(null);
-        try {
-            collection.add(t);
-            fail("Should have failed with 400 error due to a missing base template");
-        } catch (WebApplicationException e) {
-            assertNotNull(e.getResponse());
-            assertEquals(400, e.getResponse().getStatus());
-        }
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> collection.add(t)));
     }
 
     @Test
-    public void testAddVersion() throws Exception {
+    public void testAddVersion() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
 
@@ -251,7 +255,7 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddNamedVm() throws Exception {
+    public void testAddNamedVm() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpHttpHeaderExpectations("Expect", "201-created");
@@ -297,7 +301,7 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddNamedVmFiltered() throws Exception {
+    public void testAddNamedVmFiltered() {
         setUpFilteredQueryExpectations();
         setUriInfo(setUpBasicUriExpectations());
 
@@ -344,7 +348,7 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddWithCluster() throws Exception {
+    public void testAddWithCluster() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
 
@@ -389,7 +393,7 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddWithClusterName() throws Exception {
+    public void testAddWithClusterName() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
         setUpEntityQueryExpectations(QueryType.GetClusterById,
@@ -476,20 +480,7 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
-        Template model = new Template();
-        model.setName(NAMES[0]);
-        setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Template", "add", "vm.id|name");
-        }
-    }
-
-    @Test
-    public void testAddUploadIcon() throws Exception {
+    public void testAddUploadIcon() {
         setUpGetGraphicsExpectations(1);
         setUpGetConsoleExpectations(0, 0, 1);
         setUpGetSoundcardExpectations(1);
@@ -528,7 +519,7 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddUseExistingIcons() throws Exception {
+    public void testAddUseExistingIcons() {
         setUpGetGraphicsExpectations(1);
         setUpGetConsoleExpectations(0, 0, 1);
         setUpGetSoundcardExpectations(1);
@@ -567,16 +558,11 @@ public class BackendTemplatesResourceTest
     }
 
     @Test
-    public void testAddSetAndUploadIconFailure() throws Exception {
+    public void testAddSetAndUploadIconFailure() {
         final Template restModel = getRestModel(0);
         restModel.setLargeIcon(IconTestHelpler.createIconWithData());
         restModel.setSmallIcon(IconTestHelpler.createIcon(GUIDS[2]));
-        try {
-            collection.add(restModel);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BAD_REQUEST);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(restModel)), BAD_REQUEST);
     }
 
     protected org.ovirt.engine.core.common.businessentities.VM setUpVm(Guid id) {
@@ -608,8 +594,7 @@ public class BackendTemplatesResourceTest
            when(entity.getTemplateVersionNumber()).thenReturn(2);
            when(entity.getBaseTemplateId()).thenReturn(GUIDS[1]);
            when(entity.isBaseTemplate()).thenReturn(false);
-        }
-        else {
+        } else {
             when(entity.getTemplateVersionNumber()).thenReturn(1);
             // same base template id as the template itself
             when(entity.getBaseTemplateId()).thenReturn(GUIDS[index]);

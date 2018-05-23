@@ -20,7 +20,6 @@ import org.ovirt.engine.core.aaa.ProfileEntry;
 import org.ovirt.engine.core.common.ActionUtils;
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.EventNotificationEntity;
-import org.ovirt.engine.core.common.VdcEventNotificationUtils;
 import org.ovirt.engine.core.common.VdcObjectType;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.VmManagementParametersBase;
@@ -227,14 +226,14 @@ public class AsyncDataProvider {
     private static int DEFAULT_OS_ID = 0;
 
     // dictionary to hold cache of all config values (per version) queried by client, if the request for them succeeded.
-    private HashMap<KeyValuePairCompat<ConfigValues, String>, Object> cachedConfigValues = new HashMap<>();
+    private Map<KeyValuePairCompat<ConfigValues, String>, Object> cachedConfigValues = new HashMap<>();
 
-    private HashMap<KeyValuePairCompat<ConfigValues, String>, Object> cachedConfigValuesPreConvert = new HashMap<>();
+    private Map<KeyValuePairCompat<ConfigValues, String>, Object> cachedConfigValuesPreConvert = new HashMap<>();
 
     private String _defaultConfigurationVersion = null;
 
     // cached OS names
-    private HashMap<Integer, String> osNames;
+    private Map<Integer, String> osNames;
 
     // OS default icons
     private Map<Integer, VmIconIdSizePair> osIdToDefaultIconIdMap;
@@ -251,7 +250,7 @@ public class AsyncDataProvider {
     private List<Integer> osIds;
 
     // cached unique OS names
-    private HashMap<Integer, String> uniqueOsNames;
+    private Map<Integer, String> uniqueOsNames;
 
     // cached linux OS
     private List<Integer> linuxOsIds;
@@ -271,9 +270,9 @@ public class AsyncDataProvider {
     // cached windows OS
     private List<Integer> windowsOsIds;
     // cached OS Architecture
-    private HashMap<Integer, ArchitectureType> osArchitectures;
+    private Map<Integer, ArchitectureType> osArchitectures;
     // default OS per architecture
-    private HashMap<ArchitectureType, Integer> defaultOSes;
+    private Map<ArchitectureType, Integer> defaultOSes;
 
     // default OS per architecture
     private Set<Integer> oses64bit;
@@ -1114,7 +1113,7 @@ public class AsyncDataProvider {
         Frontend.getInstance().runQuery(QueryType.GetAllDisksByVmId, params, aQuery);
     }
 
-    public HashMap<Integer, String> getOsUniqueOsNames() {
+    public Map<Integer, String> getOsUniqueOsNames() {
         return uniqueOsNames;
     }
 
@@ -1695,10 +1694,9 @@ public class AsyncDataProvider {
 
     public void getPmOptions(AsyncQuery<List<String>> aQuery, final String pmType, String version) {
         aQuery.converterCallback = source -> {
-            HashMap<String, ArrayList<String>> cachedPmMap = new HashMap<>();
-            HashMap<String, HashMap<String, Object>> dict =
-                    (HashMap<String, HashMap<String, Object>>) source;
-            for (Entry<String, HashMap<String, Object>> pair : dict.entrySet()) {
+            Map<String, ArrayList<String>> cachedPmMap = new HashMap<>();
+            Map<String, Map<String, Object>> dict = (Map<String, Map<String, Object>>) source;
+            for (Entry<String, Map<String, Object>> pair : dict.entrySet()) {
                 ArrayList<String> list = new ArrayList<>();
                 for (Entry<String, Object> p : pair.getValue().entrySet()) {
                     list.add(p.getKey());
@@ -1998,9 +1996,11 @@ public class AsyncDataProvider {
 
     public void getVmFromOva(AsyncQuery<QueryReturnValue> aQuery, Guid vdsId, String path) {
         aQuery.setHandleFailure(true);
+        GetVmFromOvaQueryParameters params = new GetVmFromOvaQueryParameters(vdsId, path);
+        params.setListDirectory(true);
         Frontend.getInstance().runQuery(
                 QueryType.GetVmFromOva,
-                new GetVmFromOvaQueryParameters(vdsId, path),
+                params,
                 aQuery);
     }
 
@@ -2179,10 +2179,9 @@ public class AsyncDataProvider {
         if (cachedConfigValues.containsKey(config_key)) {
             // cache hit
             returnValue = (T) cachedConfigValues.get(config_key);
-        }
-        // cache miss: convert configuration value using query's converter
-        // and call asyncCallback's onSuccess
-        else if (cachedConfigValuesPreConvert.containsKey(config_key)) {
+        } else if (cachedConfigValuesPreConvert.containsKey(config_key)) {
+            // cache miss: convert configuration value using query's converter
+            // and call asyncCallback's onSuccess
             returnValue = (T) cachedConfigValuesPreConvert.get(config_key);
 
             // run converter
@@ -2342,7 +2341,7 @@ public class AsyncDataProvider {
         return ret;
     }
 
-    public Map<EventNotificationEntity, HashSet<AuditLogType>> getAvailableNotificationEvents() {
+    public Map<EventNotificationEntity, Set<AuditLogType>> getAvailableNotificationEvents() {
         return VdcEventNotificationUtils.getNotificationEvents();
     }
 
@@ -2833,10 +2832,6 @@ public class AsyncDataProvider {
 
     public List<String> getMigrationPoliciesSupportedVersions() {
         return getSupportedVersions(ConfigValues.MigrationPoliciesSupported);
-    }
-
-    public boolean isTestImageIOProxyConnectionSupported(Version clusterVersion) {
-        return (Boolean) getConfigValuePreConverted(ConfigValues.TestImageIOProxyConnectionSupported, clusterVersion.toString());
     }
 
     private List<String> getSupportedVersions(ConfigValues option) {

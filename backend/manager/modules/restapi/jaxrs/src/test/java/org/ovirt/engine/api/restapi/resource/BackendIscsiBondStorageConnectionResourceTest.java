@@ -1,9 +1,14 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.StorageConnection;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.EditIscsiBondParameters;
@@ -14,6 +19,7 @@ import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.StorageServerConnectionQueryParametersBase;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIscsiBondStorageConnectionResourceTest extends AbstractBackendSubResourceTest<StorageConnection, StorageServerConnections, BackendIscsiBondStorageConnectionResource> {
 
     protected static final Guid ISCSI_BOND_ID = GUIDS[1];
@@ -31,7 +37,7 @@ public class BackendIscsiBondStorageConnectionResourceTest extends AbstractBacke
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1, getIscsiBondContainingStorageConnection());
 
@@ -48,20 +54,15 @@ public class BackendIscsiBondStorageConnectionResourceTest extends AbstractBacke
     }
 
     @Test
-    public void testGetWithInvalidStorageId() throws Exception {
+    public void testGetWithInvalidStorageId() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1, getIscsiBondWithNoMatchingStorages());
 
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGetStorageConnectionNotFound() throws Exception {
+    public void testGetStorageConnectionNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1, getIscsiBondContainingStorageConnection());
 
@@ -71,16 +72,11 @@ public class BackendIscsiBondStorageConnectionResourceTest extends AbstractBacke
                 new Object[] { STORAGE_CONNECTION_ID.toString() },
                 null);
 
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(2, getIscsiBondContainingStorageConnection());
         setUpEntityQueryExpectations(
@@ -103,7 +99,7 @@ public class BackendIscsiBondStorageConnectionResourceTest extends AbstractBacke
         assertEquals(200, response.getStatus());
     }
 
-    protected void setUpEntityQueryExpectations(int times, IscsiBond iscsiBond) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, IscsiBond iscsiBond) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetIscsiBondById,
                     IdQueryParameters.class,

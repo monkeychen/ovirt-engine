@@ -1,29 +1,30 @@
 package org.ovirt.engine.core.bll.validator.storage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.VmHandler;
 import org.ovirt.engine.core.bll.storage.utils.BlockStorageDiscardFunctionalityHelper;
@@ -43,15 +44,18 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmDynamicDao;
-import org.ovirt.engine.core.di.InjectorRule;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
 /**
- * A test case for the {@link org.ovirt.engine.core.bll.validator.storage.StorageDomainValidator} class.
+ * A test case for the {@link StorageDomainValidator} class.
  * The hasSpaceForClonedDisk() and hasSpaceForNewDisk() methods are covered separately in
- * {@link org.ovirt.engine.core.bll.validator.storage.StorageDomainValidatorFreeSpaceTest}.
+ * {@link StorageDomainValidatorFreeSpaceTest}.
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class, InjectorExtension.class })
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StorageDomainValidatorTest {
     private StorageDomain domain;
     private StorageDomainValidator validator;
@@ -66,17 +70,18 @@ public class StorageDomainValidatorTest {
     @Mock
     private VmDynamicDao vmDynamicDao;
 
-    @ClassRule
-    public static InjectorRule injectorRule = new InjectorRule();
-
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.DiscardAfterDeleteSupported, Version.v4_0, false));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.DiscardAfterDeleteSupported, Version.v4_0, false),
+                MockConfigDescriptor.of(ConfigValues.DiscardAfterDeleteSupported, Version.v4_1, true)
+        );
+    }
 
     @Mock
-    private BlockStorageDiscardFunctionalityHelper discardFunctionalityHelper;
+    @InjectedMock
+    public BlockStorageDiscardFunctionalityHelper discardFunctionalityHelper;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         domain = new StorageDomain();
         validator = spy(new StorageDomainValidator(domain));
@@ -203,13 +208,11 @@ public class StorageDomainValidatorTest {
     @Test
     public void discardAfterDeleteSupportedByDcVersion() {
         domain.setDiscardAfterDelete(true);
-        mcr.mockConfigValue(ConfigValues.DiscardAfterDeleteSupported, Version.v4_1, true);
         assertThat(validator.isDiscardAfterDeleteSupportedByDcVersion(Version.v4_1), isValid());
     }
 
     @Test
     public void validRunningVmsOrVmLeasesForBackupDomain() {
-        when(vmDao.getAllActiveForStorageDomain(any())).thenReturn(Collections.EMPTY_LIST);
         QueryReturnValue ret = new QueryReturnValue();
         ret.setReturnValue(new ArrayList<VmBase>());
         ret.setSucceeded(true);
@@ -267,7 +270,6 @@ public class StorageDomainValidatorTest {
 
     @Test
     public void invalidVmLeasesForBackupDomain() {
-        when(vmDao.getAllActiveForStorageDomain(any())).thenReturn(Collections.EMPTY_LIST);
         QueryReturnValue ret = new QueryReturnValue();
         List<VmBase> vmLeases = new ArrayList<>();
         VM vm1 = new VM();
@@ -284,7 +286,6 @@ public class StorageDomainValidatorTest {
 
     @Test
     public void validVmLeasesForBackupDomain() {
-        when(vmDao.getAllActiveForStorageDomain(any())).thenReturn(Collections.EMPTY_LIST);
         QueryReturnValue ret = new QueryReturnValue();
         List<VmBase> vmLeases = new ArrayList<>();
         VM vm1 = new VM();
@@ -294,7 +295,6 @@ public class StorageDomainValidatorTest {
         ret.setReturnValue(vmLeases);
         ret.setSucceeded(true);
         doReturn(ret).when(validator).getEntitiesWithLeaseIdForStorageDomain(any());
-        when(vmDao.get(vm1.getId())).thenReturn(vm1);
         assertThat(validator.isRunningVmsOrVmLeasesForBackupDomain(vmHandler), isValid());
     }
 
@@ -380,7 +380,6 @@ public class StorageDomainValidatorTest {
     }
 
     private void assertGetDiscardAfterDeleteLegalForNewBlockStorageDomainPredicate(boolean allLunsSupportDiscard) {
-        injectorRule.bind(BlockStorageDiscardFunctionalityHelper.class, discardFunctionalityHelper);
         when(discardFunctionalityHelper.allLunsSupportDiscard(any())).thenReturn(allLunsSupportDiscard);
         assertEquals(
                 validator.getDiscardAfterDeleteLegalForNewBlockStorageDomainPredicate(Collections.emptyList()).get(),

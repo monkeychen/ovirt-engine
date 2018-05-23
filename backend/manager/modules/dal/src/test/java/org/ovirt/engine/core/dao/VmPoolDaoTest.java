@@ -1,40 +1,41 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VMStatus;
 import org.ovirt.engine.core.common.businessentities.VmPool;
 import org.ovirt.engine.core.common.businessentities.VmPoolMap;
 import org.ovirt.engine.core.compat.Guid;
 
-public class VmPoolDaoTest extends BaseDaoTestCase {
+public class VmPoolDaoTest extends BaseDaoTestCase<VmPoolDao> {
     private static final Guid USER_ID = new Guid("9bf7c640-b620-456f-a550-0348f366544b");
     private static final Guid DELETABLE_VM_POOL_ID = new Guid("103cfd1d-18b1-4790-8a0c-1e52621b0078");
     private static final Guid EXISTING_VM_POOL_ID = new Guid("103cfd1d-18b1-4790-8a0c-1e52621b0076");
     private static final Guid FREE_VM_ID = FixturesTool.VM_RHEL5_POOL_51;
     private static final Guid EXISTING_VM_ID = FixturesTool.VM_RHEL5_POOL_57;
     private static final int VM_POOL_COUNT = 3;
-    private VmPoolDao dao;
     private VmPool existingVmPool;
     private VmPool deletableVmPool;
     private VmPool newVmPool;
     private VmPoolMap newVmPoolMap;
+    @Inject
     private VmDao vmDao;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        dao = dbFacade.getVmPoolDao();
-        vmDao = dbFacade.getVmDao();
 
         existingVmPool = dao.get(EXISTING_VM_POOL_ID);
         deletableVmPool = dao.get(DELETABLE_VM_POOL_ID);

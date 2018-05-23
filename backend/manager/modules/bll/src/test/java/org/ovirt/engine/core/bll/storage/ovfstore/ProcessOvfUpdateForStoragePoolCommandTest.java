@@ -1,8 +1,8 @@
 package org.ovirt.engine.core.bll.storage.ovfstore;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -10,7 +10,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,17 +21,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.common.action.ProcessOvfUpdateParameters;
-import org.ovirt.engine.core.common.businessentities.Snapshot;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
 import org.ovirt.engine.core.common.businessentities.StorageDomainOvfInfo;
 import org.ovirt.engine.core.common.businessentities.StorageDomainOvfInfoStatus;
@@ -54,10 +55,8 @@ import org.ovirt.engine.core.common.constants.StorageConstants;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.KeyValuePairCompat;
-import org.ovirt.engine.core.dao.ClusterDao;
 import org.ovirt.engine.core.dao.DbUserDao;
 import org.ovirt.engine.core.dao.LabelDao;
-import org.ovirt.engine.core.dao.PermissionDao;
 import org.ovirt.engine.core.dao.SnapshotDao;
 import org.ovirt.engine.core.dao.StorageDomainDao;
 import org.ovirt.engine.core.dao.StorageDomainOvfInfoDao;
@@ -67,8 +66,11 @@ import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmStaticDao;
 import org.ovirt.engine.core.dao.VmTemplateDao;
 import org.ovirt.engine.core.dao.scheduling.AffinityGroupDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
+@ExtendWith(MockConfigExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
     private static final int ITEMS_COUNT_PER_UPDATE = 100;
 
@@ -102,9 +104,6 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
     private StorageDomainOvfInfoDao storageDomainOvfInfoDao;
 
     @Mock
-    private ClusterDao clusterDao;
-
-    @Mock
     private AffinityGroupDao affinityGroupDao;
 
     @Mock
@@ -112,9 +111,6 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
 
     @Mock
     private DbUserDao dbUserDao;
-
-    @Mock
-    private PermissionDao permissionDao;
 
     @Mock
     private OvfHelper ovfHelper;
@@ -130,13 +126,14 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
     private Set<Guid> executedOvfUpdatedDomains;
     private Map<Guid, Pair<List<StorageDomainOvfInfo>, StorageDomain>> poolDomainsOvfInfo;
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.StorageDomainOvfStoreCount, 1),
-            mockConfig(ConfigValues.OvfItemsCountPerUpdate, ITEMS_COUNT_PER_UPDATE)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+            MockConfigDescriptor.of(ConfigValues.StorageDomainOvfStoreCount, 1),
+            MockConfigDescriptor.of(ConfigValues.OvfItemsCountPerUpdate, ITEMS_COUNT_PER_UPDATE)
+        );
+    }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // init members
         initMembers();
@@ -150,10 +147,7 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
         // dao related mocks.
         doReturn(1L).when(vmStaticDao).getDbGeneration(any());
         doReturn(pool1).when(command).getStoragePool();
-        List<Snapshot> snapshots = new ArrayList<>();
-        doReturn(snapshots).when(snapshotDao).getAllWithConfiguration(any());
-        // needed for ovf writer utility
-        injectorRule.bind(ClusterDao.class, clusterDao);
+
         mockAnswers();
     }
 
@@ -206,7 +200,7 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
         doAnswer(invocation -> {
             Map<Guid, KeyValuePairCompat<String, List<Guid>>> updateMap =
                     (Map<Guid, KeyValuePairCompat<String, List<Guid>>>) invocation.getArguments()[1];
-            assertTrue("too many ovfs were sent in one vdsm call", updateMap.size() <= ITEMS_COUNT_PER_UPDATE);
+            assertTrue(updateMap.size() <= ITEMS_COUNT_PER_UPDATE, "too many ovfs were sent in one vdsm call");
             return true;
         }).when(ovfUpdateProcessHelper).executeUpdateVmInSpmCommand(any(), any(), any());
 
@@ -215,12 +209,12 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
         doAnswer(invocation -> {
             List<Guid> ids = (List<Guid>) invocation.getArguments()[0];
             List<Long> values = (List<Long>) invocation.getArguments()[1];
-            assertFalse("update of ovf version in db shouldn't be called with an empty value list",
-                    values.isEmpty());
-            assertTrue("update of ovf version in db shouldn't be called with more items then MAX_ITEMS_PER_SQL_STATEMENT",
-                    values.size() <= StorageConstants.OVF_MAX_ITEMS_PER_SQL_STATEMENT);
-            assertEquals("the size of the list of ids for update is not the same as the size of the " +
-                    "list with the new ovf values", values.size(), ids.size());
+            assertFalse(values.isEmpty(), "update of ovf version in db shouldn't be called with an empty value list");
+            assertTrue(values.size() <= StorageConstants.OVF_MAX_ITEMS_PER_SQL_STATEMENT,
+                    "update of ovf version in db shouldn't be called with more items then MAX_ITEMS_PER_SQL_STATEMENT");
+            assertEquals(values.size(), ids.size(),
+                    "the size of the list of ids for update is not the same as the size of the " +
+                            "list with the new ovf values");
             Guid[] ids_array = ids.toArray(new Guid[ids.size()]);
             Long[] values_array = values.toArray(new Long[values.size()]);
             for (int i = 0; i < ids_array.length; i++) {
@@ -329,18 +323,14 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
         doReturn(vmGuids).when(vmAndTemplatesGenerationsDao).getVmsIdsForOvfUpdate(poolId);
         doReturn(templatesGuids).when(vmAndTemplatesGenerationsDao).getVmTemplatesIdsForOvfUpdate(poolId);
         doReturn(removedGuids).when(vmAndTemplatesGenerationsDao).getIdsForOvfDeletion(poolId);
-        doReturn(Collections.EMPTY_LIST).when(affinityGroupDao).getAllAffinityGroupsByVmId(any());
-        doReturn(Collections.EMPTY_LIST).when(labelDao).getAllByEntityIds(any());
         doReturn(new DbUser()).when(dbUserDao).getByUsernameAndDomain(any(), any());
-        doReturn(Collections.EMPTY_LIST).when(permissionDao).getAllForAdElementAndObjectId(any(), any());
         pool.setStatus(StoragePoolStatus.Up);
     }
 
     private void verifyCorrectOvfDataUpdaterRun(Collection<Guid> needToBeUpdated) {
 
-        assertTrue("not all needed vms/templates were updated in db",
-                CollectionUtils.isEqualCollection(executedUpdatedOvfGenerationIdsInDb.keySet(),
-                        needToBeUpdated));
+        assertTrue(CollectionUtils.isEqualCollection(executedUpdatedOvfGenerationIdsInDb.keySet(), needToBeUpdated),
+                "not all needed vms/templates were updated in db");
 
         for (Map.Entry<Guid, Long> storagePoolGenerationEntry : executedUpdatedOvfGenerationIdsInDb.entrySet()) {
             boolean isCorrectVersion = false;
@@ -353,7 +343,7 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
                         storagePoolGenerationEntry.getValue()
                                 .equals(templates.get(storagePoolGenerationEntry.getKey()).getDbGeneration());
             }
-            assertTrue("wrong new ovf version persisted for vm/template", isCorrectVersion);
+            assertTrue(isCorrectVersion, "wrong new ovf version persisted for vm/template");
         }
     }
 
@@ -366,11 +356,11 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
             Map<Guid, List<Guid>> domainsRequiredUpdateForPool) {
         for (Guid storagePoolId : poolsRequiredUpdate) {
             for (Guid updatedDomainForPool : executedOvfUpdatedDomains) {
-                assertTrue("ovf update for domain has been executed with wrong pool",
-                        poolDomainsOvfInfo.containsKey(updatedDomainForPool));
+                assertTrue(poolDomainsOvfInfo.containsKey(updatedDomainForPool),
+                        "ovf update for domain has been executed with wrong pool");
                 if (domainsRequiredUpdateForPool.get(storagePoolId) != null) {
-                    assertTrue("ovf updated hasn't been executed on needed domain",
-                            domainsRequiredUpdateForPool.get(storagePoolId).contains(updatedDomainForPool));
+                    assertTrue(domainsRequiredUpdateForPool.get(storagePoolId).contains(updatedDomainForPool),
+                            "ovf updated hasn't been executed on needed domain");
                 }
             }
         }
@@ -554,8 +544,6 @@ public class ProcessOvfUpdateForStoragePoolCommandTest extends BaseCommandTest {
         executeCommand();
 
         verify(command, never()).performOvfUpdate(any());
-        List<Guid> idsThatNeededToBeUpdated = new LinkedList<>(vmGuids);
-        idsThatNeededToBeUpdated.addAll(templatesGuids);
 
         verifyCorrectOvfDataUpdaterRun(Collections.emptyList());
         verifyOvfUpdatedForSupportedPools(Collections.emptyList(), Collections.emptyMap());

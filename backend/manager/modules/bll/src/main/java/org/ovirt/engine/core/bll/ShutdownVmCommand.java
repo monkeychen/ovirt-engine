@@ -57,15 +57,10 @@ public class ShutdownVmCommand<T extends ShutdownVmParameters> extends StopVmCom
             // become 'down':
             log.info("Sending shutdown command for VM '{}'.", getVmName());
 
-            int secondsToWait = getParameters().getWaitBeforeShutdown() ? Config
-                    .<Integer> getValue(ConfigValues.VmGracefulShutdownTimeout) : 0;
-
             // sending a shutdown command to the VM:
-            setActionReturnValue(runVdsCommand(VDSCommandType.DestroyVm,
-                            new DestroyVmVDSCommandParameters(getVdsId(), getVmId(), getParameters().getStopReason(), true, secondsToWait))
+            setActionReturnValue(runVdsCommand(VDSCommandType.DestroyVm, buildDestroyVmVDSCommandParameters())
                     .getReturnValue());
-        }
-        else {
+        } else {
             // cannot shutdown -> send a StopVm command instead ('destroy'):
             // don't log -> log will appear for the StopVmCommand we are about to run:
             setCommandShouldBeLogged(false);
@@ -80,6 +75,16 @@ public class ShutdownVmCommand<T extends ShutdownVmParameters> extends StopVmCom
         }
 
         setSucceeded(true);
+    }
+
+    private DestroyVmVDSCommandParameters buildDestroyVmVDSCommandParameters() {
+        DestroyVmVDSCommandParameters parameters = new DestroyVmVDSCommandParameters(getVdsId(), getVmId());
+        parameters.setReason(getParameters().getStopReason());
+        parameters.setGracefully(true);
+        parameters.setSecondsToWait(getParameters().getWaitBeforeShutdown() ?
+                Config.getValue(ConfigValues.VmGracefulShutdownTimeout)
+                : 0);
+        return parameters;
     }
 
     private boolean canShutdownVm() {

@@ -1,8 +1,8 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.ExternalStatus;
 import org.ovirt.engine.core.common.businessentities.StorageDomainDynamic;
 import org.ovirt.engine.core.compat.Guid;
@@ -28,11 +28,6 @@ public class StorageDomainDynamicDaoTest
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.STORAGE_DOMAIN_SCALE_SD5;
-    }
-
-    @Override
-    protected StorageDomainDynamicDao prepareDao() {
-        return dbFacade.getStorageDomainDynamicDao();
     }
 
     @Override

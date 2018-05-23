@@ -1,9 +1,9 @@
 package org.ovirt.engine.core.bll;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.common.errors.EngineMessage.ACTION_TYPE_FAILED_EDITING_HOSTED_ENGINE_IS_DISABLED;
 import static org.ovirt.engine.core.common.errors.EngineMessage.ACTION_TYPE_FAILED_VM_CANNOT_BE_HIGHLY_AVAILABLE_AND_HOSTED_ENGINE;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,13 +20,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.numa.vm.NumaValidator;
 import org.ovirt.engine.core.bll.utils.VmDeviceUtils;
 import org.ovirt.engine.core.bll.validator.InClusterUpgradeValidator;
@@ -69,9 +71,14 @@ import org.ovirt.engine.core.dao.VdsDao;
 import org.ovirt.engine.core.dao.VdsNumaNodeDao;
 import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmDeviceDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
+import org.ovirt.engine.core.utils.MockedConfig;
 
 /** A test case for the {@link UpdateVmCommand}. */
+@ExtendWith(MockConfigExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class UpdateVmCommandTest extends BaseCommandTest {
 
     private VM vm;
@@ -104,7 +111,8 @@ public class UpdateVmCommandTest extends BaseCommandTest {
     @Mock
     private VmDeviceDao vmDeviceDao;
     @Mock
-    private CpuFlagsManagerHandler cpuFlagsManagerHandler;
+    @InjectedMock
+    public CpuFlagsManagerHandler cpuFlagsManagerHandler;
     @Mock
     private QuotaValidator quotaValidator;
     @Mock
@@ -131,14 +139,32 @@ public class UpdateVmCommandTest extends BaseCommandTest {
     @Mock
     private VmInitToOpenStackMetadataAdapter openStackMetadataAdapter;
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-        mockConfig(ConfigValues.MaxVmNameLength, 64),
-        mockConfig(ConfigValues.ValidNumOfMonitors, Arrays.asList("1", "2", "4")),
-        mockConfig(ConfigValues.VmPriorityMaxValue, 100),
-        mockConfig(ConfigValues.MaxIoThreadsPerVm, 127),
-        mockConfig(ConfigValues.SupportedClusterLevels, new HashSet<>(Collections.singleton(Version.getLast())))
-    );
+    private static Map<String, String> createMigrationMap() {
+        Map<String, String> migrationMap = new HashMap<>();
+        migrationMap.put("undefined", "true");
+        migrationMap.put("x86", "true");
+        migrationMap.put("ppc", "true");
+        return migrationMap;
+    }
+
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.MaxVmNameLength, 64),
+                MockConfigDescriptor.of(ConfigValues.ValidNumOfMonitors, Arrays.asList("1", "2", "4")),
+                MockConfigDescriptor.of(ConfigValues.VmPriorityMaxValue, 100),
+                MockConfigDescriptor.of(ConfigValues.MaxIoThreadsPerVm, 127),
+                MockConfigDescriptor.of(ConfigValues.SupportedClusterLevels,
+                        new HashSet<>(Collections.singleton(Version.getLast()))),
+                MockConfigDescriptor.of(ConfigValues.IsMigrationSupported, version, createMigrationMap()),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfCpuPerSocket, version, 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfThreadsPerCpu, version, 8),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmCpus, version, 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmSockets, version, 16),
+                MockConfigDescriptor.of(ConfigValues.VM32BitMaxMemorySizeInMB, version, 20480),
+                MockConfigDescriptor.of(ConfigValues.VM64BitMaxMemorySizeInMB, version, 4194304),
+                MockConfigDescriptor.of(ConfigValues.VMPpc64BitMaxMemorySizeInMB, version, 1048576)
+        );
+    }
 
     private static VmManagementParametersBase initParams() {
         VmStatic vmStatic = new VmStatic();
@@ -155,11 +181,9 @@ public class UpdateVmCommandTest extends BaseCommandTest {
         return params;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         final int osId = 0;
-
-        injectorRule.bind(CpuFlagsManagerHandler.class, cpuFlagsManagerHandler);
 
         when(cpuFlagsManagerHandler.getCpuId(any(), any())).thenReturn(CPU_ID);
 
@@ -213,7 +237,7 @@ public class UpdateVmCommandTest extends BaseCommandTest {
     @Test
     public void testPatternBasedNameFails() {
         vmStatic.setName("aa-??bb");
-        assertFalse("Pattern-based name should not be supported for VM", command.validateInputs());
+        assertFalse(command.validateInputs(), "Pattern-based name should not be supported for VM");
     }
 
     @Test
@@ -246,19 +270,6 @@ public class UpdateVmCommandTest extends BaseCommandTest {
         mockVmValidator();
         command.initEffectiveCompatibilityVersion();
 
-        Map<String, String> migrationMap = new HashMap<>();
-        migrationMap.put("undefined", "true");
-        migrationMap.put("x86", "true");
-        migrationMap.put("ppc", "true");
-        mcr.mockConfigValue(ConfigValues.IsMigrationSupported, command.getEffectiveCompatibilityVersion(), migrationMap);
-        mcr.mockConfigValue(ConfigValues.MaxNumOfCpuPerSocket, command.getEffectiveCompatibilityVersion(), 16);
-        mcr.mockConfigValue(ConfigValues.MaxNumOfThreadsPerCpu, command.getEffectiveCompatibilityVersion(), 8);
-        mcr.mockConfigValue(ConfigValues.MaxNumOfVmCpus, command.getEffectiveCompatibilityVersion(), 16);
-        mcr.mockConfigValue(ConfigValues.MaxNumOfVmSockets, command.getEffectiveCompatibilityVersion(), 16);
-        mcr.mockConfigValue(ConfigValues.VM32BitMaxMemorySizeInMB, command.getEffectiveCompatibilityVersion(), 20480);
-        mcr.mockConfigValue(ConfigValues.VM64BitMaxMemorySizeInMB, command.getEffectiveCompatibilityVersion(), 4194304);
-        mcr.mockConfigValue(ConfigValues.VMPpc64BitMaxMemorySizeInMB, command.getEffectiveCompatibilityVersion(), 1048576);
-
         ValidateTestUtils.runAndAssertValidateSuccess(command);
     }
 
@@ -270,7 +281,7 @@ public class UpdateVmCommandTest extends BaseCommandTest {
 
         vmStatic.setDedicatedVmForVdsList(Guid.newGuid());
 
-        assertFalse("validate should have failed with invalid dedicated host.", command.validate());
+        assertFalse(command.validate(), "validate should have failed with invalid dedicated host.");
     }
 
     @Test
@@ -328,7 +339,7 @@ public class UpdateVmCommandTest extends BaseCommandTest {
         vm.setQuotaEnforcementType(QuotaEnforcementTypeEnum.DISABLED);
         vmStatic.setQuotaEnforcementType(QuotaEnforcementTypeEnum.SOFT_ENFORCEMENT);
 
-        assertTrue("Quota enforcement type should be updatable", command.areUpdatedFieldsLegal());
+        assertTrue(command.areUpdatedFieldsLegal(), "Quota enforcement type should be updatable");
     }
 
     @Test
@@ -336,7 +347,7 @@ public class UpdateVmCommandTest extends BaseCommandTest {
         vm.setIsQuotaDefault(true);
         vmStatic.setQuotaDefault(false);
 
-        assertTrue("Quota default should be updatable", command.areUpdatedFieldsLegal());
+        assertTrue(command.areUpdatedFieldsLegal(), "Quota default should be updatable");
     }
 
     @Test
@@ -382,9 +393,9 @@ public class UpdateVmCommandTest extends BaseCommandTest {
     }
 
     @Test
+    @MockedConfig("mockConfigurationBlockingEditingHostedEngine")
     public void testBlockingHostedEngineEditing() {
         // given
-        mcr.mockConfigValue(ConfigValues.AllowEditingHostedEngine, false);
         vmStatic.setOrigin(OriginType.MANAGED_HOSTED_ENGINE);
         // when
         boolean validInput = command.validateInputs();
@@ -394,15 +405,25 @@ public class UpdateVmCommandTest extends BaseCommandTest {
                 .contains(ACTION_TYPE_FAILED_EDITING_HOSTED_ENGINE_IS_DISABLED.name()));
     }
 
+    public static Stream<MockConfigDescriptor<?>> mockConfigurationBlockingEditingHostedEngine() {
+        return Stream.concat(mockConfiguration(),
+                Stream.of(MockConfigDescriptor.of(ConfigValues.AllowEditingHostedEngine, false)));
+    }
+
     @Test
+    @MockedConfig("mockConfigurationAllowedEditingHostedEngine")
     public void testAllowedHostedEngineEditing() {
         // given
-        mcr.mockConfigValue(ConfigValues.AllowEditingHostedEngine, true);
         vmStatic.setOrigin(OriginType.MANAGED_HOSTED_ENGINE);
         // when
         boolean validInput = command.validateInputs();
         // then
         assertThat(validInput, is(true));
+    }
+
+    public static Stream<MockConfigDescriptor<?>> mockConfigurationAllowedEditingHostedEngine() {
+        return Stream.concat(mockConfiguration(),
+                Stream.of(MockConfigDescriptor.of(ConfigValues.AllowEditingHostedEngine, true)));
     }
 
     @Test

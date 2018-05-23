@@ -13,43 +13,31 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.bll.context.CommandContext;
 import org.ovirt.engine.core.bll.context.EngineContext;
-import org.ovirt.engine.core.di.InjectorRule;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
 import org.ovirt.engine.core.utils.lock.LockedObjectFactory;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, InjectorExtension.class})
 public class TransactionalMacPoolDecoratorRollbackTest {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @ClassRule
-    public static InjectorRule injectorRule = new InjectorRule();
-
     @Mock
     private LockedObjectFactory lockedObjectFactory;
 
     @Mock
-    private TransactionManager transactionManager;
+    @InjectedMock
+    public TransactionManager transactionManager;
 
     @Mock
     private MacPool sourceMacPool;
@@ -64,7 +52,6 @@ public class TransactionalMacPoolDecoratorRollbackTest {
 
     @Test
     public void testUnsuccessfulMigrationRevertsToOriginalState() throws Exception {
-        injectorRule.bind(TransactionManager.class, transactionManager);
         when(transactionManager.getTransaction()).thenReturn(transaction);
         mockLockObjectFactoryToDisableLocking();
         mockThatDuringAddingToTargetPoolOnlyFirstMacWillBeAdded();
@@ -126,37 +113,37 @@ public class TransactionalMacPoolDecoratorRollbackTest {
         private Synchronization sync;
 
         @Override
-        public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
+        public void commit() throws SecurityException, IllegalStateException {
 
         }
 
         @Override
-        public boolean delistResource(XAResource xaRes, int flag) throws IllegalStateException, SystemException {
+        public boolean delistResource(XAResource xaRes, int flag) throws IllegalStateException {
             throw new UnsupportedOperationException("Not implemented yet");
         }
 
         @Override
-        public boolean enlistResource(XAResource xaRes) throws RollbackException, IllegalStateException, SystemException {
+        public boolean enlistResource(XAResource xaRes) throws IllegalStateException {
             throw new UnsupportedOperationException("Not implemented yet");
         }
 
         @Override
-        public int getStatus() throws SystemException {
+        public int getStatus() {
             return Status.STATUS_ROLLEDBACK;
         }
 
         @Override
-        public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException, SystemException {
+        public void registerSynchronization(Synchronization sync) throws IllegalStateException {
             this.sync = sync;
         }
 
         @Override
-        public void rollback() throws IllegalStateException, SystemException {
+        public void rollback() throws IllegalStateException {
             this.sync.afterCompletion(getStatus());
         }
 
         @Override
-        public void setRollbackOnly() throws IllegalStateException, SystemException {
+        public void setRollbackOnly() throws IllegalStateException {
             throw new UnsupportedOperationException("Not implemented yet");
         }
     }

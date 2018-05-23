@@ -1,10 +1,8 @@
 package org.ovirt.engine.core.bll.network.dc;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
@@ -12,49 +10,41 @@ import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isVal
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.network.dc.AddNetworkCommand.AddNetworkValidator;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.businessentities.network.ProviderNetwork;
 import org.ovirt.engine.core.common.errors.EngineMessage;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, InjectorExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AddNetworkValidatorTest {
 
     @Mock
     private Network network;
 
     @Mock
-    private DbFacade dbFacade;
-
-    @Mock
-    private NetworkDao networkDao;
-
-    @Mock
-    private VmDao vmDao;
+    @InjectedMock
+    public NetworkDao networkDao;
 
     private List<Network> networks = new ArrayList<>();
     private AddNetworkValidator validator;
 
-    @Before
+    @BeforeEach
     public void setup() {
-        validator = spy(new AddNetworkValidator(vmDao, network));
+        validator = new AddNetworkValidator(network);
 
-        // spy on attempts to access the database
-        doReturn(dbFacade).when(validator).getDbFacade();
-
-        // mock some commonly used Daos
-        when(dbFacade.getNetworkDao()).thenReturn(networkDao);
-
-        // mock their getters
+        // mock DAO getters
         when(networkDao.getAllForDataCenter(any())).thenReturn(networks);
     }
 
@@ -71,31 +61,31 @@ public class AddNetworkValidatorTest {
     }
 
     @Test
-    public void externalNetworkIsNewInDataCenterNoNetworks() throws Exception {
+    public void externalNetworkIsNewInDataCenterNoNetworks() {
         assertThat(validator.externalNetworkNewInDataCenter(), isValid());
     }
 
     @Test
-    public void externalNetworkIsNewInDataCenter() throws Exception {
+    public void externalNetworkIsNewInDataCenter() {
         externalNetworkNewInDataCenterTestSetup(false);
         assertThat(validator.externalNetworkNewInDataCenter(), isValid());
     }
 
     @Test
-    public void externalNetworkIsNotNewInDataCenter() throws Exception {
+    public void externalNetworkIsNotNewInDataCenter() {
         externalNetworkNewInDataCenterTestSetup(true);
         assertThat(validator.externalNetworkNewInDataCenter(),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_EXTERNAL_NETWORK_ALREADY_EXISTS));
     }
 
     @Test
-    public void externalNetworkIsAVmNetwork() throws Exception {
+    public void externalNetworkIsAVmNetwork() {
         when(network.isVmNetwork()).thenReturn(true);
         assertThat(validator.externalNetworkIsVmNetwork(), isValid());
     }
 
     @Test
-    public void externalNetworkIsNotAVmNetwork() throws Exception {
+    public void externalNetworkIsNotAVmNetwork() {
         when(network.isVmNetwork()).thenReturn(false);
         assertThat(validator.externalNetworkIsVmNetwork(),
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_EXTERNAL_NETWORK_MUST_BE_VM_NETWORK));

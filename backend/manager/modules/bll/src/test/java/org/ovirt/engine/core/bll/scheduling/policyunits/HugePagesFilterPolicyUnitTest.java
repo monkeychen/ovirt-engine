@@ -1,25 +1,21 @@
 package org.ovirt.engine.core.bll.scheduling.policyunits;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.bll.scheduling.pending.PendingHugePages;
 import org.ovirt.engine.core.bll.scheduling.pending.PendingResourceManager;
 import org.ovirt.engine.core.common.businessentities.HugePage;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.scheduling.PerHostMessages;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
 public class HugePagesFilterPolicyUnitTest {
     VDS host1;
@@ -28,10 +24,7 @@ public class HugePagesFilterPolicyUnitTest {
 
     PendingResourceManager pendingResourceManager;
 
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule(mockConfig(ConfigValues.MaxSchedulerWeight, 1000));
-
-    @Before
+    @BeforeEach
     public void setUp() {
         host1 = new VDS();
         host1.setId(Guid.newGuid());
@@ -48,7 +41,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testNoHugePages() throws Exception {
+    public void testNoHugePages() {
         HugePagesFilterPolicyUnit unit = new HugePagesFilterPolicyUnit(null, pendingResourceManager);
         List<VDS> hosts = unit.filter(null,
                 Collections.singletonList(host1),
@@ -61,7 +54,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testHugePagesNotPresentOnHost() throws Exception {
+    public void testHugePagesNotPresentOnHost() {
         vm.setCustomProperties("hugepages=1024");
 
         HugePagesFilterPolicyUnit unit = new HugePagesFilterPolicyUnit(null, pendingResourceManager);
@@ -74,7 +67,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testHugePagesWrongSizeOnHost() throws Exception {
+    public void testHugePagesWrongSizeOnHost() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Collections.singletonList(new HugePage(2048, 50)));
@@ -89,7 +82,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testHugePagesGoodAndWrongSizeOnHost() throws Exception {
+    public void testHugePagesGoodAndWrongSizeOnHost() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Arrays.asList(
@@ -106,7 +99,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testNotEnoughFreeHugePagesOnHost() throws Exception {
+    public void testNotEnoughFreeHugePagesOnHost() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Collections.singletonList(new HugePage(1024, 50)));
@@ -121,7 +114,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testNotEnoughFreeHugePagesOnHostPending() throws Exception {
+    public void testNotEnoughFreeHugePagesOnHostPending() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Collections.singletonList(new HugePage(1024, 1050)));
@@ -139,7 +132,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testEnoughFreeHugePagesOnHostBadSizePending() throws Exception {
+    public void testEnoughFreeHugePagesOnHostBadSizePending() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Collections.singletonList(new HugePage(1024, 1050)));
@@ -158,7 +151,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testEnoughFreeHugePagesOnHostBadSizeAvailableAndPending() throws Exception {
+    public void testEnoughFreeHugePagesOnHostBadSizeAvailableAndPending() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Arrays.asList(
@@ -179,7 +172,7 @@ public class HugePagesFilterPolicyUnitTest {
     }
 
     @Test
-    public void testEnoughFreeHugePagesOnHostSimple() throws Exception {
+    public void testEnoughFreeHugePagesOnHostSimple() {
         vm.setCustomProperties("hugepages=1024");
 
         host1.setHugePages(Collections.singletonList(new HugePage(1024, 1024)));

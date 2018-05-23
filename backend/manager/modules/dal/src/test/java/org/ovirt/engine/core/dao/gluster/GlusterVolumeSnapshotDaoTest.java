@@ -1,40 +1,43 @@
 package org.ovirt.engine.core.dao.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterSnapshotStatus;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterVolumeEntity;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterVolumeSnapshotEntity;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 
-public class GlusterVolumeSnapshotDaoTest extends BaseDaoTestCase {
+public class GlusterVolumeSnapshotDaoTest extends BaseDaoTestCase<GlusterVolumeSnapshotDao> {
     private static final Guid VOLUME_ID = new Guid("0c3f45f6-3fe9-4b35-a30c-be0d1a835ea8");
     private static final Guid CLUSTER_ID = new Guid("ae956031-6be2-43d6-bb8f-5191c9253314");
     private static final Guid EXISTING_SNAPSHOT_ID = new Guid("0c3f45f6-3fe9-4b35-a30c-be0d1a835ea6");
     private static final Guid EXISTING_SNAPSHOT_ID_1 = new Guid("0c3f45f6-3fe9-4b35-a30c-be0d1a835ea7");
     private static final String EXISTING_SNAPSHOT_NAME_1 = "test-vol-distribute-1-snap2";
     private static final String NEW_SNAPSHOT_NAME = "test-vol-distribute-1-snap3";
-    private GlusterVolumeSnapshotDao dao;
-    private GlusterVolumeDao volumeDao;
     private GlusterVolumeSnapshotEntity existingSnapshot;
     private GlusterVolumeSnapshotEntity existingSnapshot1;
     private GlusterVolumeSnapshotEntity newSnapshot;
+    @Inject
+    private GlusterVolumeDao volumeDao;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        dao = dbFacade.getGlusterVolumeSnapshotDao();
-        volumeDao = dbFacade.getGlusterVolumeDao();
         existingSnapshot = dao.getById(EXISTING_SNAPSHOT_ID);
         existingSnapshot1 = dao.getById(EXISTING_SNAPSHOT_ID_1);
     }
@@ -155,7 +158,7 @@ public class GlusterVolumeSnapshotDaoTest extends BaseDaoTestCase {
 
         assertNotNull(snapshot);
 
-        assertFalse(snapshot.equals(existingSnapshot));
+        assertNotEquals(snapshot, existingSnapshot);
         existingSnapshot.setStatus(GlusterSnapshotStatus.DEACTIVATED);
         assertEquals(existingSnapshot, snapshot);
     }
@@ -169,7 +172,7 @@ public class GlusterVolumeSnapshotDaoTest extends BaseDaoTestCase {
 
         assertNotNull(snapshot);
 
-        assertFalse(snapshot.equals(existingSnapshot));
+        assertNotEquals(snapshot, existingSnapshot);
         existingSnapshot.setStatus(GlusterSnapshotStatus.DEACTIVATED);
         assertEquals(existingSnapshot, snapshot);
     }

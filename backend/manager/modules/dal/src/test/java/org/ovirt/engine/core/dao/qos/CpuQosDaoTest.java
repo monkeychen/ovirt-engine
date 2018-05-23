@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.dao.qos;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.qos.CpuQos;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseGenericDaoTestCase;
@@ -37,11 +37,6 @@ public class CpuQosDaoTest extends BaseGenericDaoTestCase<Guid, CpuQos, CpuQosDa
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.QOS_ID_4;
-    }
-
-    @Override
-    protected CpuQosDao prepareDao() {
-        return dbFacade.getCpuQosDao();
     }
 
     @Override

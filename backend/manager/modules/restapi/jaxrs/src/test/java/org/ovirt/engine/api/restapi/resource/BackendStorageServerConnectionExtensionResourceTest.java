@@ -1,6 +1,11 @@
 package org.ovirt.engine.api.restapi.resource;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.StorageConnectionExtension;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.IdParameters;
@@ -10,6 +15,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageServerConnectionExtensionResourceTest extends AbstractBackendSubResourceTest<StorageConnectionExtension, StorageServerConnectionExtension, BackendStorageServerConnectionExtensionResource> {
     private static Guid extensionID = GUIDS[0];
     private static Guid hostID = GUIDS[1];
@@ -35,7 +41,7 @@ public class BackendStorageServerConnectionExtensionResourceTest extends Abstrac
         return StorageConnectionExtensionResourceTestHelper.getModel(extensionID, hostID, pass, username, iqn);
     }
 
-    private void setUpGetEntityExpectations() throws Exception {
+    private void setUpGetEntityExpectations() {
         setUpEntityQueryExpectations(QueryType.GetStorageServerConnectionExtensionById,
                 IdQueryParameters.class,
                 new String[] { "Id" },
@@ -44,7 +50,7 @@ public class BackendStorageServerConnectionExtensionResourceTest extends Abstrac
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUpGetEntityExpectations();
         setUriInfo(setUpBasicUriExpectations());
         StorageConnectionExtension extension = resource.get();
@@ -53,7 +59,7 @@ public class BackendStorageServerConnectionExtensionResourceTest extends Abstrac
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations();
         setUriInfo(
                 setUpActionExpectations(
@@ -69,7 +75,7 @@ public class BackendStorageServerConnectionExtensionResourceTest extends Abstrac
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations();
         setUpGetEntityExpectations(); // Get is being called twice.
 

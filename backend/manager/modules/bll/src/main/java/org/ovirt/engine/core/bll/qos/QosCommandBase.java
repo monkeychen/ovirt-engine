@@ -18,14 +18,22 @@ import org.ovirt.engine.core.common.action.QosParametersBase;
 import org.ovirt.engine.core.common.businessentities.qos.QosBase;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
+import org.ovirt.engine.core.dao.network.HostNetworkQosDao;
+import org.ovirt.engine.core.dao.network.NetworkQoSDao;
+import org.ovirt.engine.core.dao.qos.CpuQosDao;
 import org.ovirt.engine.core.dao.qos.QosDao;
-
+import org.ovirt.engine.core.dao.qos.StorageQosDao;
 
 public abstract class QosCommandBase<T extends QosBase, M extends QosValidator<T>> extends CommandBase<QosParametersBase<T>> {
 
     @Inject
-    protected DbFacade dbFacade;
+    protected StorageQosDao storageQosDao;
+    @Inject
+    protected CpuQosDao cpuQosDao;
+    @Inject
+    protected HostNetworkQosDao hostNetworkQosDao;
+    @Inject
+    protected NetworkQoSDao networkQosDao;
 
     private T qos;
     private Guid qosId;

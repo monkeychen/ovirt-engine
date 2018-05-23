@@ -1,5 +1,9 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -10,7 +14,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Template;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AddVmTemplateParameters;
@@ -23,6 +29,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.utils.VmDeviceType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C extends AbstractBackendCollectionResource<R, Q>>
         extends AbstractBackendCollectionResourceTest<R, Q, C> {
 
@@ -76,12 +83,8 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
                 new Object[]{NAMES[0], DESCRIPTIONS[0]},
                 valid,
                 success));
-        try {
-            doAdd(getRestModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, () -> doAdd(getRestModel(0))), detail);
     }
 
     @Test
@@ -94,7 +97,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
         testListAllConsoleAware(false);
     }
 
-    protected void setUpAddExpectations() throws Exception {
+    protected void setUpAddExpectations() {
         setUriInfo(setUpBasicUriExpectations());
         setUpHttpHeaderExpectations("Expect", "201-created");
 
@@ -135,7 +138,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
         }
     }
 
-    protected void setUpGetVirtioScsiExpectations(int ... idxs) throws Exception {
+    protected void setUpGetVirtioScsiExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetVirtioScsiControllers,
                     IdQueryParameters.class,
@@ -145,7 +148,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
         }
     }
 
-    protected void setUpGetSoundcardExpectations(int ... idxs) throws Exception {
+    protected void setUpGetSoundcardExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetSoundDevices,
                     IdQueryParameters.class,
@@ -155,7 +158,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
         }
     }
 
-    protected void setUpGetEntityExpectations(int index) throws Exception {
+    protected void setUpGetEntityExpectations(int index) {
         setUpGetEntityExpectations(QueryType.GetVmTemplate,
                 GetVmTemplateParameters.class,
                 new String[] { "Id" },
@@ -163,7 +166,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
                 getEntity(index));
     }
 
-    protected void setUpGetGraphicsExpectations(int times) throws Exception {
+    protected void setUpGetGraphicsExpectations(int times) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetGraphicsDevices,
                     IdQueryParameters.class,
@@ -177,7 +180,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
 
     protected abstract R getRestModel(int index);
 
-    protected void setUpGetBallooningExpectations(Integer... idxs) throws Exception {
+    protected void setUpGetBallooningExpectations(Integer... idxs) {
         for (int i : idxs) {
             setUpGetEntityExpectations(QueryType.IsBalloonEnabled,
                     IdQueryParameters.class,
@@ -187,7 +190,7 @@ public abstract class BackendTemplatesBasedResourceTest<R extends Template, Q, C
         }
     }
 
-    protected void setUpGetBallooningExpectations(int times) throws Exception {
+    protected void setUpGetBallooningExpectations(int times) {
         List<Integer> idxs = new ArrayList<>();
         for (int i = 0; i < times; i++) {
             idxs.add(i);

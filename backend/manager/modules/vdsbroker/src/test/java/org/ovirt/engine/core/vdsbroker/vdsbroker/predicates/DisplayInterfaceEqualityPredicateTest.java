@@ -1,17 +1,17 @@
 package org.ovirt.engine.core.vdsbroker.vdsbroker.predicates;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkInterface;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DisplayInterfaceEqualityPredicateTest {
     private static final String TEST_INTERFACE_NAME = "interface name";
     private static final String TEST_INTERFACE_ADDRESS = "interface address";
@@ -23,15 +23,15 @@ public class DisplayInterfaceEqualityPredicateTest {
 
     private DisplayInterfaceEqualityPredicate underTest;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         when(mockIface.getName()).thenReturn(TEST_INTERFACE_NAME);
         when(mockIface.getIpv4Address()).thenReturn(TEST_INTERFACE_ADDRESS);
         underTest = new DisplayInterfaceEqualityPredicate(mockIface);
     }
 
     @Test
-    public void testEvalPositive() throws Exception {
+    public void testEvalPositive() {
         when(mockOtherIface.getName()).thenReturn(TEST_INTERFACE_NAME);
         when(mockOtherIface.getIpv4Address()).thenReturn(TEST_INTERFACE_ADDRESS);
 
@@ -39,7 +39,7 @@ public class DisplayInterfaceEqualityPredicateTest {
     }
 
     @Test
-    public void testEvalDifferentName() throws Exception {
+    public void testEvalDifferentName() {
         when(mockOtherIface.getName()).thenReturn("not" + TEST_INTERFACE_NAME);
         when(mockOtherIface.getIpv4Address()).thenReturn(TEST_INTERFACE_ADDRESS);
 
@@ -47,7 +47,7 @@ public class DisplayInterfaceEqualityPredicateTest {
     }
 
     @Test
-    public void testEvalDifferentAddress() throws Exception {
+    public void testEvalDifferentAddress() {
         when(mockOtherIface.getName()).thenReturn(TEST_INTERFACE_NAME);
         when(mockOtherIface.getIpv4Address()).thenReturn("not" + TEST_INTERFACE_ADDRESS);
 

@@ -1,20 +1,21 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.quota.QuotaManager;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.Quota;
@@ -43,19 +44,23 @@ import org.ovirt.engine.core.dao.gluster.GlusterVolumeDao;
 import org.ovirt.engine.core.dao.network.NetworkViewDao;
 import org.ovirt.engine.core.searchbackend.SearchObjectAutoCompleter;
 import org.ovirt.engine.core.searchbackend.SearchObjects;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQuery<SearchParameters>> {
-
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.UserSessionTimeOutInterval, 30),
-            mockConfig(ConfigValues.SupportedClusterLevels, new HashSet<>(Collections.singletonList(new Version(3, 0)))),
-            mockConfig(ConfigValues.DBEngine, null),
-            mockConfig(ConfigValues.DBPagingType, null),
-            mockConfig(ConfigValues.DBSearchTemplate,
-                    "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(%1$s) as RowNum FROM (%2$s)) as T1 ) as T2 %3$s")
-            );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.concat(AbstractQueryTest.mockConfiguration(),
+                Stream.of(
+                        MockConfigDescriptor.of(ConfigValues.UserSessionTimeOutInterval, 30),
+                        MockConfigDescriptor.of(ConfigValues.SupportedClusterLevels,
+                                new HashSet<>(Collections.singletonList(new Version(3, 0)))),
+                        MockConfigDescriptor.of(ConfigValues.DBEngine, null),
+                        MockConfigDescriptor.of(ConfigValues.DBPagingType, null),
+                        MockConfigDescriptor.of(ConfigValues.DBSearchTemplate,
+                                "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(%1$s) as RowNum FROM (%2$s)) as T1 ) as T2 %3$s")
+                )
+        );
+    }
 
     @Mock
     private QuotaManager quotaManager;
@@ -99,14 +104,14 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
      * @param diskDao
      *            - The dao to be used
      */
-    @Before
+    @BeforeEach
     public void mockDiskDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(diskDao.getAllWithQuery(matches(getDiskImageRegexString(search))))
                 .thenReturn(diskImageResultList);
     }
 
-    @Before
+    @BeforeEach
     public void mockQuotaDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(quotaDao.getAllWithQuery(matches(getQuotaRegexString(search))))
@@ -133,7 +138,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
      * @param clusterDao
      *            - The dao to be used
      */
-    @Before
+    @BeforeEach
     public void mockClusterDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(clusterDao.getAllWithQuery(matches(getClusterRegexString(search))))
@@ -148,7 +153,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
      * @param storagePoolDao
      *            - The dao to be used
      */
-    @Before
+    @BeforeEach
     public void mockStoragePoolDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(storagePoolDao.getAllWithQuery(matches(getStoragePoolRegexString(search))))
@@ -163,14 +168,14 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
      * @param glusterVolumeDao
      *            - The dao to be used
      */
-    @Before
+    @BeforeEach
     public void mockGlusterVolumeDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(glusterVolumeDao.getAllWithQuery(matches(getGlusterVolumeRegexString(search))))
                 .thenReturn(glusterVolumeList);
     }
 
-    @Before
+    @BeforeEach
     public void mockNetworkDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(networkViewDao.getAllWithQuery(matches(getNetworkRegexString(search))))
@@ -199,7 +204,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
      * @param diskImageDao
      *            - The dao to be used
      */
-    @Before
+    @BeforeEach
     public void mockVdsDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(vdsDao.getAllWithQuery(matches(getVdsRegexString(search))))
@@ -232,7 +237,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
      * @param vmTemplateDao
      *            - The dao to be used
      */
-    @Before
+    @BeforeEach
     public void mockVMTemplateDao() {
         SearchObjectAutoCompleter search = new SearchObjectAutoCompleter();
         when(vmTemplateDao.getAllWithQuery(matches(getVMTemplateRegexString(search))))
@@ -347,7 +352,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
         return query.toString();
     }
 
-    @Before
+    @BeforeEach
     public void mockCpuFlagsManagerHandler() {
         ServerCpu resultCpu = new ServerCpu();
         resultCpu.setCpuName("cpu");
@@ -355,7 +360,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllMultiDiskImageSearch() throws Exception {
+    public void testGetAllMultiDiskImageSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Disks" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.Disk);
         getQuery().executeQueryCommand();
@@ -363,7 +368,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllDiskImageSearch() throws Exception {
+    public void testGetAllDiskImageSearch() {
         // The query Should be used is : "SELECT * FROM (SELECT *, ROW_NUMBER() OVER( ORDER BY disk_name ASC ) as RowNum
         // FROM (SELECT * FROM vm_images_view WHERE ( image_guid IN (SELECT vm_images_view.image_guid FROM
         // vm_images_view ))) as T1 ) as T2"
@@ -374,7 +379,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllVMSearch() throws Exception {
+    public void testGetAllVMSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("VM" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.VM);
         getQuery().executeQueryCommand();
@@ -382,7 +387,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllVMTemplatesSearch() throws Exception {
+    public void testGetAllVMTemplatesSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Template" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.VmTemplate);
         getQuery().executeQueryCommand();
@@ -391,7 +396,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
 
 
     @Test
-    public void testGetAllMultiVmSearch() throws Exception {
+    public void testGetAllMultiVmSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("VMs" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.VmTemplate);
         getQuery().executeQueryCommand();
@@ -399,7 +404,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllVdsSearch() throws Exception {
+    public void testGetAllVdsSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Host" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.VDS);
         getQuery().executeQueryCommand();
@@ -409,7 +414,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllMultiVdsSearch() throws Exception {
+    public void testGetAllMultiVdsSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Hosts" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.VDS);
         getQuery().executeQueryCommand();
@@ -419,7 +424,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllClusterSearch() throws Exception {
+    public void testGetAllClusterSearch() {
         // The original query should be : SELECT * FROM (SELECT *, ROW_NUMBER() OVER( ORDER BY name ASC ) as RowNum FROM
         // (SELECT * FROM clusters WHERE ( cluster_id IN (SELECT cluster_storage_domain.cluster_id FROM
         // cluster_storage_domain ))) as T1 ) as T2
@@ -430,7 +435,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllMultiClusterSearch() throws Exception {
+    public void testGetAllMultiClusterSearch() {
         // The original query should be : SELECT * FROM (SELECT *, ROW_NUMBER() OVER( ORDER BY name ASC ) as RowNum FROM
         // (SELECT * FROM clusters WHERE ( cluster_id IN (SELECT cluster_storage_domain.cluster_id FROM
         // cluster_storage_domain ))) as T1 ) as T2
@@ -441,7 +446,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllStoragePoolSearch() throws Exception {
+    public void testGetAllStoragePoolSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Datacenter" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.StoragePool);
         getQuery().executeQueryCommand();
@@ -449,9 +454,9 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     // TODO: Search using search text "Datacenters:" is not supported.
-    @Ignore
+    @Disabled
     @Test
-    public void testGetAllMultiStoragePoolSearch() throws Exception {
+    public void testGetAllMultiStoragePoolSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Datacenters" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.StoragePool);
         getQuery().executeQueryCommand();
@@ -459,7 +464,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllGlusterVolumesSearch() throws Exception {
+    public void testGetAllGlusterVolumesSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Volumes" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.GlusterVolume);
         getQuery().executeQueryCommand();
@@ -467,7 +472,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllQuotaSearch() throws Exception {
+    public void testGetAllQuotaSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Quota" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.Quota);
         getQuery().executeQueryCommand();
@@ -475,7 +480,7 @@ public class SearchQueryTest extends AbstractQueryTest<SearchParameters, SearchQ
     }
 
     @Test
-    public void testGetAllNetworkSearch() throws Exception {
+    public void testGetAllNetworkSearch() {
         when(getQueryParameters().getSearchPattern()).thenReturn("Network" + CommonConstants.QUERY_RETURN_TYPE_SEPARATOR);
         when(getQueryParameters().getSearchTypeValue()).thenReturn(SearchType.Network);
         getQuery().executeQueryCommand();

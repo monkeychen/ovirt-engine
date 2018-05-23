@@ -1,13 +1,15 @@
 package org.ovirt.engine.api.restapi.util;
 
-import java.lang.reflect.InvocationTargetException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.api.model.ActionableResource;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.DiskAttachment;
@@ -21,8 +23,8 @@ import org.ovirt.engine.api.restapi.resource.ResourceLocator;
 import org.ovirt.engine.api.restapi.resource.utils.LinkFollower;
 import org.ovirt.engine.api.restapi.resource.utils.LinksTreeNode;
 
-@RunWith(MockitoJUnitRunner.class)
-public class LinkFollowerTest extends Assert {
+@ExtendWith(MockitoExtension.class)
+public class LinkFollowerTest {
 
     private LinkFollower linkFollower;
 
@@ -31,27 +33,22 @@ public class LinkFollowerTest extends Assert {
 
     @Mock BackendVmNicsResource vmNicsResource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         linkFollower = new LinkFollower(resourceLocator) {
             //override fetch() since it requires a real environment and would crash tests.
             protected ActionableResource fetch(String href) {
                 if (href.equals("/ovirt-engine/api/vms/63978315-2d17-4e67-b393-2ea60a8aeacb/nics")){
                     return createNics();
-                }
-                else if (href.equals("/ovirt-engine/api/vms/63978315-2d17-4e67-b393-2ea60a8aeacb/diskattachments")) {
+                } else if (href.equals("/ovirt-engine/api/vms/63978315-2d17-4e67-b393-2ea60a8aeacb/diskattachments")) {
                     return createDiskAttachments();
-                }
-                else if (href.equals("/ovirt-engine/api/disks/aaa")) {
+                } else if (href.equals("/ovirt-engine/api/disks/aaa")) {
                     return new Disk();
-                }
-                else if (href.equals("/ovirt-engine/api/disks/bbb")) {
+                } else if (href.equals("/ovirt-engine/api/disks/bbb")) {
                     return new Disk();
-                }
-                else if (href.equals("/ovirt-engine/api/disks/ccc")) {
+                } else if (href.equals("/ovirt-engine/api/disks/ccc")) {
                     return new Disk();
-                }
-                else {
+                } else {
                     return null;
                 }
             }
@@ -61,7 +58,7 @@ public class LinkFollowerTest extends Assert {
     }
 
     @Test
-    public void testFollowLinks() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public void testFollowLinks() throws SecurityException, IllegalArgumentException {
         LinksTreeNode linksTree = linkFollower.createLinksTree(Vm.class, "nics,disk_attachments.disk");
         Vm vm = createVm();
         linkFollower.followLinks(vm, linksTree);
@@ -141,7 +138,7 @@ public class LinkFollowerTest extends Assert {
         assertFalse(child1.isRoot());
         assertFalse(child1.isFollowed());
         assertEquals("disk_attachments", child1.getElement());
-        assertEquals(child1.getChildren().size(), 2);
+        assertEquals(2, child1.getChildren().size());
         assertNotNull(child1.getChild("disk").get());
         assertNotNull(child1.getChild("template").get());
 
@@ -151,7 +148,7 @@ public class LinkFollowerTest extends Assert {
         assertFalse(child2.isRoot());
         assertFalse(child2.isFollowed());
         assertEquals("nics", child2.getElement());
-        assertEquals(child2.getChildren().size(), 1);
+        assertEquals(1, child2.getChildren().size());
         assertNotNull(child2.getChild("network_labels").get());
 
         //tags

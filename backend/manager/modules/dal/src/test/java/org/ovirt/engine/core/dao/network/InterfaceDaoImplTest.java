@@ -1,11 +1,11 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,12 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.HostNetworkQos;
 import org.ovirt.engine.core.common.businessentities.network.InterfaceStatus;
 import org.ovirt.engine.core.common.businessentities.network.Ipv4BootProtocol;
 import org.ovirt.engine.core.common.businessentities.network.Ipv6BootProtocol;
-import org.ovirt.engine.core.common.businessentities.network.NetworkInterface;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkInterface;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkStatistics;
 import org.ovirt.engine.core.compat.Guid;
@@ -26,25 +28,25 @@ import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-public class InterfaceDaoImplTest extends BaseDaoTestCase {
+public class InterfaceDaoImplTest extends BaseDaoTestCase<InterfaceDao> {
     private static final String IP_ADDR = "10.35.110.10";
     private static final Guid VDS_ID = FixturesTool.VDS_RHEL6_NFS_SPM;
     private static final String TARGET_ID = "0cc146e8-e5ed-482c-8814-270bc48c297b";
     private static final String LABEL = "abc";
 
-    private HostNetworkStatisticsDaoTest statsTest;
-    private InterfaceDao dao;
     private VdsNetworkInterface existingVdsInterface;
     private VdsNetworkInterface newVdsInterface;
     private VdsNetworkStatistics newVdsStatistics;
     private HostNetworkQos newQos;
 
+    @Inject
+    private NetworkQoSDao networkQoSDao;
+
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        statsTest = new HostNetworkStatisticsDaoTest();
-        dao = dbFacade.getInterfaceDao();
         existingVdsInterface = dao.get(FixturesTool.VDS_NETWORK_INTERFACE);
 
         newQos = new HostNetworkQos();
@@ -133,7 +135,7 @@ public class InterfaceDaoImplTest extends BaseDaoTestCase {
             found |= FixturesTool.VDS_NETWORK_INTERFACE.equals(iface.getId());
         }
         assertTrue(found);
-        assertNotNull(dbFacade.getNetworkQosDao().get(FixturesTool.VDS_NETWORK_INTERFACE));
+        assertNotNull(networkQoSDao.get(FixturesTool.VDS_NETWORK_INTERFACE));
 
         dao.removeInterfaceFromVds(FixturesTool.VDS_NETWORK_INTERFACE);
 
@@ -142,7 +144,7 @@ public class InterfaceDaoImplTest extends BaseDaoTestCase {
         for (VdsNetworkInterface iface : after) {
             assertNotSame(FixturesTool.VDS_NETWORK_INTERFACE, iface.getId());
         }
-        assertNull(dbFacade.getNetworkQosDao().get(FixturesTool.VDS_NETWORK_INTERFACE));
+        assertNull(networkQoSDao.get(FixturesTool.VDS_NETWORK_INTERFACE));
     }
 
     /**
@@ -198,32 +200,8 @@ public class InterfaceDaoImplTest extends BaseDaoTestCase {
         testUpdateInterface(FixturesTool.VDS_NETWORK_INTERFACE_WITHOUT_QOS);
     }
 
-    private class HostNetworkStatisticsDaoTest extends NetworkStatisticsDaoTest<VdsNetworkStatistics> {
-
-        @Override
-        protected List<? extends NetworkInterface<VdsNetworkStatistics>> getAllInterfaces() {
-            return dao.getAllInterfacesForVds(VDS_ID);
-        }
-
-        @Override
-        protected void updateStatistics(VdsNetworkStatistics stats) {
-            dao.updateStatisticsForVds(stats);
-        }
-
-    }
-
     @Test
-    public void testUpdateStatisticsWithValues() {
-        statsTest.testUpdateStatistics(999.0, 999L);
-    }
-
-    @Test
-    public void testUpdateStatisticsNullValues() {
-        statsTest.testUpdateStatistics(null, null);
-    }
-
-    @Test
-    public void testMasshUpdateStatisticsForVds() throws Exception {
+    public void testMasshUpdateStatisticsForVds() {
         List<VdsNetworkInterface> interfaces = dao.getAllInterfacesForVds(VDS_ID);
         List<VdsNetworkStatistics> statistics = new ArrayList<>(interfaces.size());
         for (VdsNetworkInterface iface : interfaces) {
@@ -328,7 +306,7 @@ public class InterfaceDaoImplTest extends BaseDaoTestCase {
      * Asserts that the correct VdsNetworkInterface is returned for the given network.
      */
     @Test
-    public void testGetVdsInterfacesByNetworkId() throws Exception {
+    public void testGetVdsInterfacesByNetworkId() {
         List<VdsNetworkInterface> result = dao.getVdsInterfacesByNetworkId(FixturesTool.NETWORK_ENGINE);
         assertEquals(existingVdsInterface, result.get(0));
     }

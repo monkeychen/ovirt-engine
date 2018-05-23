@@ -1,5 +1,9 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -13,9 +17,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import org.ovirt.engine.api.model.Fault;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Network;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.NetworkAttachmentParameters;
@@ -42,7 +45,7 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
     }
 
     @Test
-    public void testAddNetworkAttachment() throws Exception {
+    public void testAddNetworkAttachment() {
         setUriInfo(setUpBasicUriExpectations());
         setUpVerifyHostExpectations();
         setUpCreationExpectations(ActionType.AddNetworkAttachment,
@@ -65,37 +68,34 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
     }
 
     @Test
-    public void testAddNetworkAttachmentCantDo() throws Exception {
+    public void testAddNetworkAttachmentCantDo() {
         doTestBadAddNetworkAttachment(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddNetworkAttachmentFailure() throws Exception {
+    public void testAddNetworkAttachmentFailure() {
         doTestBadAddNetworkAttachment(true, false, FAILURE);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         org.ovirt.engine.api.model.NetworkAttachment model = createIncompleteNetworkAttachment();
         setUriInfo(setUpBasicUriExpectations());
         setUpVerifyHostExpectations();
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "NetworkAttachment", "add", getIncompleteFields());
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "NetworkAttachment", "add", getIncompleteFields());
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Override
     @Test
-    public void testList() throws Exception {
+    public void testList() {
         UriInfo uriInfo = setUpUriExpectations(null);
         setUpNetworkAttachmentsQueryExpectations(null);
         collection.setUriInfo(uriInfo);
@@ -104,40 +104,29 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
 
     @Override
     @Test
-    public void testListFailure() throws Exception {
+    public void testListFailure() {
         setUpNetworkAttachmentsQueryExpectations(FAILURE);
         UriInfo uriInfo = setUpUriExpectations(null);
         collection.setUriInfo(uriInfo);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Override
     @Test
-    public void testListCrash() throws Exception {
+    public void testListCrash() {
         Throwable t = new RuntimeException(FAILURE);
         setUpNetworkAttachmentsQueryExpectations(t);
 
         UriInfo uriInfo = setUpUriExpectations(null);
         collection.setUriInfo(uriInfo);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     @Override
     @Test
-    public void testListCrashClientLocale() throws Exception {
+    public void testListCrashClientLocale() {
         UriInfo uriInfo = setUpUriExpectations(null);
         locales.add(CLIENT_LOCALE);
 
@@ -145,14 +134,7 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
         setUpNetworkAttachmentsQueryExpectations(t);
         collection.setUriInfo(uriInfo);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        } finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     protected String[] getIncompleteFields() {
@@ -173,7 +155,7 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
         return setUpEntityExpectations(mock(NetworkAttachment.class), index);
     }
 
-    protected void verifyCollection(List<org.ovirt.engine.api.model.NetworkAttachment> collection) throws Exception {
+    protected void verifyCollection(List<org.ovirt.engine.api.model.NetworkAttachment> collection) {
         assertNotNull(collection);
         assertEquals(GUIDS.length, collection.size());
         for (int i = 0; i < GUIDS.length; i++) {
@@ -210,7 +192,7 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
     protected void setUpEntityExpectations(NetworkAttachment entity) {
     }
 
-    private void doTestBadAddNetworkAttachment(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddNetworkAttachment(boolean valid, boolean success, String detail) {
         setUpVerifyHostExpectations();
         setUriInfo(setUpActionExpectations(ActionType.AddNetworkAttachment,
                 NetworkAttachmentParameters.class,
@@ -219,12 +201,7 @@ public abstract class AbstractBackendNetworkAttachmentsResourceTest<C extends Ab
                 valid,
                 success));
 
-        try {
-            collection.add(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(getModel(0))), detail);
     }
 
     private void setUpNetworkAttachmentsQueryExpectations(Object failure) {

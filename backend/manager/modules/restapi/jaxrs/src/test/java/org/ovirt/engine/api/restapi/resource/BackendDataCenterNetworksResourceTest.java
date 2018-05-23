@@ -1,9 +1,15 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.DataCenter;
 import org.ovirt.engine.api.model.Network;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -12,6 +18,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendDataCenterNetworksResourceTest
         extends AbstractBackendNetworksResourceTest<BackendDataCenterNetworksResource> {
 
@@ -22,7 +29,7 @@ public class BackendDataCenterNetworksResourceTest
     }
 
     @Test
-    public void testAddNetwork() throws Exception {
+    public void testAddNetwork() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddNetwork,
                                   AddNetworkStoragePoolParameters.class,
@@ -47,16 +54,16 @@ public class BackendDataCenterNetworksResourceTest
     }
 
     @Test
-    public void testAddNetworkCantDo() throws Exception {
+    public void testAddNetworkCantDo() {
         doTestBadAddNetwork(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddNetworkFailure() throws Exception {
+    public void testAddNetworkFailure() {
         doTestBadAddNetwork(true, false, FAILURE);
     }
 
-    private void doTestBadAddNetwork(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddNetwork(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(ActionType.AddNetwork,
                                            AddNetworkStoragePoolParameters.class,
                                            new String[] { "StoragePoolId" },
@@ -67,33 +74,24 @@ public class BackendDataCenterNetworksResourceTest
         model.setDataCenter(new DataCenter());
         model.getDataCenter().setId(DATA_CENTER_ID.toString());
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         Network model = new Network();
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Network", "add", "name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Network", "add", "name");
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpQueryExpectations(query, null);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetNetworksByDataCenterId,
                                          IdQueryParameters.class,
                                          new String[] { "Id" },
@@ -103,7 +101,7 @@ public class BackendDataCenterNetworksResourceTest
     }
 
     @Override
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetNetworksByDataCenterId,
                                          IdQueryParameters.class,

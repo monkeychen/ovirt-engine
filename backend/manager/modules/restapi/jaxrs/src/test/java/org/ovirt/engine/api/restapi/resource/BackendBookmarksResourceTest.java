@@ -1,12 +1,18 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Bookmark;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.BookmarksOperationParameters;
@@ -14,6 +20,7 @@ import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendBookmarksResourceTest extends AbstractBackendCollectionResourceTest<Bookmark,
     org.ovirt.engine.core.common.businessentities.Bookmark, BackendBookmarksResource> {
 
@@ -24,7 +31,7 @@ public class BackendBookmarksResourceTest extends AbstractBackendCollectionResou
     }
 
     @Test
-    public void testAddBookmark() throws Exception {
+    public void testAddBookmark() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddBookmark, BookmarksOperationParameters.class,
                 new String[] { "Bookmark.Name", "Bookmark.Value" },
@@ -38,23 +45,20 @@ public class BackendBookmarksResourceTest extends AbstractBackendCollectionResou
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(new Bookmark());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Bookmark", "add", "name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(new Bookmark())),
+                "Bookmark", "add", "name");
     }
 
     @Test
-    public void testAddBookmarkCantDo() throws Exception {
+    public void testAddBookmarkCantDo() {
         doTestBadAddBookmark(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddBookmarkFailure() throws Exception {
+    public void testAddBookmarkFailure() {
         doTestBadAddBookmark(true, false, FAILURE);
     }
 
@@ -62,16 +66,12 @@ public class BackendBookmarksResourceTest extends AbstractBackendCollectionResou
      * Helpers.
      *************************************************************************************/
 
-    private void doTestBadAddBookmark(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddBookmark(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(ActionType.AddBookmark, BookmarksOperationParameters.class,
                 new String[] { "Bookmark.Name", "Bookmark.Value" },
                 new Object[] { NAMES[0], VALUES[0] }, valid, success));
-        try {
-            collection.add(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(getModel(0))), detail);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class BackendBookmarksResourceTest extends AbstractBackendCollectionResou
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetAllBookmarks,
                                      QueryParametersBase.class,
                                      new String[] { },

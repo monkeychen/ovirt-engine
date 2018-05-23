@@ -1,12 +1,17 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Network;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AttachNetworkToClusterParameter;
@@ -15,6 +20,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksResourceTest<BackendClusterNetworksResource> {
 
     static final Guid CLUSTER_ID = GUIDS[1];
@@ -24,7 +30,7 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
     }
 
     @Test
-    public void testAddNetwork() throws Exception {
+    public void testAddNetwork() {
         setUpClusterExpectations(CLUSTER_ID);
 
         setUriInfo(setUpBasicUriExpectations());
@@ -44,16 +50,16 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
     }
 
     @Test
-    public void testAddNetworkCantDo() throws Exception {
+    public void testAddNetworkCantDo() {
         doTestBadAddNetwork(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddNetworkFailure() throws Exception {
+    public void testAddNetworkFailure() {
         doTestBadAddNetwork(true, false, FAILURE);
     }
 
-    private void doTestBadAddNetwork(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddNetwork(boolean valid, boolean success, String detail) {
         setUpClusterExpectations(CLUSTER_ID);
 
         setUriInfo(setUpBasicUriExpectations());
@@ -66,16 +72,11 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
                 success);
         Network model = getModel(0);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddNameSuppliedButNoId() throws Exception {
+    public void testAddNameSuppliedButNoId() {
         setUriInfo(setUpBasicUriExpectations());
         Network model = new Network();
         model.setName("orcus");
@@ -93,7 +94,7 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
     }
 
     @Test
-    public void testAddIdSuppliedButNoName() throws Exception {
+    public void testAddIdSuppliedButNoName() {
         setUriInfo(setUpBasicUriExpectations());
         Network model = new Network();
         model.setId("11111111-1111-1111-1111-111111111111");
@@ -110,20 +111,16 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
     }
 
     @Test
-    public void testAddIncompleteParametersNoName() throws Exception {
+    public void testAddIncompleteParametersNoName() {
         Network model = new Network();
         model.setDescription(DESCRIPTIONS[0]);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Network", "add", "id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Network", "add", "id|name");
     }
 
     @Override
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetAllNetworksByClusterId,
                                          IdQueryParameters.class,
@@ -147,7 +144,7 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
         return group;
     }
 
-    protected void setUpGetNetworksByDataCenterExpectations(int times, Object failure) throws Exception {
+    protected void setUpGetNetworksByDataCenterExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetAllNetworks,
                                          IdQueryParameters.class,
@@ -159,12 +156,12 @@ public class BackendClusterNetworksResourceTest extends AbstractBackendNetworksR
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 }

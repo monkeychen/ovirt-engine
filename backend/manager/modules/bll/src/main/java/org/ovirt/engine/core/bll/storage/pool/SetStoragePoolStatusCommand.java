@@ -5,7 +5,6 @@ import java.util.EnumSet;
 import javax.inject.Inject;
 
 import org.apache.commons.lang.StringUtils;
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.context.CommandContext;
 import org.ovirt.engine.core.bll.storage.StorageHandlingCommandBase;
 import org.ovirt.engine.core.common.AuditLogType;
@@ -39,13 +38,12 @@ public class SetStoragePoolStatusCommand<T extends SetStoragePoolStatusParameter
                     StorageDomainStatus.Unknown,
                     null);
         }
-        StoragePoolStatusHandler.poolStatusChanged(getStoragePool().getId(), getStoragePool().getStatus());
+        storagePoolStatusHandler.poolStatusChanged(getStoragePool().getId(), getStoragePool().getStatus());
         setSucceeded(true);
     }
 
     public String getError() {
-        return Backend.getInstance().getVdsErrorsTranslator()
-                .translateErrorTextSingle(getParameters().getError().toString());
+        return backend.getVdsErrorsTranslator().translateErrorTextSingle(getParameters().getError().toString());
     }
 
     @Override

@@ -32,7 +32,10 @@ def extract_disk(ova_file, disk_size, image_path):
                 read = remaining
             written = 0
             while written < read:
-                wbuf = memoryview(buf, written, read - written)
+                if python2:
+                    wbuf = buffer(buf, written, read - written)
+                else:
+                    wbuf = memoryview(buf)[written:read - written]
                 written += image.write(wbuf)
             copied += written
 
@@ -73,7 +76,10 @@ def nti(s):
 
 
 def extract_disks(ova_path, image_paths):
-    fd = os.open(ova_path, os.O_RDONLY | os.O_DIRECT)
+    try:
+        fd = os.open(ova_path, os.O_RDONLY | os.O_DIRECT)
+    except OSError:
+        fd = os.open(ova_path, os.O_RDONLY)
     buf = mmap.mmap(-1, TAR_BLOCK_SIZE)
     with io.FileIO(fd, "r", closefd=True) as ova_file, \
             closing(buf):

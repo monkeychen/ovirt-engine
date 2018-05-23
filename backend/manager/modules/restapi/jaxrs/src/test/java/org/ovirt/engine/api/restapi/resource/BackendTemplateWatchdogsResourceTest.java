@@ -16,12 +16,18 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Watchdog;
 import org.ovirt.engine.api.model.WatchdogAction;
 import org.ovirt.engine.api.model.WatchdogModel;
@@ -34,6 +40,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTemplateWatchdogsResourceTest
         extends AbstractBackendCollectionResourceTest<Watchdog, VmWatchdog, BackendInstanceTypeWatchdogsResource> {
 
@@ -74,7 +81,7 @@ public class BackendTemplateWatchdogsResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(
             QueryType.GetWatchdog,
             IdQueryParameters.class,
@@ -106,7 +113,7 @@ public class BackendTemplateWatchdogsResourceTest
     }
 
     @Override
-    protected void verifyCollection(List<Watchdog> collection) throws Exception {
+    protected void verifyCollection(List<Watchdog> collection) {
         assertNotNull(collection);
         assertEquals(1, collection.size());
         if(!collection.isEmpty()) {

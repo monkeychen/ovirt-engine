@@ -1,25 +1,31 @@
 package org.ovirt.engine.core.bll.validator;
 
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.ovirt.engine.core.bll.DbDependentTestBase;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.network.VmNetworkInterface;
 import org.ovirt.engine.core.common.businessentities.network.VnicProfile;
@@ -29,17 +35,21 @@ import org.ovirt.engine.core.common.businessentities.storage.DiskInterface;
 import org.ovirt.engine.core.common.businessentities.storage.DiskVmElement;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
+import org.ovirt.engine.core.common.utils.customprop.VmPropertiesUtils;
+import org.ovirt.engine.core.common.utils.exceptions.InitializationException;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.DiskVmElementDao;
 import org.ovirt.engine.core.dao.network.VmNetworkInterfaceDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-@RunWith(MockitoJUnitRunner.class)
-public class VmValidatorTest extends DbDependentTestBase {
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class VmValidatorTest extends BaseCommandTest {
 
     private VmValidator validator;
 
@@ -51,32 +61,40 @@ public class VmValidatorTest extends DbDependentTestBase {
     private static final int MAX_NUM_CPUS_PER_SOCKET = 3;
     private static final int MAX_NUM_THREADS_PER_CPU = 2;
 
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.MaxNumOfVmCpus, COMPAT_VERSION_FOR_CPU_SOCKET_TEST, MAX_NUM_CPUS),
-            mockConfig(ConfigValues.MaxNumOfVmSockets, COMPAT_VERSION_FOR_CPU_SOCKET_TEST, MAX_NUM_SOCKETS),
-            mockConfig(ConfigValues.MaxNumOfCpuPerSocket, COMPAT_VERSION_FOR_CPU_SOCKET_TEST, MAX_NUM_CPUS_PER_SOCKET),
-            mockConfig(ConfigValues.MaxNumOfThreadsPerCpu, COMPAT_VERSION_FOR_CPU_SOCKET_TEST, MAX_NUM_THREADS_PER_CPU),
-            mockConfig(ConfigValues.SriovHotPlugSupported, Version.v3_6, false),
-            mockConfig(ConfigValues.SriovHotPlugSupported, Version.v4_0, true)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmCpus, COMPAT_VERSION_FOR_CPU_SOCKET_TEST, MAX_NUM_CPUS),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmSockets,
+                        COMPAT_VERSION_FOR_CPU_SOCKET_TEST,
+                        MAX_NUM_SOCKETS),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfCpuPerSocket,
+                        COMPAT_VERSION_FOR_CPU_SOCKET_TEST,
+                        MAX_NUM_CPUS_PER_SOCKET),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfThreadsPerCpu,
+                        COMPAT_VERSION_FOR_CPU_SOCKET_TEST,
+                        MAX_NUM_THREADS_PER_CPU),
+                MockConfigDescriptor.of(ConfigValues.SriovHotPlugSupported, Version.v3_6, false),
+                MockConfigDescriptor.of(ConfigValues.SriovHotPlugSupported, Version.v4_0, true)
+        );
+    }
 
     @Mock
-    VmNetworkInterfaceDao vmNetworkInterfaceDao;
+    @InjectedMock
+    public VmNetworkInterfaceDao vmNetworkInterfaceDao;
 
     @Mock
-    DiskVmElementDao diskVmElementDao;
+    @InjectedMock
+    public DiskVmElementDao diskVmElementDao;
 
     @Mock
-    VnicProfileDao vnicProfileDao;
+    @InjectedMock
+    public VnicProfileDao vnicProfileDao;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp() throws InitializationException {
         vm = createVm();
-        validator = new VmValidator(vm);
-
-        when(DbFacade.getInstance().getVmNetworkInterfaceDao()).thenReturn(vmNetworkInterfaceDao);
-        when(DbFacade.getInstance().getVnicProfileDao()).thenReturn(vnicProfileDao);
+        validator = spy(new VmValidator(vm));
+        mockVmPropertiesUtils();
     }
 
     private VM createVm() {
@@ -90,6 +108,21 @@ public class VmValidatorTest extends DbDependentTestBase {
         vm.setNumOfSockets(numOfSockets);
         vm.setCpuPerSocket(cpuPerSocket);
         vm.setThreadsPerCpu(threadsPerCpu);
+    }
+
+    private void mockVmPropertiesUtils() throws InitializationException {
+        VmPropertiesUtils utils = spy(new VmPropertiesUtils());
+        doReturn("mdev_type=^.*$").
+                when(utils)
+                .getPredefinedVMProperties(any());
+        doReturn("").
+                when(utils)
+                .getUserDefinedVMProperties(any());
+        doReturn(new HashSet<>(Arrays.asList(Version.v4_0, Version.v4_1, Version.v4_2))).
+                when(utils)
+                .getSupportedClusterLevels();
+        doReturn(utils).when(validator).getVmPropertiesUtils();
+        utils.init();
     }
 
     @Test
@@ -196,11 +229,24 @@ public class VmValidatorTest extends DbDependentTestBase {
                 failsWith(EngineMessage.ACTION_TYPE_FAILED_MIN_THREADS_PER_CPU));
     }
 
+    @Test
+    public void testVmNotUsingMdevTypeHook() {
+        assertNotNull(VmPropertiesUtils.getInstance());
+        assertThat(validator.vmNotUsingMdevTypeHook(), isValid());
+    }
+
+    @Test
+    public void testVmUsingMdevTypeHook() {
+        vm.setCustomProperties("mdev_type=Test");
+        assertNotNull(VmPropertiesUtils.getInstance());
+        assertThat(validator.vmNotUsingMdevTypeHook(),
+                failsWith(EngineMessage.ACTION_TYPE_FAILED_VM_USES_MDEV_TYPE_HOOK));
+    }
+
     private void validateVMPluggedDisksWithReservationStatus(boolean vmHasDisksPluggedWithReservation) {
         DiskVmElement dve = new DiskVmElement(null, vm.getId());
         dve.setUsingScsiReservation(vmHasDisksPluggedWithReservation);
 
-        when(DbFacade.getInstance().getDiskVmElementDao()).thenReturn(diskVmElementDao);
         when(diskVmElementDao.getAllPluggedToVm(vm.getId())).thenReturn(
                 Collections.singletonList(dve));
 
@@ -208,8 +254,7 @@ public class VmValidatorTest extends DbDependentTestBase {
             // If the VM has plugged disks using ISCSI reservation the validation should fail
             assertThat(validator.isVmPluggedDiskNotUsingScsiReservation(),
                     failsWith(EngineMessage.ACTION_TYPE_FAILED_VM_USES_SCSI_RESERVATION));
-        }
-        else {
+        } else {
             assertThat(validator.isVmPluggedDiskNotUsingScsiReservation(), isValid());
         }
     }

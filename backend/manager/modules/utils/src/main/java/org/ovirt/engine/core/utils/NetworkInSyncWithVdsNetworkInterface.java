@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
 import org.ovirt.engine.core.common.FeatureSupported;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.network.DnsResolverConfiguration;
@@ -64,8 +63,8 @@ public class NetworkInSyncWithVdsNetworkInterface {
     public ReportedConfigurations reportConfigurationsOnHost () {
         ReportedConfigurations result = new ReportedConfigurations();
 
-        Integer networkMtu = network.getMtu() == 0 ? NetworkUtils.getDefaultMtu() : network.getMtu();
-        result.add(ReportedConfigurationType.MTU, iface.getMtu(), networkMtu, isNetworkMtuInSync());
+        result.add(ReportedConfigurationType.MTU, iface.getMtu(), NetworkUtils.getHostMtuActualValue(network),
+                isNetworkMtuInSync());
         result.add(ReportedConfigurationType.BRIDGED, iface.isBridged(), network.isVmNetwork());
         result.add(ReportedConfigurationType.VLAN, iface.getVlanId(), network.getVlanId());
         result.add(ReportedConfigurationType.SWITCH_TYPE,
@@ -102,10 +101,7 @@ public class NetworkInSyncWithVdsNetworkInterface {
     }
 
     private boolean isNetworkMtuInSync() {
-        boolean networkValueSetToDefaultMtu = network.getMtu() == 0;
-        boolean ifaceValueSetToDefaultMtu = iface.getMtu() == NetworkUtils.getDefaultMtu();
-        boolean bothUsesDefaultValue = networkValueSetToDefaultMtu && ifaceValueSetToDefaultMtu;
-        return bothUsesDefaultValue || iface.getMtu() == network.getMtu();
+        return iface.getMtu() == NetworkUtils.getHostMtuActualValue(network);
     }
 
     private boolean isIpv4NetworkSubnetInSync() {
@@ -115,8 +111,7 @@ public class NetworkInSyncWithVdsNetworkInterface {
     private boolean isIpv4GatewayInSync() {
         String gatewayDesiredValue = getIpv4PrimaryAddress().getGateway();
         String gatewayActualValue = iface.getIpv4Gateway();
-        boolean bothBlank = StringUtils.isBlank(gatewayDesiredValue) && StringUtils.isBlank(gatewayActualValue);
-        return bothBlank || Objects.equals(gatewayDesiredValue, gatewayActualValue);
+        return Objects.equals(gatewayDesiredValue, gatewayActualValue);
     }
 
     private boolean isIpv6PrefixInSync() {
@@ -126,8 +121,7 @@ public class NetworkInSyncWithVdsNetworkInterface {
     private boolean isIpv6GatewayInSync() {
         String gatewayDesiredValue = getIpv6PrimaryAddress().getGateway();
         String gatewayActualValue = iface.getIpv6Gateway();
-        boolean bothBlank = StringUtils.isBlank(gatewayDesiredValue) && StringUtils.isBlank(gatewayActualValue);
-        return bothBlank || Objects.equals(gatewayDesiredValue, gatewayActualValue);
+        return Objects.equals(gatewayDesiredValue, gatewayActualValue);
     }
 
     private SubnetUtils getsSubnetUtilsInstance() {

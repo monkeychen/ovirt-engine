@@ -14,13 +14,16 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BrandingCascadingResourceServletTest {
 
     @Mock
@@ -40,7 +43,7 @@ public class BrandingCascadingResourceServletTest {
 
     BrandingCascadingResourceServlet testServlet;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         testServlet = new BrandingCascadingResourceServlet();
         testServlet.init(mockBrandingManager);
@@ -53,7 +56,7 @@ public class BrandingCascadingResourceServletTest {
      * Test that serving works when the request is "/favicon".
      */
     @Test
-    public void testDoGetServeFavicon() throws IOException, ServletException, URISyntaxException {
+    public void testDoGetServeFavicon() throws IOException, URISyntaxException, ServletException {
         when(mockBrandingManager.getCascadingResource("favicon")).thenReturn(mockCascadingResource); //$NON-NLS-1$
         when(mockCascadingResource.getFile()).thenReturn(
                 new File(this.getClass().getClassLoader().
@@ -69,7 +72,7 @@ public class BrandingCascadingResourceServletTest {
      * Test that a 404 is served when no resources are available.
      */
     @Test
-    public void testDoGetServeFaviconNotFound() throws IOException, ServletException, URISyntaxException {
+    public void testDoGetServeFaviconNotFound() throws IOException, ServletException {
         testServlet.doGet(mockRequest, mockResponse);
         verify(mockResponse).sendError(HttpServletResponse.SC_NOT_FOUND);
     }

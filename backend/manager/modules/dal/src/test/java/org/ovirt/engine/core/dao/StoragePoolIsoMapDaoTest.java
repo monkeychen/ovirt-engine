@@ -1,13 +1,13 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.StorageDomainStatus;
 import org.ovirt.engine.core.common.businessentities.StoragePoolIsoMap;
 import org.ovirt.engine.core.common.businessentities.StoragePoolIsoMapId;
@@ -33,11 +33,6 @@ public class StoragePoolIsoMapDaoTest extends
     }
 
     @Override
-    protected StoragePoolIsoMapDao prepareDao() {
-        return dbFacade.getStoragePoolIsoMapDao();
-    }
-
-    @Override
     protected StoragePoolIsoMapId generateNonExistingId() {
         return new StoragePoolIsoMapId(Guid.newGuid(), Guid.newGuid());
     }
@@ -47,7 +42,7 @@ public class StoragePoolIsoMapDaoTest extends
         return 11;
     }
 
-    @Ignore
+    @Disabled
     @Override
     public void testGetAll() {
         // Not supported

@@ -82,16 +82,6 @@ public class StorageDiskListModel extends SearchableListModel<StorageDomain, Dis
         downloadCommand = value;
     }
 
-    private UICommand stopDownloadCommand;
-
-    public UICommand getStopDownloadCommand() {
-        return stopDownloadCommand;
-    }
-
-    private void setStopDownloadCommand(UICommand value) {
-        stopDownloadCommand = value;
-    }
-
     public StorageDiskListModel() {
         setTitle(ConstantsManager.getInstance().getConstants().disksTitle());
         setHelpTag(HelpTag.disks);
@@ -103,7 +93,6 @@ public class StorageDiskListModel extends SearchableListModel<StorageDomain, Dis
         setPauseUploadCommand(new UICommand("PauseUpload", this)); //$NON-NLS-1$
         setResumeUploadCommand(new UICommand("ResumeUpload", this)); //$NON-NLS-1$
         setDownloadCommand(new UICommand("Download", this)); //$NON-NLS-1$
-        setStopDownloadCommand(new UICommand("StopDownload", this)); //$NON-NLS-1$
 
         updateActionAvailability();
     }
@@ -131,8 +120,7 @@ public class StorageDiskListModel extends SearchableListModel<StorageDomain, Dis
     public void search() {
         if (getEntity() != null) {
             super.search();
-        }
-        else {
+        } else {
             setItems(null);
         }
     }
@@ -164,7 +152,6 @@ public class StorageDiskListModel extends SearchableListModel<StorageDomain, Dis
         getPauseUploadCommand().setIsExecutionAllowed(UploadImageModel.isPauseAllowed(disks));
         getResumeUploadCommand().setIsExecutionAllowed(UploadImageModel.isResumeAllowed(disks));
         getDownloadCommand().setIsExecutionAllowed(DownloadImageHandler.isDownloadAllowed(disks));
-        getStopDownloadCommand().setIsExecutionAllowed(DownloadImageHandler.isStopDownloadAllowed(disks));
     }
 
     private boolean isRemoveCommandAvailable(List<DiskImage> disks) {
@@ -271,43 +258,28 @@ public class StorageDiskListModel extends SearchableListModel<StorageDomain, Dis
         DownloadImageManager.getInstance().startDownload(getSelectedItems());
     }
 
-    private void stopDownload() {
-        DownloadImageManager.getInstance().stopDownload(getSelectedItems());
-    }
-
     @Override
     public void executeCommand(UICommand command) {
         super.executeCommand(command);
 
         if (command == getRemoveCommand()) {
             remove();
-        }
-        else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
             onRemove();
-        }
-        else if ("Upload".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("Upload".equals(command.getName())) { //$NON-NLS-1$
             upload();
-        }
-        else if ("CancelUpload".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("CancelUpload".equals(command.getName())) { //$NON-NLS-1$
             cancelUpload();
-        }
-        else if ("OnCancelUpload".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnCancelUpload".equals(command.getName())) { //$NON-NLS-1$
             onCancelUpload();
-        }
-        else if ("PauseUpload".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("PauseUpload".equals(command.getName())) { //$NON-NLS-1$
             pauseUpload();
-        }
-        else if ("ResumeUpload".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("ResumeUpload".equals(command.getName())) { //$NON-NLS-1$
             resumeUpload();
-        }
-        else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
             cancel();
-        }
-        else if (command == getDownloadCommand()) {
+        } else if (command == getDownloadCommand()) {
             download();
-        }
-        else if (command == getStopDownloadCommand()) {
-            stopDownload();
         }
     }
 

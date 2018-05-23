@@ -85,6 +85,7 @@ public final class Cloner {
         vm.setBootSequence(instance.getBootSequence());
         vm.setClientIp(instance.getClientIp());
         vm.setCpuPerSocket(instance.getCpuPerSocket());
+        vm.setThreadsPerCpu(instance.getThreadsPerCpu());
         vm.setCpuSys(instance.getCpuSys());
         vm.setCpuUser(instance.getCpuUser());
         vm.setDedicatedVmForVdsList(instance.getDedicatedVmForVdsList());
@@ -206,6 +207,8 @@ public final class Cloner {
         vm.setManagedDeviceMap(instance.getManagedVmDeviceMap());
         vm.setUnmanagedDeviceList(instance.getUnmanagedDeviceList());
         vm.setRuntimeDeviceCustomProperties(instance.getRuntimeDeviceCustomProperties());
+        vm.setLeaseStorageDomainId(instance.getLeaseStorageDomainId());
+        vm.setVmInit(instance.getVmInit());
         return vm;
     }
 
@@ -432,6 +435,7 @@ public final class Cloner {
         obj.setDefaultBootSequence(instance.getDefaultBootSequence());
         obj.setComment(instance.getComment());
         obj.setCustomEmulatedMachine(instance.getCustomEmulatedMachine());
+        obj.setBiosType(instance.getBiosType());
         obj.setCustomCpuName(instance.getCustomCpuName());
         obj.setCustomCompatibilityVersion(instance.getCustomCompatibilityVersion());
         obj.setFailBack(instance.isFailBack());
@@ -471,6 +475,7 @@ public final class Cloner {
         obj.setCustomProperties(instance.getCustomProperties());
         obj.setSmallIconId(instance.getSmallIconId());
         obj.setLargeIconId(instance.getLargeIconId());
+        obj.setLeaseStorageDomainId(instance.getLeaseStorageDomainId());
 
         return obj;
     }
@@ -493,6 +498,7 @@ public final class Cloner {
         obj.setDescription(instance.getDescription());
         obj.setComment(instance.getComment());
         obj.setCustomEmulatedMachine(instance.getCustomEmulatedMachine());
+        obj.setBiosType(instance.getBiosType());
         obj.setCustomCpuName(instance.getCustomCpuName());
         obj.setCustomCompatibilityVersion(instance.getCustomCompatibilityVersion());
         obj.setInitialized(instance.isInitialized());
@@ -525,6 +531,7 @@ public final class Cloner {
         obj.setLargeIconId(instance.getLargeIconId());
         obj.setProviderId(instance.getProviderId());
         obj.setLeaseStorageDomainId(instance.getLeaseStorageDomainId());
+        obj.setVmInit(instance.getVmInit());
         return obj;
     }
 

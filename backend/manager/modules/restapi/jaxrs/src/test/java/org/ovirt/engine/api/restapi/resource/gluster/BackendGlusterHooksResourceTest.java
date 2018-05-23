@@ -1,5 +1,7 @@
 package org.ovirt.engine.api.restapi.resource.gluster;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -11,9 +13,10 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cluster;
-import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.GlusterHook;
 import org.ovirt.engine.api.resource.ClusterResource;
 import org.ovirt.engine.api.restapi.resource.AbstractBackendCollectionResourceTest;
@@ -23,6 +26,7 @@ import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendGlusterHooksResourceTest extends AbstractBackendCollectionResourceTest<GlusterHook, GlusterHookEntity, BackendGlusterHooksResource> {
     private static final Guid clusterId = GUIDS[0];
     private static final String defaultClusterName = "Default";
@@ -59,19 +63,14 @@ public class BackendGlusterHooksResourceTest extends AbstractBackendCollectionRe
     }
 
     @Override
-    public void testListCrash() throws Exception {
+    public void testListCrash() {
         UriInfo uriInfo = setUpUriExpectations(null);
         collection.setUriInfo(uriInfo);
 
         Throwable t = new RuntimeException(FAILURE);
         setUpHooksQueryExpectations(t);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     /**
@@ -84,36 +83,23 @@ public class BackendGlusterHooksResourceTest extends AbstractBackendCollectionRe
     }
 
     @Override
-    public void testListCrashClientLocale() throws Exception {
+    public void testListCrashClientLocale() {
         collection.setUriInfo(setUpUriExpectations(null));
         locales.add(CLIENT_LOCALE);
 
         Throwable t = new RuntimeException(FAILURE);
         setUpHooksQueryExpectations(t);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        } finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     @Override
-    public void testListFailure() throws Exception {
+    public void testListFailure() {
         collection.setUriInfo(setUpUriExpectations(null));
 
         setUpHooksQueryExpectations(FAILURE);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Override

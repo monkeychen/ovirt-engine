@@ -1,25 +1,21 @@
 package org.ovirt.engine.ui.common.utils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.ui.common.utils.BaseDynamicMessages.DynamicMessageKey;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BaseDynamicMessagesTest {
 
     BaseDynamicMessages testMessages;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         testMessages = new BaseDynamicMessages(null);
     }
 
@@ -27,59 +23,54 @@ public class BaseDynamicMessagesTest {
     public void getPlaceHolderListTest1() {
         String testMessage = "This is a test if {0} can actually work out {1}"; //$NON-NLS-1$
         List<Integer> result = testMessages.getPlaceHolderList(testMessage);
-        assertEquals("Result should have 2 items", 2, result.size()); //$NON-NLS-1$
-        assertEquals("index 0 should be 0", (Integer) 0, result.get(0)); //$NON-NLS-1$
+        assertIndexes(result, 2);
     }
 
     @Test
     public void getPlaceHolderListTest2() {
         String testMessage = "This is a test if {0} can actually work out {1}, {0}, {1}, {1}"; //$NON-NLS-1$
         List<Integer> result = testMessages.getPlaceHolderList(testMessage);
-        assertEquals("Result should have 2 items", 2, result.size()); //$NON-NLS-1$
-        assertEquals("index 0 should be 0", (Integer) 0, result.get(0)); //$NON-NLS-1$
-        assertEquals("index 1 should be 1", (Integer) 1, result.get(1)); //$NON-NLS-1$
+        assertIndexes(result, 2);
     }
 
     @Test
     public void getPlaceHolderListTest3OutofOrder() {
         String testMessage = "This is {3} a {4} test {1} if {0} can actually work out {2}"; //$NON-NLS-1$
         List<Integer> result = testMessages.getPlaceHolderList(testMessage);
-        assertEquals("Result should have 5 items", 5, result.size()); //$NON-NLS-1$
-        assertEquals("index 0 should be 0", (Integer) 0, result.get(0)); //$NON-NLS-1$
-        assertEquals("index 1 should be 1", (Integer) 1, result.get(1)); //$NON-NLS-1$
-        assertEquals("index 2 should be 2", (Integer) 2, result.get(2)); //$NON-NLS-1$
-        assertEquals("index 3 should be 3", (Integer) 3, result.get(3)); //$NON-NLS-1$
-        assertEquals("index 4 should be 4", (Integer) 4, result.get(4)); //$NON-NLS-1$
+        assertIndexes(result, 5);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    private static void assertIndexes(List<Integer> result, int expectedSize) {
+        assertEquals(expectedSize, result.size(), String.format("Result should have %d items", expectedSize)); //$NON-NLS-1$
+        for (int i = 0; i < expectedSize; ++i) {
+            assertEquals(Integer.valueOf(i), result.get(i), String.format("index %d should be %d", i, i)); //$NON-NLS-1$
+        }
+    }
+
+    @Test
     public void getPlaceHolderListTestInvalidWithGap() {
         String testMessage = "This is a test if {0} can actually work out {2}"; //$NON-NLS-1$
-        testMessages.getPlaceHolderList(testMessage);
-        fail("Should not get here"); //$NON-NLS-1$
+        assertThrows(IllegalArgumentException.class, () -> testMessages.getPlaceHolderList(testMessage));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getPlaceHolderListTestInvalidWithGap2() {
         String testMessage = "This is {3} a {4} test if {0} can actually work out {2}"; //$NON-NLS-1$
-        testMessages.getPlaceHolderList(testMessage);
-        fail("Should not get here"); //$NON-NLS-1$
+        assertThrows(IllegalArgumentException.class, () -> testMessages.getPlaceHolderList(testMessage));
     }
 
     @Test
     public void getPlaceHolderListTestNoPlaceHolder() {
         String testMessage = "This is a test without place holders"; //$NON-NLS-1$
         List<Integer> result = testMessages.getPlaceHolderList(testMessage);
-        assertTrue("Result should be empty", result.isEmpty()); //$NON-NLS-1$
+        assertTrue(result.isEmpty(), "Result should be empty"); //$NON-NLS-1$
     }
 
     @Test
     public void formatStringTest() {
         testMessages.addFallback(DynamicMessageKey.APPLICATION_TITLE, "Testing 123: {0}"); //$NON-NLS-1$
         String result = testMessages.formatString(DynamicMessageKey.APPLICATION_TITLE, "1.1.1"); //$NON-NLS-1$
-        assertNotNull("There should be a result"); //$NON-NLS-1$
-        assertEquals("Result should be 'Testing 123: 1.1.1'", //$NON-NLS-1$
-                "Testing 123: 1.1.1", result); //$NON-NLS-1$
+        assertEquals("Testing 123: 1.1.1", result); //$NON-NLS-1$
     }
 
     @Test
@@ -87,9 +78,7 @@ public class BaseDynamicMessagesTest {
         testMessages.addFallback(DynamicMessageKey.APPLICATION_TITLE, "Testing 123: {0}.{1}.{2}"); //$NON-NLS-1$
         String result = testMessages.formatString(DynamicMessageKey.APPLICATION_TITLE,
                 "1", "1", "1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        assertNotNull("There should be a result"); //$NON-NLS-1$
-        assertEquals("Result should be 'Testing 123: 1.1.1'", //$NON-NLS-1$
-                "Testing 123: 1.1.1", result); //$NON-NLS-1$
+        assertEquals("Testing 123: 1.1.1", result); //$NON-NLS-1$
     }
 
     @Test
@@ -97,9 +86,7 @@ public class BaseDynamicMessagesTest {
         testMessages.addFallback(DynamicMessageKey.APPLICATION_TITLE, "Testing 123: {0}"); //$NON-NLS-1$
         String result = testMessages.formatString(DynamicMessageKey.APPLICATION_TITLE,
                 "1.1.1", "2.2.2"); //$NON-NLS-1$ //$NON-NLS-2$
-        assertNotNull("There should be a result"); //$NON-NLS-1$
-        assertEquals("Result should be 'Testing 123: 1.1.1'", //$NON-NLS-1$
-                "Testing 123: 1.1.1", result); //$NON-NLS-1$
+        assertEquals("Testing 123: 1.1.1", result); //$NON-NLS-1$
     }
 
     @Test
@@ -107,16 +94,14 @@ public class BaseDynamicMessagesTest {
         testMessages.addFallback(DynamicMessageKey.APPLICATION_TITLE, "Testing 123: {0}.{1}.{0}"); //$NON-NLS-1$
         String result = testMessages.formatString(DynamicMessageKey.APPLICATION_TITLE,
                 "1", "2", "3"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        assertNotNull("There should be a result"); //$NON-NLS-1$
-        assertEquals("Result should be 'Testing 123: 1.1.1'", //$NON-NLS-1$
-                "Testing 123: 1.2.1", result); //$NON-NLS-1$
+        assertEquals("Testing 123: 1.2.1", result); //$NON-NLS-1$
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void formatStringTestNotEnoughParams() {
         testMessages.addFallback(DynamicMessageKey.APPLICATION_TITLE, "Testing 123: {0}.{1}.{2}"); //$NON-NLS-1$
-        testMessages.formatString(DynamicMessageKey.APPLICATION_TITLE, "1.1.1"); //$NON-NLS-1$
-        fail("Should not get here"); //$NON-NLS-1$
+        assertThrows(IllegalArgumentException.class,
+                () -> testMessages.formatString(DynamicMessageKey.APPLICATION_TITLE, "1.1.1")); //$NON-NLS-1$
     }
 
 }

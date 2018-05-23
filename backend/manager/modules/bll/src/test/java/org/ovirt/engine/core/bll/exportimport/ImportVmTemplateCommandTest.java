@@ -1,11 +1,11 @@
 package org.ovirt.engine.core.bll.exportimport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -20,11 +20,12 @@ import java.util.Set;
 
 import javax.validation.ConstraintViolation;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
@@ -46,20 +47,18 @@ import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.common.businessentities.storage.VolumeFormat;
 import org.ovirt.engine.core.common.businessentities.storage.VolumeType;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.utils.ValidationUtils;
 import org.ovirt.engine.core.common.utils.VmInitToOpenStackMetadataAdapter;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.StorageDomainDao;
 import org.ovirt.engine.core.dao.StorageDomainStaticDao;
 import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VmTemplateDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ImportVmTemplateCommandTest extends BaseCommandTest {
 
     @Mock
@@ -86,10 +85,6 @@ public class ImportVmTemplateCommandTest extends BaseCommandTest {
     @Mock
     private VmInitToOpenStackMetadataAdapter openStackMetadataAdapter;
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule();
-
-
     @Spy
     @InjectMocks
     private ImportVmTemplateCommand<ImportVmTemplateParameters> command =
@@ -105,7 +100,7 @@ public class ImportVmTemplateCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validVolumeFormatAndTypeCombinations() throws Exception {
+    public void validVolumeFormatAndTypeCombinations() {
         assertValidVolumeInfoCombination(VolumeFormat.RAW, VolumeType.Preallocated, StorageType.NFS);
         assertValidVolumeInfoCombination(VolumeFormat.RAW, VolumeType.Sparse, StorageType.NFS);
         assertValidVolumeInfoCombination(VolumeFormat.COW, VolumeType.Sparse, StorageType.NFS);
@@ -124,7 +119,7 @@ public class ImportVmTemplateCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void invalidVolumeFormatAndTypeCombinations() throws Exception {
+    public void invalidVolumeFormatAndTypeCombinations() {
         assertInvalidVolumeInfoCombination(VolumeFormat.COW, VolumeType.Preallocated, StorageType.NFS);
         assertInvalidVolumeInfoCombination(VolumeFormat.COW, VolumeType.Preallocated, StorageType.ISCSI);
         assertInvalidVolumeInfoCombination(VolumeFormat.COW, VolumeType.Preallocated, StorageType.FCP);
@@ -154,7 +149,6 @@ public class ImportVmTemplateCommandTest extends BaseCommandTest {
             VolumeType volumeType,
             StorageType storageType) {
         setupVolumeFormatAndTypeTest(volumeFormat, volumeType, storageType);
-        mockMemorySize(Version.getLast());
         ValidateTestUtils.runAndAssertValidateSuccess(command);
     }
 
@@ -325,14 +319,8 @@ public class ImportVmTemplateCommandTest extends BaseCommandTest {
         command.generateNewDiskId(disk);
         command.updateManagedDeviceMap(disk, managedDevices);
         Guid oldDiskId = command.getNewDiskIdForDisk(disk.getId()).getId();
-        assertEquals("The old disk id should be similar to the value at the newDiskIdForDisk.", beforeOldDiskId, oldDiskId);
-        assertNotNull("The manged deivce should return the disk device by the new key", managedDevices.get(disk.getId()));
-        assertNull("The manged deivce should not return the disk device by the old key", managedDevices.get(beforeOldDiskId));
-    }
-
-    private void mockMemorySize(Version version) {
-        mcr.mockConfigValue(ConfigValues.VM32BitMaxMemorySizeInMB, version, 20480);
-        mcr.mockConfigValue(ConfigValues.VM64BitMaxMemorySizeInMB, version, 4194304);
-        mcr.mockConfigValue(ConfigValues.VMPpc64BitMaxMemorySizeInMB, version, 1048576);
+        assertEquals(beforeOldDiskId, oldDiskId, "The old disk id should be similar to the value at the newDiskIdForDisk.");
+        assertNotNull(managedDevices.get(disk.getId()), "The manged deivce should return the disk device by the new key");
+        assertNull(managedDevices.get(beforeOldDiskId), "The manged deivce should not return the disk device by the old key");
     }
 }

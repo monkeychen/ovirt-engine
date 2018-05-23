@@ -1,13 +1,20 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Tag;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.TagsActionParametersBase;
@@ -17,6 +24,7 @@ import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public abstract class AbstractBackendAssignedTagsResourceTest<C extends AbstractBackendAssignedTagsResource>
     extends AbstractBackendCollectionResourceTest<Tag, Tags, C> {
 
@@ -33,23 +41,18 @@ public abstract class AbstractBackendAssignedTagsResourceTest<C extends Abstract
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            collection.getTagResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> collection.getTagResource("foo")));
     }
 
     @Test
-    public void testAddTag() throws Exception {
+    public void testAddTag() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(attachAction,
                                   attachParams,
@@ -74,7 +77,7 @@ public abstract class AbstractBackendAssignedTagsResourceTest<C extends Abstract
     }
 
     @Test
-    public void testAddTagByName() throws Exception {
+    public void testAddTagByName() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetAllTags,
@@ -106,27 +109,23 @@ public abstract class AbstractBackendAssignedTagsResourceTest<C extends Abstract
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(new Tag());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Tag", "add", "id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(new Tag())), "Tag", "add", "id|name");
     }
 
     @Test
-    public void testAddTagCantDo() throws Exception {
+    public void testAddTagCantDo() {
         doTestBadAddTag(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddTagFailure() throws Exception {
+    public void testAddTagFailure() {
         doTestBadAddTag(true, false, FAILURE);
     }
 
-    private void doTestBadAddTag(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddTag(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(attachAction,
                                            attachParams,
                                            new String[] { "TagId", "EntitiesId" },
@@ -136,16 +135,11 @@ public abstract class AbstractBackendAssignedTagsResourceTest<C extends Abstract
         Tag model = new Tag();
         model.setId(GUIDS[0].toString());
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(queryType,

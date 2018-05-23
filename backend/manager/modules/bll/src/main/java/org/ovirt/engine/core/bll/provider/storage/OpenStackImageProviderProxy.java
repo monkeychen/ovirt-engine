@@ -20,6 +20,8 @@ import org.ovirt.engine.core.common.businessentities.storage.RepoImage;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.common.businessentities.storage.VolumeFormat;
 import org.ovirt.engine.core.compat.Guid;
+import org.ovirt.engine.core.dao.StorageDomainStaticDao;
+import org.ovirt.engine.core.dao.provider.ProviderDao;
 import org.ovirt.engine.core.di.Injector;
 
 import com.woorea.openstack.base.client.OpenStackRequest;
@@ -77,9 +79,9 @@ public class OpenStackImageProviderProxy extends AbstractOpenStackStorageProvide
 
     public static OpenStackImageProviderProxy getFromStorageDomainId(Guid storageDomainId,
             ProviderProxyFactory providerProxyFactory) {
-        StorageDomainStatic storageDomainStatic = getDbFacade().getStorageDomainStaticDao().get(storageDomainId);
+        StorageDomainStatic storageDomainStatic = Injector.get(StorageDomainStaticDao.class).get(storageDomainId);
         if (storageDomainStatic != null) {
-            Provider<?> provider = getDbFacade().getProviderDao().get(new Guid(storageDomainStatic.getStorage()));
+            Provider<?> provider = Injector.get(ProviderDao.class).get(new Guid(storageDomainStatic.getStorage()));
             return providerProxyFactory.create(provider);
         }
         return null;
@@ -264,7 +266,7 @@ public class OpenStackImageProviderProxy extends AbstractOpenStackStorageProvide
     }
 
     public Map<String, String> getDownloadHeaders() {
-        HashMap<String, String> httpHeaders = new HashMap<>();
+        Map<String, String> httpHeaders = new HashMap<>();
 
         if (getTokenProvider() != null) {
             httpHeaders.put("X-Auth-Token", getTokenProvider().getToken());

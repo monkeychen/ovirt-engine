@@ -1,5 +1,6 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +10,9 @@ import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Tag;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AttachEntityToTagParameters;
@@ -18,6 +21,7 @@ import org.ovirt.engine.core.common.queries.GetTagsByVmIdParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmTagResourceTest extends AbstractBackendSubResourceTest<Tag, Tags, BackendVmTagResource> {
     private static final Guid VM_ID = GUIDS[0];
     private static final Guid TAG_ID = GUIDS[1];
@@ -27,7 +31,7 @@ public class BackendVmTagResourceTest extends AbstractBackendSubResourceTest<Tag
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetTagsExpectations(true);
         setUriInfo(
             setUpActionExpectations(
@@ -43,16 +47,16 @@ public class BackendVmTagResourceTest extends AbstractBackendSubResourceTest<Tag
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    private void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpGetTagsExpectations(true);
         setUriInfo(
             setUpActionExpectations(
@@ -64,29 +68,17 @@ public class BackendVmTagResourceTest extends AbstractBackendSubResourceTest<Tag
                 success
             )
         );
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
     @Test
-    public void testRemoveNonExistant() throws Exception{
+    public void testRemoveNonExistant() {
         setUpGetTagsExpectations(false);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
-    private void setUpGetTagsExpectations(boolean succeed) throws Exception {
+    private void setUpGetTagsExpectations(boolean succeed) {
         setUpGetEntityExpectations(
             QueryType.GetTagsByVmId,
             GetTagsByVmIdParameters.class,

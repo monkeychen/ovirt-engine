@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.bll.migration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.migration.ConvergenceConfig;
 import org.ovirt.engine.core.common.migration.ConvergenceItem;
 import org.ovirt.engine.core.common.migration.ConvergenceItemWithStallingLimit;
@@ -25,7 +25,7 @@ public class ConvergenceConfigProviderTest {
     private ConvergenceConfigProvider provider = new ConvergenceConfigProvider();
 
     @Test
-    public void jsonInvalidJson() throws IOException {
+    public void jsonInvalidJson() {
         provider.initMigrationPolicies("this is not a valid json", VERSION);
         MigrationPolicy policy = provider.getMigrationPolicy(Guid.newGuid(), VERSION);
         assertTrue(policy instanceof NoMigrationPolicy);

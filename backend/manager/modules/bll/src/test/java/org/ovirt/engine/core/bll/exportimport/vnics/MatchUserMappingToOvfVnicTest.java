@@ -1,23 +1,25 @@
 package org.ovirt.engine.core.bll.exportimport.vnics;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.bll.exportimport.vnics.MapVnicsHandlers.MatchUserMappingToOvfVnic;
 import org.ovirt.engine.core.common.businessentities.network.ExternalVnicProfileMapping;
 import org.ovirt.engine.core.common.businessentities.network.VmNetworkInterface;
 
 public class MatchUserMappingToOvfVnicTest {
 
+    private static final boolean GENERATE_DEBUG_INFO = false;
     private static MapVnicDataPoints dataPoints;
     private static MatchUserMappingToOvfVnic matcher;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         dataPoints = new MapVnicDataPoints();
         dataPoints.prepareTestDataPoints();
@@ -50,17 +52,19 @@ public class MatchUserMappingToOvfVnicTest {
         ExternalVnicProfileMapping expectedMatchingMapping = expectedIsMatch ? userMappingUnderTest : null;
         assertEquals(expectedMatchingMapping, ctx.getMatched().get(ovfVnicUnderTest));
         assertTrue(ctx.getMatched().size() > 0);
-        assertTrue(ctx.getException() == null);
+        assertNull(ctx.getException());
     }
 
     private void print(VmNetworkInterface ovfVnicUnderTest, MapVnicsContext ctx, int count) {
+        if (!GENERATE_DEBUG_INFO) {
+            return;
+        }
         System.out.println("---------------- test #" + count + " ----------------");
         System.out.println("ovf vnic:" + ovfVnicUnderTest.getVnicProfileName() + " " + ovfVnicUnderTest.getNetworkName());
         ExternalVnicProfileMapping matched = ctx.getMatched().get(ovfVnicUnderTest);
         if (matched != null) {
             System.out.println("matched:" + matched.getSourceProfileName() + " " + matched.getSourceNetworkName());
-        }
-        else {
+        } else {
             System.out.println("matched is null");
         }
     }

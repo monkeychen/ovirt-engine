@@ -1,16 +1,16 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.BusinessEntity;
 import org.ovirt.engine.core.common.businessentities.GuestAgentStatus;
 import org.ovirt.engine.core.common.businessentities.VMStatus;
@@ -42,11 +42,6 @@ public class VmDynamicDaoTest extends BaseGenericDaoTestCase<Guid, VmDynamic, Vm
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.VM_RHEL5_POOL_57;
-    }
-
-    @Override
-    protected VmDynamicDao prepareDao() {
-        return dbFacade.getVmDynamicDao();
     }
 
     @Override
@@ -91,7 +86,7 @@ public class VmDynamicDaoTest extends BaseGenericDaoTestCase<Guid, VmDynamic, Vm
     }
 
     @Test
-    public void testUpdateAll() throws Exception {
+    public void testUpdateAll() {
         VmDynamic existingVm2 = dao.get(FixturesTool.VM_RHEL5_POOL_51);
         existingEntity.setStatus(VMStatus.Down);
         existingVm2.setIp("111");
@@ -108,7 +103,7 @@ public class VmDynamicDaoTest extends BaseGenericDaoTestCase<Guid, VmDynamic, Vm
      * without a previous console user succeeds and returns {@code true}.
      */
     @Test
-    public void testUpdateConsoleUserWithOptimisticLockingSuccess() throws Exception {
+    public void testUpdateConsoleUserWithOptimisticLockingSuccess() {
         VmDynamic vmWithoutConsoleUser = dao.get(FixturesTool.VM_RHEL5_POOL_51);
         vmWithoutConsoleUser.setConsoleUserId(new Guid("9bf7c640-b620-456f-a550-0348f366544b"));
 
@@ -122,7 +117,7 @@ public class VmDynamicDaoTest extends BaseGenericDaoTestCase<Guid, VmDynamic, Vm
      * that already as a previous console user fails and returns {@code false}.
      */
     @Test
-    public void testUpdateConsoleUserWithOptimisticLockingFailure() throws Exception {
+    public void testUpdateConsoleUserWithOptimisticLockingFailure() {
         VmDynamic vmWithoutConsoleUser = dao.get(FixturesTool.VM_RHEL5_POOL_57);
         vmWithoutConsoleUser.setConsoleUserId(new Guid("9bf7c640-b620-456f-a550-0348f366544b"));
 
@@ -132,20 +127,18 @@ public class VmDynamicDaoTest extends BaseGenericDaoTestCase<Guid, VmDynamic, Vm
     }
 
     @Test
-    public void testClearMigratingToVds() throws Exception {
+    public void testClearMigratingToVds() {
         VmDynamic vmDynamic = dao.get(FixturesTool.VM_RHEL5_POOL_51);
-        assertNotNull("migrating_to_vds field should not be null before we clear it",
-                vmDynamic.getMigratingToVds());
+        assertNotNull(vmDynamic.getMigratingToVds(), "migrating_to_vds field should not be null before we clear it");
 
         dao.clearMigratingToVds(FixturesTool.VM_RHEL5_POOL_51);
 
         vmDynamic = dao.get(FixturesTool.VM_RHEL5_POOL_51);
-        assertNull("migrating_to_vds field should be null after we clear it",
-                vmDynamic.getMigratingToVds());
+        assertNull(vmDynamic.getMigratingToVds(), "migrating_to_vds field should be null after we clear it");
     }
 
     @Test
-    public void testGuestAgentStatus() throws Exception {
+    public void testGuestAgentStatus() {
         Guid vmId = FixturesTool.VM_RHEL5_POOL_51;
         VmDynamic vmDynamic = dao.get(vmId);
         vmDynamic.setGuestAgentStatus(GuestAgentStatus.UpdateNeeded);

@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -26,13 +29,13 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner.Silent;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.OngoingStubbing;
 import org.ovirt.engine.api.model.BaseResource;
@@ -63,10 +66,11 @@ import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.SearchParameters;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(Silent.class)
-public abstract class AbstractBackendBaseTest extends Assert {
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+public abstract class AbstractBackendBaseTest {
 
     protected static final Guid[] GUIDS = { new Guid("00000000-0000-0000-0000-000000000000"),
             new Guid("11111111-1111-1111-1111-111111111111"),
@@ -129,10 +133,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
 
     private List<Runnable> interactions = new ArrayList<>();
 
-    @Rule
-    public final MockConfigRule mcr = new MockConfigRule();
-
-    @Before
+    @BeforeEach
     public void setUp() {
         interactions.clear();
 
@@ -175,7 +176,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
         return mapperLocator.getMapper(from, to);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Locale.setDefault(locale);
         interactions.forEach(Runnable::run);
@@ -242,8 +243,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
                                                   Class<? extends QueryParametersBase> clz,
                                                   String[] names,
                                                   Object[] values,
-                                                  E entity)
-            throws Exception {
+                                                  E entity) {
         setUpGetEntityExpectations(query, clz, names, values, entity, false);
     }
 
@@ -252,8 +252,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
             String[] names,
             Object[] values,
             E entity,
-            boolean onceOnly)
-            throws Exception {
+            boolean onceOnly) {
         QueryReturnValue queryResult = new QueryReturnValue();
         OngoingStubbing<QueryReturnValue> stubbing =
                 when(backend.runQuery(eq(query), eqParams(clz, addSession(names), addSession(values))))
@@ -269,7 +268,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
 
     protected <E> void setUpGetEntityExpectations(String query,
             SearchType type,
-            E entity) throws Exception {
+            E entity) {
         QueryReturnValue queryResult = new QueryReturnValue();
         SearchParameters params = new SearchParameters(query, type);
         when(backend.runQuery(eq(QueryType.Search), eqSearchParams(params))).thenReturn(queryResult);
@@ -319,7 +318,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
         }
     }
 
-    protected void setUpGetConsoleExpectations(int... idxs) throws Exception {
+    protected void setUpGetConsoleExpectations(int... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetConsoleDevices,
                     IdQueryParameters.class,
@@ -330,7 +329,7 @@ public abstract class AbstractBackendBaseTest extends Assert {
         }
     }
 
-    protected void setUpGetRngDeviceExpectations(int... idxs) throws Exception {
+    protected void setUpGetRngDeviceExpectations(int... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetRngDevice,
                     IdQueryParameters.class,
@@ -603,7 +602,8 @@ public abstract class AbstractBackendBaseTest extends Assert {
         Fault fault = (Fault) wae.getResponse().getEntity();
         assertEquals(reason, fault.getReason());
         assertNotNull(fault.getDetail());
-        assertTrue("expected detail to include: " + t.getMessage(), fault.getDetail().contains(t.getMessage()));
+        assertTrue(fault.getDetail().contains(t.getMessage()),
+                "expected detail to include: " + t.getMessage());
     }
 
     protected void verifyIncompleteException(WebApplicationException wae,
@@ -619,7 +619,13 @@ public abstract class AbstractBackendBaseTest extends Assert {
     }
 
     protected void verifyNotFoundException(WebApplicationException wae) {
+        assertNotNull(wae.getResponse());
         assertEquals(404, wae.getResponse().getStatus());
+    }
+
+    protected void verifyBadRequest(WebApplicationException wae) {
+        assertNotNull(wae.getResponse());
+        assertEquals(BAD_REQUEST, wae.getResponse().getStatus());
     }
 
     protected <T> ArrayList<T> asList(T element) {

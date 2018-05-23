@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.ovirt.engine.api.model.Bookmark;
 
 public class BookmarkMapperTest extends AbstractInvertibleMappingTest<Bookmark,

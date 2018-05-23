@@ -1,38 +1,41 @@
 package org.ovirt.engine.core.utils.ovf;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.ovirt.engine.core.bll.storage.disk.image.ImagesHandler;
 import org.ovirt.engine.core.common.businessentities.ArchitectureType;
 import org.ovirt.engine.core.common.businessentities.BusinessEntity;
 import org.ovirt.engine.core.common.businessentities.DisplayType;
 import org.ovirt.engine.core.common.businessentities.GraphicsType;
 import org.ovirt.engine.core.common.businessentities.OriginType;
+import org.ovirt.engine.core.common.businessentities.Snapshot;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VmDevice;
 import org.ovirt.engine.core.common.businessentities.VmDeviceGeneralType;
@@ -45,6 +48,7 @@ import org.ovirt.engine.core.common.businessentities.storage.DiskVmElement;
 import org.ovirt.engine.core.common.businessentities.storage.FullEntityOvfData;
 import org.ovirt.engine.core.common.businessentities.storage.Image;
 import org.ovirt.engine.core.common.businessentities.storage.ImageStatus;
+import org.ovirt.engine.core.common.businessentities.storage.QcowCompat;
 import org.ovirt.engine.core.common.businessentities.storage.VolumeFormat;
 import org.ovirt.engine.core.common.businessentities.storage.VolumeType;
 import org.ovirt.engine.core.common.config.ConfigValues;
@@ -54,11 +58,13 @@ import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.common.utils.VmDeviceType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
-import org.ovirt.engine.core.utils.RandomUtilsSeedingRule;
+import org.ovirt.engine.core.utils.RandomUtilsSeedingExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class, RandomUtilsSeedingExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class OvfManagerTest {
 
     private static final Guid SMALL_DEFAULT_ICON_ID = Guid.createGuidFromString("00000000-0000-0000-0000-00000000000a");
@@ -73,20 +79,18 @@ public class OvfManagerTest {
     private static final int MIN_ENTITY_NAME_LENGTH = 3;
     private static final int MAX_ENTITY_NAME_LENGTH = 30;
 
-    @ClassRule
-    public static MockConfigRule mockConfigRule = new MockConfigRule(
-        mockConfig(ConfigValues.VdcVersion, "3.0.0.0"),
-        mockConfig(ConfigValues.MaxNumOfVmSockets, Version.v3_6, 16),
-        mockConfig(ConfigValues.MaxNumOfVmCpus, Version.v3_6, 16),
-        mockConfig(ConfigValues.MaxNumOfVmSockets, Version.v4_0, 16),
-        mockConfig(ConfigValues.MaxNumOfVmCpus, Version.v4_0, 16),
-        mockConfig(ConfigValues.MaxNumOfVmSockets, Version.getLast(), 16),
-        mockConfig(ConfigValues.MaxNumOfVmCpus, Version.getLast(), 16),
-        mockConfig(ConfigValues.PassDiscardSupported, Version.v4_0, true)
-    );
-
-    @Rule
-    public RandomUtilsSeedingRule rusr = new RandomUtilsSeedingRule();
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.VdcVersion, "3.0.0.0"),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmSockets, Version.v3_6, 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmCpus, Version.v3_6, 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmSockets, Version.v4_0, 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmCpus, Version.v4_0, 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmSockets, Version.getLast(), 16),
+                MockConfigDescriptor.of(ConfigValues.MaxNumOfVmCpus, Version.getLast(), 16),
+                MockConfigDescriptor.of(ConfigValues.PassDiscardSupported, Version.v4_0, true)
+        );
+    }
 
     @InjectMocks
     @Spy
@@ -95,10 +99,13 @@ public class OvfManagerTest {
     private OvfVmIconDefaultsProvider iconDefaultsProvider;
     @Mock
     private OsRepository osRepository;
+    @Spy
+    @InjectMocks
+    private ImagesHandler imagesHandler;
 
-    @Before
-    public void setUp() throws Exception {
-        final HashMap<Integer, String> osIdsToNames = new HashMap<>();
+    @BeforeEach
+    public void setUp() {
+        final Map<Integer, String> osIdsToNames = new HashMap<>();
         osIdsToNames.put(DEFAULT_OS_ID, "os_name_a");
         osIdsToNames.put(EXISTING_OS_ID, "os_name_b");
         final List<Pair<GraphicsType, DisplayType>> gndDefaultOs = new ArrayList<>();
@@ -127,8 +134,8 @@ public class OvfManagerTest {
     }
 
     private static void assertVm(VM vm, VM newVm, long expectedDbGeneration) {
-        assertEquals("imported vm is different than expected", vm, newVm);
-        assertEquals("imported db generation is different than expected", expectedDbGeneration, newVm.getDbGeneration());
+        assertEquals(vm, newVm, "imported vm is different than expected");
+        assertEquals(expectedDbGeneration, newVm.getDbGeneration(), "imported db generation is different than expected");
 
         // Icons are actually not stored in snapshots, so they are excluded from comparison
         newVm.getStaticData().setSmallIconId(vm.getStaticData().getSmallIconId());
@@ -198,8 +205,8 @@ public class OvfManagerTest {
         final VmTemplate newtemplate = new VmTemplate();
         FullEntityOvfData fullEntityOvfData = new FullEntityOvfData(newtemplate);
         manager.importTemplate(xml, fullEntityOvfData);
-        assertEquals("imported template is different than expected", newtemplate, template);
-        assertEquals("imported db generation is different than expected", template.getDbGeneration(), newtemplate.getDbGeneration());
+        assertEquals(newtemplate, template, "imported template is different than expected");
+        assertEquals(template.getDbGeneration(), newtemplate.getDbGeneration(), "imported db generation is different than expected");
     }
 
 
@@ -283,7 +290,7 @@ public class OvfManagerTest {
     //       different obviously given the time passed between the two exports.
     //       for now the export date will just be removed but in the future it's better to inject the date to the
     //       writer.
-    private String deleteExportDateValueFromXml(String xml) throws Exception{
+    private String deleteExportDateValueFromXml(String xml) {
         return xml.replaceFirst("<ExportDate>[\\s\\S]*?<\\/ExportDate>", "");
     }
 
@@ -394,5 +401,64 @@ public class OvfManagerTest {
         template.setClusterArch(ArchitectureType.x86_64);
         template.setOsId(EXISTING_OS_ID);
         return template;
+    }
+
+    @Test
+    public void testRemoveImageFromSnapshotConfiguration() throws OvfReaderException {
+        Guid vmId = Guid.newGuid();
+        VM vm = new VM();
+        vm.setId(vmId);
+        vm.setStoragePoolId(Guid.newGuid());
+        vm.setVmtName(RandomUtils.instance().nextString(10));
+        vm.setOrigin(OriginType.OVIRT);
+        vm.setDbGeneration(1L);
+        Guid vmSnapshotId = Guid.newGuid();
+
+        DiskImage disk1 = addTestDisk(vm, vmSnapshotId);
+        DiskVmElement dve1 = new DiskVmElement(disk1.getId(), vm.getId());
+        dve1.setDiskInterface(DiskInterface.VirtIO);
+        disk1.setDiskVmElements(Collections.singletonList(dve1));
+
+        DiskImage disk2 = addTestDisk(vm, vmSnapshotId);
+        DiskVmElement dve2 = new DiskVmElement(disk2.getId(), vm.getId());
+        dve2.setDiskInterface(DiskInterface.IDE);
+        disk2.setDiskVmElements(Collections.singletonList(dve2));
+
+        ArrayList<DiskImage> disks = new ArrayList<>(Arrays.asList(disk1, disk2));
+        FullEntityOvfData fullEntityOvfDataForExport = new FullEntityOvfData(vm);
+        fullEntityOvfDataForExport.setDiskImages(disks);
+        String ovf = manager.exportVm(vm, fullEntityOvfDataForExport, Version.v4_0);
+        Snapshot snap = new Snapshot();
+        snap.setVmConfiguration(ovf);
+        snap.setId(vmSnapshotId);
+
+        Snapshot actual = imagesHandler.prepareSnapshotConfigWithAlternateImage(snap, disk2.getImageId(), null, manager);
+        String actualOvf = actual.getVmConfiguration();
+
+        VM emptyVm = new VM();
+        FullEntityOvfData fullEntityOvfData = new FullEntityOvfData(emptyVm);
+        manager.importVm(actualOvf, emptyVm, fullEntityOvfData);
+        assertEquals(1, fullEntityOvfData.getDiskImages().size(), "Wrong number of disks");
+        assertEquals(disk1, fullEntityOvfData.getDiskImages().get(0), "Wrong disk");
+    }
+
+    private static DiskImage addTestDisk(VM vm, Guid snapshotId) {
+        Guid imageId = Guid.newGuid();
+        DiskImage disk = new DiskImage();
+        disk.setImageId(imageId);
+        disk.setId(Guid.newGuid());
+        disk.setVolumeType(VolumeType.Sparse);
+        disk.setVolumeFormat(VolumeFormat.COW);
+        disk.setQcowCompat(QcowCompat.QCOW2_V3);
+        disk.setStoragePoolId(vm.getStoragePoolId());
+        disk.setActive(Boolean.TRUE);
+        disk.setPlugged(Boolean.TRUE);
+        disk.setVmSnapshotId(snapshotId);
+        disk.setImageStatus(ImageStatus.OK);
+        disk.setAppList("");
+        disk.setDescription("");
+        vm.getDiskList().add(disk);
+        vm.getDiskMap().put(imageId, disk);
+        return disk;
     }
 }

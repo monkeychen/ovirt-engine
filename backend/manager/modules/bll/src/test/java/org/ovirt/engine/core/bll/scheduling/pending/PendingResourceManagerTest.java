@@ -1,12 +1,12 @@
 package org.ovirt.engine.core.bll.scheduling.pending;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.compat.Guid;
@@ -14,7 +14,7 @@ import org.ovirt.engine.core.compat.Guid;
 public class PendingResourceManagerTest {
 
     @Test
-    public void testClearVm() throws Exception {
+    public void testClearVm() {
         PendingResourceManager manager = new PendingResourceManager();
 
         VDS host = new VDS();
@@ -44,7 +44,7 @@ public class PendingResourceManagerTest {
     }
 
     @Test
-    public void testClearHost() throws Exception {
+    public void testClearHost() {
         PendingResourceManager manager = new PendingResourceManager();
 
         VDS host = new VDS();
@@ -70,7 +70,7 @@ public class PendingResourceManagerTest {
     }
 
     @Test
-    public void testAddPending() throws Exception {
+    public void testAddPending() {
         PendingResourceManager manager = new PendingResourceManager();
 
         VDS host = new VDS();
@@ -99,7 +99,7 @@ public class PendingResourceManagerTest {
     }
 
     @Test
-    public void testGetScheduledHost() throws Exception {
+    public void testGetScheduledHost() {
         PendingResourceManager manager = new PendingResourceManager();
 
         VDS host1 = new VDS();

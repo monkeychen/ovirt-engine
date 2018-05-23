@@ -1,45 +1,45 @@
 package org.ovirt.engine.core.bll.scheduling;
 
-import static org.junit.Assert.assertEquals;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.validation.groups.Default;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.common.businessentities.network.NetworkQoS;
 import org.ovirt.engine.core.common.businessentities.qos.CpuQos;
 import org.ovirt.engine.core.common.businessentities.qos.StorageQos;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.utils.ValidationUtils;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockConfigExtension.class)
 public class QosRangeValidatorTest {
 
     public static final int OUT_OF_RANGE = 111;
     public static final int MAX_RANGE = 100;
 
-    @Rule
-    public final MockConfigRule configRule = new MockConfigRule(
-        mockConfig(ConfigValues.MaxCpuLimitQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxThroughputUpperBoundQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxReadThroughputUpperBoundQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxWriteThroughputUpperBoundQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxIopsUpperBoundQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxReadIopsUpperBoundQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxWriteIopsUpperBoundQosValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxAverageNetworkQoSValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxPeakNetworkQoSValue, MAX_RANGE),
-        mockConfig(ConfigValues.MaxBurstNetworkQoSValue, MAX_RANGE)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.MaxCpuLimitQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxThroughputUpperBoundQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxReadThroughputUpperBoundQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxWriteThroughputUpperBoundQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxIopsUpperBoundQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxReadIopsUpperBoundQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxWriteIopsUpperBoundQosValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxAverageNetworkQoSValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxPeakNetworkQoSValue, MAX_RANGE),
+                MockConfigDescriptor.of(ConfigValues.MaxBurstNetworkQoSValue, MAX_RANGE)
+        );
+    }
 
     @Test
     public void validCpuMessage() {

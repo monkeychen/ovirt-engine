@@ -1,44 +1,42 @@
 package org.ovirt.engine.core.vdsbroker.vdsbroker;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.common.businessentities.storage.LUNs;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
-import org.ovirt.engine.core.utils.RandomUtilsSeedingRule;
+import org.ovirt.engine.core.utils.RandomUtilsSeedingExtension;
 
+@ExtendWith({MockConfigExtension.class, RandomUtilsSeedingExtension.class})
 public class GetDeviceListVDSCommandTest {
-
-    @Rule
-    public RandomUtilsSeedingRule rusr = new RandomUtilsSeedingRule();
-
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.PassDiscardSupported, Version.v4_0, false),
-            mockConfig(ConfigValues.PassDiscardSupported, Version.v4_1, true)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.PassDiscardSupported, Version.v4_0, false),
+                MockConfigDescriptor.of(ConfigValues.PassDiscardSupported, Version.v4_1, true)
+        );
+    }
 
     @Test
-    public void parseLunReturnsIscsiByDefault() throws Exception {
+    public void parseLunReturnsIscsiByDefault() {
         testParseLunForDevtypeField(StorageType.ISCSI, "");
     }
 
     @Test
-    public void parseLunReturnsFcpForFcp() throws Exception {
+    public void parseLunReturnsFcpForFcp() {
         testParseLunForDevtypeField(StorageType.FCP, GetDeviceListVDSCommand.DEVTYPE_VALUE_FCP);
     }
 
@@ -60,7 +58,7 @@ public class GetDeviceListVDSCommandTest {
     }
 
     @Test
-    public void parseLunReturnsUnknownForNoField() throws Exception {
+    public void parseLunReturnsUnknownForNoField() {
         Map<String, Object> xlun = new HashMap<>();
         LUNs lun = GetDeviceListVDSCommand.parseLun(xlun, Version.v4_1);
 
@@ -68,7 +66,7 @@ public class GetDeviceListVDSCommandTest {
     }
 
     @Test
-    public void parseLunPathStatus() throws Exception {
+    public void parseLunPathStatus() {
         int numActivePaths = 1 + RandomUtils.instance().nextInt(3);
         int numNonActivePaths = 2 + RandomUtils.instance().nextInt(3);
         int numPaths = numActivePaths + numNonActivePaths;
@@ -93,19 +91,19 @@ public class GetDeviceListVDSCommandTest {
         LUNs lun = GetDeviceListVDSCommand.parseLun(xlun, Version.v4_1);
 
         // Go over the directory
-        assertEquals("wrong number of paths", numPaths, lun.getPathCount());
+        assertEquals(numPaths, lun.getPathCount(), "wrong number of paths");
         Map<String, Boolean> pathDir = new HashMap<>(lun.getPathsDictionary());
         for (int i = 0; i < numPaths; ++i) {
             // Assert for each device
             String device = physicalDevicePrefix + i;
             Boolean isActive = pathDir.remove(device);
 
-            assertNotNull("Device " + device + " isn't in the device map", isActive);
-            assertEquals("Device " + device + " has the wrong state ", i < numActivePaths, isActive);
+            assertNotNull(isActive, "Device " + device + " isn't in the device map");
+            assertEquals(i < numActivePaths, isActive, "Device " + device + " has the wrong state ");
         }
 
         // After remove all the expected devices, the directory should be empty
-        assertTrue("Wrong devices in the device map", pathDir.isEmpty());
+        assertTrue(pathDir.isEmpty(), "Wrong devices in the device map");
     }
 
     @Test

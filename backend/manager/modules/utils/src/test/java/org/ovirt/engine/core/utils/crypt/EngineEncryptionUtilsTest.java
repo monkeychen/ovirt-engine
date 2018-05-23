@@ -1,38 +1,32 @@
 package org.ovirt.engine.core.utils.crypt;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.ovirt.engine.core.utils.MockEngineLocalConfigRule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.ovirt.engine.core.common.utils.Pair;
+import org.ovirt.engine.core.utils.MockEngineLocalConfigExtension;
+import org.ovirt.engine.core.utils.TrustStoreTestUtils;
 
+@ExtendWith(MockEngineLocalConfigExtension.class)
 public class EngineEncryptionUtilsTest {
 
-    @ClassRule
-    public static MockEngineLocalConfigRule mockEngineLocalConfigRule;
-
-    static {
-        try {
-            mockEngineLocalConfigRule = new MockEngineLocalConfigRule(
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_TRUST_STORE_TYPE", "JKS"),
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_TRUST_STORE", URLDecoder.decode(ClassLoader.getSystemResource("key.p12").getPath(), "UTF-8")),
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_TRUST_STORE_PASSWORD", "NoSoup4U"),
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_ENGINE_STORE_TYPE", "PKCS12"),
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_ENGINE_STORE", URLDecoder.decode(ClassLoader.getSystemResource("key.p12").getPath(), "UTF-8")),
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_ENGINE_STORE_PASSWORD", "NoSoup4U"),
-                new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI_ENGINE_STORE_ALIAS", "1")
-            );
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+    public static Stream<Pair<String, String>> mockEngineLocalConfiguration() {
+        return Stream.of(
+                new Pair<>("ENGINE_PKI_TRUST_STORE_TYPE", "JKS"),
+                new Pair<>("ENGINE_PKI_TRUST_STORE", TrustStoreTestUtils.getTrustStorePath()),
+                new Pair<>("ENGINE_PKI_TRUST_STORE_PASSWORD", "NoSoup4U"),
+                new Pair<>("ENGINE_PKI_ENGINE_STORE_TYPE", "PKCS12"),
+                new Pair<>("ENGINE_PKI_ENGINE_STORE", TrustStoreTestUtils.getTrustStorePath()),
+                new Pair<>("ENGINE_PKI_ENGINE_STORE_PASSWORD", "NoSoup4U"),
+                new Pair<>("ENGINE_PKI_ENGINE_STORE_ALIAS", "1")
+        );
     }
 
     @Test
@@ -79,6 +73,6 @@ public class EngineEncryptionUtilsTest {
             t.join();
         }
 
-        assertFalse(failures.toString(), failed.get());
+        assertFalse(failed.get(), failures.toString());
     }
 }

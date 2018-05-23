@@ -1,8 +1,8 @@
 package org.ovirt.engine.core.bll.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -13,13 +13,16 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.interfaces.BackendInternal;
+import org.ovirt.engine.core.bll.validator.gluster.GlusterBrickValidator;
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.action.gluster.GlusterVolumeRemoveBricksParameters;
 import org.ovirt.engine.core.common.asynctasks.gluster.GlusterAsyncTask;
@@ -40,6 +43,7 @@ import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.gluster.GlusterVolumeDao;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StartRemoveGlusterVolumeBricksCommandTest extends BaseCommandTest {
     @Mock
     GlusterVolumeDao volumeDao;
@@ -47,6 +51,9 @@ public class StartRemoveGlusterVolumeBricksCommandTest extends BaseCommandTest {
     protected BackendInternal backend;
     @Mock
     protected VDSBrokerFrontend vdsBrokerFrontend;
+    @Spy
+    @InjectMocks
+    private GlusterBrickValidator brickValidator;
 
     private final Guid volumeId1 = new Guid("8bc6f108-c0ef-43ab-ba20-ec41107220f5");
 
@@ -84,13 +91,12 @@ public class StartRemoveGlusterVolumeBricksCommandTest extends BaseCommandTest {
         return bricks;
     }
 
-    @Before
+    @BeforeEach
     public void prepareMocks() {
         doReturn(getVds(VDSStatus.Up)).when(cmd).getUpServer();
         doReturn(getSingleBrickVolume(volumeId1)).when(volumeDao).getById(volumeId1);
         doReturn(getMultiBrickVolume(volumeId2)).when(volumeDao).getById(volumeId2);
         doReturn(cluster).when(cmd).getCluster();
-        doReturn(vdsBrokerFrontend).when(cmd).getVdsBroker();
     }
 
     private VDS getVds(VDSStatus status) {

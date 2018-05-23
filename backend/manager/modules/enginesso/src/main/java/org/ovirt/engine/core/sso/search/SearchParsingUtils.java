@@ -47,7 +47,7 @@ public class SearchParsingUtils {
                 Authz.InvokeKeys.QUERY_ENTITY,
                 queryEntity);
         ExtKey key = queryEntity.equals(Authz.QueryEntity.GROUP) ? Authz.GroupRecord.ID : Authz.PrincipalRecord.ID;
-        List<ExtMap> filter = ids.stream().map((id) -> createMapForKeyAndValue(key, id)).collect(Collectors.toList());
+        List<ExtMap> filter = ids.stream().map(id -> createMapForKeyAndValue(key, id)).collect(Collectors.toList());
         result.mput(
                 QueryFilterRecord.OPERATOR,
                 QueryFilterOperator.OR
@@ -56,13 +56,6 @@ public class SearchParsingUtils {
                         filter
                 );
         return result;
-    }
-
-    public static ExtMap generateQueryForName(String name, ExtUUID queryEntity) {
-        StringBuilder query = new StringBuilder(getQueryPrefixByEntity(queryEntity)).append("|");
-        attributesToKeys.keySet()
-                .forEach((key) -> query.append(String.format("(%1$s=%2$s)", key, name)));
-        return generateQueryMap(query.append(")").toString(), queryEntity);
     }
 
     public static ExtMap generateQueryMap(String query, ExtUUID queryEntity) {

@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.bll.snapshots;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.businessentities.Snapshot;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.storage.Disk;
@@ -17,7 +17,7 @@ import org.ovirt.engine.core.common.businessentities.storage.ImageStatus;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.DiskImageDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SnapshotVmConfigurationHelperTest {
 
     @Mock
@@ -37,8 +37,8 @@ public class SnapshotVmConfigurationHelperTest {
 
     private static final String EXISTING_VM_NAME = "Dummy configuration";
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         existingSnapshot = createSnapshot(existingSnapshotId);
         existingVm = createVm(existingVmId);
         existingSnapshot.setVmConfiguration(EXISTING_VM_NAME); // Dummy configuration
@@ -67,7 +67,7 @@ public class SnapshotVmConfigurationHelperTest {
     }
 
     @Test
-    public void testIllegalImageReturnedByQuery() throws Exception {
+    public void testIllegalImageReturnedByQuery() {
         existingVm.getDiskMap().put(existingDiskImage.getId(), existingDiskImage);
         existingVm.getImages().add(existingDiskImage);
         snapshotVmConfigurationHelper.markImagesIllegalIfNotInDb(existingVm, existingSnapshotId);

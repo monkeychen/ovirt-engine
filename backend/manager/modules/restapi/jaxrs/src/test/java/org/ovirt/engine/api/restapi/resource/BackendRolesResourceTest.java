@@ -1,13 +1,19 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Permit;
 import org.ovirt.engine.api.model.Permits;
 import org.ovirt.engine.api.model.Role;
@@ -19,6 +25,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendRolesResourceTest
         extends AbstractBackendCollectionResourceTest<Role, org.ovirt.engine.core.common.businessentities.Role, BackendRolesResource> {
 
@@ -27,13 +34,13 @@ public class BackendRolesResourceTest
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
-    public void testAddRole() throws Exception {
+    public void testAddRole() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddRoleWithActionGroups,
                                   RoleWithActionGroupsParameters.class,
@@ -60,7 +67,7 @@ public class BackendRolesResourceTest
     }
 
     @Test
-    public void testAddRoleInvalidPermit() throws Exception {
+    public void testAddRoleInvalidPermit() {
         setUriInfo(setUpBasicUriExpectations());
         Role model = new Role();
         model.setName(NAMES[0]);
@@ -68,41 +75,29 @@ public class BackendRolesResourceTest
         model.getPermits().getPermits().add(new Permit());
         model.getPermits().getPermits().get(0).setId("1234");
 
-        try {
-            Response response = collection.add(model);
-            fail("expected WebApplicationException");
-        } catch(WebApplicationException wae) {
-            assertEquals(BAD_REQUEST, wae.getResponse().getStatus());
-            assertEquals("1234 is not a valid permit ID.", wae.getResponse().getEntity());
-        }
+        WebApplicationException wae = assertThrows(WebApplicationException.class, () -> collection.add(model));
+        verifyBadRequest(wae);
+        assertEquals("1234 is not a valid permit ID.", wae.getResponse().getEntity());
     }
 
     @Test
-    public void testAddIncompleteParametersNoPermits() throws Exception {
+    public void testAddIncompleteParametersNoPermits() {
         Role model = new Role();
         model.setName(NAMES[0]);
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Role", "add", "permits.id");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Role", "add", "permits.id");
     }
 
     @Test
-    public void testAddIncompleteParametersNoName() throws Exception {
+    public void testAddIncompleteParametersNoName() {
         Role model = new Role();
         model.setPermits(new Permits());
         model.getPermits().getPermits().add(new Permit());
         model.getPermits().getPermits().get(0).setId("1");
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Role", "add", "name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Role", "add", "name");
     }
 
     @Override
@@ -111,7 +106,7 @@ public class BackendRolesResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetAllRoles,

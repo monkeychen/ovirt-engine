@@ -16,6 +16,10 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,7 +29,9 @@ import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.NetworkFilterParameter;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.RemoveVmNicFilterParameterParameters;
@@ -36,6 +42,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmNicFilterParameterResourceTest
         extends AbstractBackendSubResourceTest<NetworkFilterParameter, VmNicFilterParameter, BackendVmNicFilterParameterResource> {
 
@@ -51,7 +58,7 @@ public class BackendVmNicFilterParameterResourceTest
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(
             QueryType.GetVmInterfaceFilterParameterById,
@@ -60,17 +67,12 @@ public class BackendVmNicFilterParameterResourceTest
             new Object[] { PARAMETER_ID },
             Collections.emptyList()
         );
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
 
@@ -79,7 +81,7 @@ public class BackendVmNicFilterParameterResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(
             QueryType.GetVmInterfaceFilterParameterById,
@@ -88,17 +90,12 @@ public class BackendVmNicFilterParameterResourceTest
             new Object[] { PARAMETER_ID },
             new ArrayList<VmNetworkInterface>()
         );
-        try {
-            resource.update(getParameter());
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getParameter())));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(1);
         setUriInfo(
             setUpActionExpectations(
@@ -115,7 +112,7 @@ public class BackendVmNicFilterParameterResourceTest
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUriInfo(
             setUpActionExpectations(
                 ActionType.RemoveVmNicFilterParameter,
@@ -130,16 +127,16 @@ public class BackendVmNicFilterParameterResourceTest
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUriInfo(
                 setUpActionExpectations(
                         ActionType.RemoveVmNicFilterParameter,
@@ -150,13 +147,8 @@ public class BackendVmNicFilterParameterResourceTest
                         success
                 )
         );
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
     protected NetworkFilterParameter getParameter() {
@@ -183,7 +175,7 @@ public class BackendVmNicFilterParameterResourceTest
 
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetVmInterfaceFilterParameterById,
@@ -195,11 +187,11 @@ public class BackendVmNicFilterParameterResourceTest
         }
     }
 
-    protected void setUpGetEntityExpectations(int times) throws Exception {
+    protected void setUpGetEntityExpectations(int times) {
         setUpGetEntityExpectations(times, getEntity(DEFAULT_INDEX));
     }
 
-    protected void setUpGetEntityExpectations(int times, VmNicFilterParameter entity) throws Exception {
+    protected void setUpGetEntityExpectations(int times, VmNicFilterParameter entity) {
         while (times-- > 0) {
             setUpGetEntityExpectations(
                 QueryType.GetVmInterfaceFilterParameterById,

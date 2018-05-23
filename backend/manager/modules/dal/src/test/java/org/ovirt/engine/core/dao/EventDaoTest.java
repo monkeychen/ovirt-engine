@@ -1,32 +1,32 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.EventNotificationMethod;
 import org.ovirt.engine.core.common.businessentities.EventNotificationHist;
 import org.ovirt.engine.core.common.businessentities.EventSubscriber;
 import org.ovirt.engine.core.compat.Guid;
 
-public class EventDaoTest extends BaseDaoTestCase {
+public class EventDaoTest extends BaseDaoTestCase<EventDao> {
     private static final int FREE_AUDIT_LOG_ID = 44295;
-    private EventDao dao;
     private Guid existingSubscriber;
     private Guid newSubscriber;
     private EventSubscriber newSubscription;
     private EventNotificationHist newHistory;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        dao = dbFacade.getEventDao();
         existingSubscriber = new Guid("9bf7c640-b620-456f-a550-0348f366544a");
         newSubscriber = new Guid("9bf7c640-b620-456f-a550-0348f366544b");
         newSubscription = new EventSubscriber();

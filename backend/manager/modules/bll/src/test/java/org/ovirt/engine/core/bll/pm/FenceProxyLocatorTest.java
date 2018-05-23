@@ -1,11 +1,11 @@
 package org.ovirt.engine.core.bll.pm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -16,13 +16,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.ovirt.engine.core.bll.DbDependentTestBase;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.common.businessentities.FencingPolicy;
 import org.ovirt.engine.core.common.businessentities.NonOperationalReason;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -31,16 +31,16 @@ import org.ovirt.engine.core.common.businessentities.pm.FenceAgent;
 import org.ovirt.engine.core.common.businessentities.pm.FenceProxySourceType;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.FenceAgentDao;
 import org.ovirt.engine.core.dao.VdsDao;
+import org.ovirt.engine.core.utils.InjectedMock;
 import org.ovirt.engine.core.utils.pm.VdsFenceOptions;
 
 /**
  * This class tests the FenceProxyLocator
  */
-@RunWith(MockitoJUnitRunner.class)
-public class FenceProxyLocatorTest extends DbDependentTestBase {
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class FenceProxyLocatorTest extends BaseCommandTest {
 
     private static Guid FENCECD_HOST_ID = new Guid("11111111-1111-1111-1111-111111111111");
     private static Guid FENCED_HOST_CLUSTER_ID = new Guid("22222222-2222-2222-2222-222222222222");
@@ -50,29 +50,25 @@ public class FenceProxyLocatorTest extends DbDependentTestBase {
     private static Guid OTHER_DATACENTER_ID = new Guid("77777777-7777-7777-7777-777777777777");
 
     @Mock
-    private DbFacade dbFacade;
+    @InjectedMock
+    public VdsDao vdsDao;
 
     @Mock
-    private VdsDao vdsDao;
-
-    @Mock
-    private FenceAgentDao fenceAgentDao;
+    @InjectedMock
+    public FenceAgentDao fenceAgentDao;
 
     private VdsFenceOptions vdsFenceOptions;
 
     private VDS fencedHost;
 
-    @Before
+    @BeforeEach
     public void setup() {
-        when(dbFacade.getVdsDao()).thenReturn(vdsDao);
-        when(dbFacade.getFenceAgentDao()).thenReturn(fenceAgentDao);
-
         mockVdsFenceOptions(true);
         mockFencedHost();
         mockFenceAgents();
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         fencedHost = null;
     }
@@ -337,7 +333,6 @@ public class FenceProxyLocatorTest extends DbDependentTestBase {
 
     private FenceProxyLocator setupLocator(FencingPolicy fencingPolicy) {
         FenceProxyLocator fenceProxyLocator = spy(new FenceProxyLocator(fencedHost, fencingPolicy));
-        when(fenceProxyLocator.getDbFacade()).thenReturn(dbFacade);
         doReturn(vdsFenceOptions).when(fenceProxyLocator).createVdsFenceOptions(any());
         doReturn(0L).when(fenceProxyLocator).getDelayBetweenRetries();
         doReturn(1).when(fenceProxyLocator).getFindFenceProxyRetries();

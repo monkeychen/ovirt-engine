@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.ovirt.engine.core.common.action.ActionParametersBase;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.ChangeQuotaParameters;
-import org.ovirt.engine.core.common.action.GetDiskAlignmentParameters;
 import org.ovirt.engine.core.common.action.RemoveDiskParameters;
 import org.ovirt.engine.core.common.businessentities.VmEntityType;
 import org.ovirt.engine.core.common.businessentities.storage.CinderDisk;
@@ -91,16 +90,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         privateMoveCommand = value;
     }
 
-    private UICommand privateScanAlignmentCommand;
-
-    public UICommand getScanAlignmentCommand() {
-        return privateScanAlignmentCommand;
-    }
-
-    private void setScanAlignmentCommand(UICommand value) {
-        privateScanAlignmentCommand = value;
-    }
-
     private UICommand exportCommand;
 
     public UICommand getExportCommand() {
@@ -181,16 +170,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         downloadCommand = value;
     }
 
-    private UICommand stopDownloadCommand;
-
-    public UICommand getStopDownloadCommand() {
-        return stopDownloadCommand;
-    }
-
-    private void setStopDownloadCommand(UICommand value) {
-        stopDownloadCommand = value;
-    }
-
     private EntityModel<DiskStorageType> diskViewType;
 
     public EntityModel<DiskStorageType> getDiskViewType() {
@@ -242,14 +221,12 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         setMoveCommand(new UICommand("Move", this)); //$NON-NLS-1$
         setChangeQuotaCommand(new UICommand("changeQuota", this)); //$NON-NLS-1$
         setCopyCommand(new UICommand("Copy", this)); //$NON-NLS-1$
-        setScanAlignmentCommand(new UICommand("Check Alignment", this)); //$NON-NLS-1$
         setExportCommand(new UICommand("Export", this)); //$NON-NLS-1$
         setUploadCommand(new UICommand("Upload", this)); //$NON-NLS-1$
         setCancelUploadCommand(new UICommand("CancelUpload", this)); //$NON-NLS-1$
         setPauseUploadCommand(new UICommand("PauseUpload", this)); //$NON-NLS-1$
         setResumeUploadCommand(new UICommand("ResumeUpload", this)); //$NON-NLS-1$
         setDownloadCommand(new UICommand("Download", this)); //$NON-NLS-1$
-        setStopDownloadCommand(new UICommand("StopDownload", this)); //$NON-NLS-1$
 
         updateActionAvailability();
 
@@ -362,19 +339,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         model.setEntity(this);
         model.init(disks);
         model.startProgress();
-    }
-
-    private void scanAlignment() {
-        ArrayList<ActionParametersBase> parameterList = new ArrayList<>();
-
-        for (Disk disk : getSelectedItems()) {
-            parameterList.add(new GetDiskAlignmentParameters(disk.getId()));
-        }
-
-        Frontend.getInstance().runMultipleAction(ActionType.GetDiskAlignment, parameterList,
-                result -> {
-                },
-                this);
     }
 
     private void export() {
@@ -538,10 +502,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         DownloadImageManager.getInstance().startDownload(getSelectedDiskImages());
     }
 
-    private void stopDownload() {
-        DownloadImageManager.getInstance().stopDownload(getSelectedDiskImages());
-    }
-
     private List<DiskImage> getSelectedDiskImages() {
         return getSelectedItems().stream().map(disk -> (DiskImage) disk).collect(Collectors.toList());
     }
@@ -557,8 +517,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         getNewCommand().setIsExecutionAllowed(true);
         getEditCommand().setIsExecutionAllowed(disk != null && disks != null && disks.size() == 1 && shouldAllowEdit);
         getRemoveCommand().setIsExecutionAllowed(disks != null && disks.size() > 0 && isRemoveCommandAvailable());
-        getScanAlignmentCommand().setIsExecutionAllowed(
-                disks != null && disks.size() > 0 && isScanAlignmentCommandAvailable());
         getExportCommand().setIsExecutionAllowed(isExportCommandAvailable());
         updateCopyAndMoveCommandAvailability(disks);
 
@@ -566,7 +524,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         getPauseUploadCommand().setIsExecutionAllowed(UploadImageModel.isPauseAllowed(disks));
         getResumeUploadCommand().setIsExecutionAllowed(UploadImageModel.isResumeAllowed(disks));
         getDownloadCommand().setIsExecutionAllowed(DownloadImageHandler.isDownloadAllowed(disks));
-        getStopDownloadCommand().setIsExecutionAllowed(DownloadImageHandler.isStopDownloadAllowed(disks));
     }
 
     private boolean isDiskLocked(Disk disk) {
@@ -659,19 +616,6 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
         return true;
     }
 
-    private boolean isScanAlignmentCommandAvailable() {
-        List<Disk> disks = getSelectedItems() != null ? getSelectedItems() : new ArrayList<>();
-
-        for (Disk disk : disks) {
-            if (disk.getDiskStorageType() == DiskStorageType.IMAGE &&
-                    ((DiskImage) disk).getImageStatus() != ImageStatus.OK) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private boolean isExportCommandAvailable() {
         List<DiskImage> disks = asImages(getSelectedItems());
 
@@ -707,58 +651,38 @@ public class DiskListModel extends ListWithSimpleDetailsModel<Void, Disk> {
 
         if (command == getNewCommand()) {
             newEntity();
-        }
-        else if (command == getEditCommand()) {
+        } else if (command == getEditCommand()) {
             edit();
-        }
-        else if (command == getRemoveCommand()) {
+        } else if (command == getRemoveCommand()) {
             remove();
-        }
-        else if (command == getMoveCommand()) {
+        } else if (command == getMoveCommand()) {
             move();
-        }
-        else if (command == getCopyCommand()) {
+        } else if (command == getCopyCommand()) {
             copy();
-        }
-        else if (command == getScanAlignmentCommand()) {
-            scanAlignment();
-        }
-        else if (command == getExportCommand()) {
+        } else if (command == getExportCommand()) {
             export();
-        }
-        else if (RemoveDiskModel.CANCEL_REMOVE.equals(command.getName()) || "Cancel".equals(command.getName())) { //$NON-NLS-1$
+        } else if (RemoveDiskModel.CANCEL_REMOVE.equals(command.getName()) || "Cancel".equals(command.getName())) { //$NON-NLS-1$
             cancel();
-        }
-        else if ("CancelConfirm".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("CancelConfirm".equals(command.getName())) { //$NON-NLS-1$
             cancelConfirm();
-        }
-        else if (RemoveDiskModel.ON_REMOVE.equals(command.getName())) {
+        } else if (RemoveDiskModel.ON_REMOVE.equals(command.getName())) {
             onRemove();
         } else if (command == getChangeQuotaCommand()) {
             changeQuota();
         } else if (command.getName().equals("onChangeQuota")) { //$NON-NLS-1$
             onChangeQuota();
-        }
-        else if (command == getUploadCommand()) {
+        } else if (command == getUploadCommand()) {
             upload();
-        }
-        else if (command == getCancelUploadCommand()) {
+        } else if (command == getCancelUploadCommand()) {
             cancelUpload();
-        }
-        else if ("OnCancelUpload".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnCancelUpload".equals(command.getName())) { //$NON-NLS-1$
             onCancelUpload();
-        }
-        else if (command == getPauseUploadCommand()) {
+        } else if (command == getPauseUploadCommand()) {
             pauseUpload();
-        }
-        else if (command == getResumeUploadCommand()) {
+        } else if (command == getResumeUploadCommand()) {
             resumeUpload();
-        }
-        else if (command == getDownloadCommand()) {
+        } else if (command == getDownloadCommand()) {
             download();
-        }
-        else if (command == getStopDownloadCommand()) {
-            stopDownload();
         }
     }
 

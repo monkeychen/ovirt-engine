@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -20,6 +21,7 @@ import org.ovirt.engine.core.common.errors.EngineMessage;
 public class ValidationUtils {
 
     public static final String NO_SPECIAL_CHARACTERS_EXTRA_I18N = "^[\\p{L}0-9._\\+-]*$";
+    public static final String CUSTOM_CPU_NAME = "^[\\p{L}0-9._\\+\\-,]*$";
     public static final String NO_SPECIAL_CHARACTERS_I18N = "^[\\p{L}0-9._-]*$";
     public static final String NO_SPECIAL_CHARACTERS = "[0-9a-zA-Z_-]+";
     public static final String ONLY_I18N_ASCII_OR_NONE = "[\\p{ASCII}\\p{L}]*";
@@ -28,6 +30,7 @@ public class ValidationUtils {
     public static final String NO_TRIMMING_WHITE_SPACES_PATTERN = "^$|\\S.*\\S|^\\S+$";
     public static final String IPV4_PATTERN_NON_EMPTY =
             "\\b((25[0-5]|2[0-4]\\d|[01]\\d\\d|\\d?\\d)\\.){3}(25[0-5]|2[0-4]\\d|[01]\\d\\d|\\d?\\d)";
+    // IPv4 pattern should not match the empty string because 'no entry' is represented in engine with null
     public static final String IPV4_PATTERN = "^" + IPV4_PATTERN_NON_EMPTY;
     private static final String IPV6_ADDRESS_BLOCK = "[0-9a-fA-F]{1,4}";
     private static final String IPV6_HEX_COMPRESSED_PATTERN =
@@ -64,6 +67,8 @@ public class ValidationUtils {
             + "]*[\\p{L}0-9._-]*$|^[\\p{L}0-9._-]*[" + VmPool.MASK_CHARACTER + "]*[\\p{L}0-9._-]+$";
 
     private static final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    public static final Pattern ipv6RegexPattern = Pattern.compile(IPV6_PATTERN);
+    public static final Pattern ipv4RegexPattern = Pattern.compile(IPV4_PATTERN);
 
     /***
      * This function validates a hostname according to URI RFC's.
@@ -148,5 +153,24 @@ public class ValidationUtils {
 
     public static boolean validatePort(int port) {
         return (port >= BusinessEntitiesDefinitions.NETWORK_MIN_LEGAL_PORT) && (port <= BusinessEntitiesDefinitions.NETWORK_MAX_LEGAL_PORT);
+    }
+
+    /**
+     *
+     * @param ipv4Address a ipv4 address with prefix ('/24') is invalid
+     * @return true if the address matches the regex
+     */
+    public static boolean isValidIpv4(String ipv4Address) {
+        return ipv4Address == null ? false : ipv4RegexPattern.matcher(ipv4Address).matches();
+    }
+
+    /**
+     *
+     * @param ipv6Address an address with prefix ('/64') or link local zone index ('%eth0')
+     *                    is invalid
+     * @return true if the address matches the regex
+     */
+    public static boolean isValidIpv6(String ipv6Address) {
+        return ipv6Address == null ? false : ipv6RegexPattern.matcher(ipv6Address).matches();
     }
 }

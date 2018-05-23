@@ -6,35 +6,28 @@ import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.scheduling.policyunits.InClusterUpgradeWeightPolicyUnit.BAD_WEIGHT;
 import static org.ovirt.engine.core.bll.scheduling.policyunits.InClusterUpgradeWeightPolicyUnit.BEST_WEIGHT;
 import static org.ovirt.engine.core.bll.scheduling.policyunits.InClusterUpgradeWeightPolicyUnit.BETTER_WEIGHT;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.VdsDynamicDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
-import junit.framework.TestCase;
-
-@RunWith(MockitoJUnitRunner.class)
-public class InClusterUpgradeWeightPolicyUnitTest extends TestCase {
-
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule(mockConfig(ConfigValues.MaxSchedulerWeight, 1000));
-
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class InClusterUpgradeWeightPolicyUnitTest {
     @Mock
     private VdsDynamicDao vdsDynamicDao;
 
@@ -48,7 +41,7 @@ public class InClusterUpgradeWeightPolicyUnitTest extends TestCase {
     private VDS tooOldHost;
     private VDS currentHost;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         newEnoughHost = newHost("RHEL - 7.2 - 1.el7");
         tooOldHost = newHost("RHEL - 5.0 - 1.el5");

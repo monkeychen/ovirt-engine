@@ -2,31 +2,24 @@ package org.ovirt.engine.core.dao;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.storage.ImageStorageDomainMap;
 import org.ovirt.engine.core.common.businessentities.storage.ImageStorageDomainMapId;
 import org.ovirt.engine.core.compat.Guid;
 
-public class ImageStorageDomainMapDaoTest extends BaseDaoTestCase {
+public class ImageStorageDomainMapDaoTest extends BaseDaoTestCase<ImageStorageDomainMapDao> {
 
     private static final Guid EXISTING_IMAGE_ID = new Guid("c9a559d9-8666-40d1-9967-759502b19f0b");
     private static final Guid EXISTING_IMAGE_ID_WITH_NO_MAP_ENTRY = new Guid("f9a559d9-8666-40d1-9967-759502b19f0f");
-    private ImageStorageDomainMapDao dao;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        dao = dbFacade.getImageStorageDomainMapDao();
-    }
 
     @Test
     public void testGetAllByImageId() {
@@ -80,7 +73,7 @@ public class ImageStorageDomainMapDaoTest extends BaseDaoTestCase {
         dao.remove(new ImageStorageDomainMapId(EXISTING_IMAGE_ID, FixturesTool.STORAGE_DOMAIN_SCALE_SD5));
         List<ImageStorageDomainMap> entries = dao.getAllByStorageDomainId(EXISTING_IMAGE_ID);
         for (ImageStorageDomainMap entry : entries) {
-            assertFalse(entry.getStorageDomainId().equals(FixturesTool.STORAGE_DOMAIN_SCALE_SD5));
+            assertNotEquals(FixturesTool.STORAGE_DOMAIN_SCALE_SD5, entry.getStorageDomainId());
         }
         assertNotNull(entries);
         assertTrue(entries.isEmpty());
@@ -92,16 +85,15 @@ public class ImageStorageDomainMapDaoTest extends BaseDaoTestCase {
         ImageStorageDomainMap imageStorageDomainMap = dao.getAllByImageId(EXISTING_IMAGE_ID).get(0);
         Guid quotaId = imageStorageDomainMap.getQuotaId();
         // test that the current quota doesn't equal with the new quota
-        if (quotaId.equals(FixturesTool.DEFAULT_QUOTA_GENERAL)) {
-            fail("Same source and dest quota id, cannot perform test");
-        }
+        assertNotEquals
+                (FixturesTool.DEFAULT_QUOTA_GENERAL, quotaId, "Same source and dest quota id, cannot perform test");
         // change quota to the new quota 91
         dao.updateQuotaForImageAndSnapshots(FixturesTool.IMAGE_GROUP_ID, FixturesTool.STORAGE_DOMAIN_SCALE_SD5, FixturesTool.DEFAULT_QUOTA_GENERAL);
         // fetch the image again
         imageStorageDomainMap = dao.getAllByImageId(EXISTING_IMAGE_ID).get(0);
         quotaId = imageStorageDomainMap.getQuotaId();
         // check that the new quota is the inserted one
-        assertEquals("quota wasn't changed", FixturesTool.DEFAULT_QUOTA_GENERAL, quotaId);
+        assertEquals(FixturesTool.DEFAULT_QUOTA_GENERAL, quotaId, "quota wasn't changed");
     }
 
     @Test
@@ -117,8 +109,7 @@ public class ImageStorageDomainMapDaoTest extends BaseDaoTestCase {
         // fetch the image again
         imageStorageDomainMap = dao.getAllByImageId(EXISTING_IMAGE_ID).get(0);
         // check that the new disk profile is the inserted one
-        assertEquals("disk profile wasn't changed",
-                FixturesTool.DISK_PROFILE_2,
-                imageStorageDomainMap.getDiskProfileId());
+        assertEquals(FixturesTool.DISK_PROFILE_2, imageStorageDomainMap.getDiskProfileId(),
+                "disk profile wasn't changed");
     }
 }

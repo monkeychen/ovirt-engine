@@ -42,8 +42,8 @@ import org.ovirt.engine.core.common.action.LockProperties.Scope;
 import org.ovirt.engine.core.common.businessentities.ActionGroup;
 import org.ovirt.engine.core.common.businessentities.ArchitectureType;
 import org.ovirt.engine.core.common.businessentities.Cluster;
+import org.ovirt.engine.core.common.businessentities.DisplayType;
 import org.ovirt.engine.core.common.businessentities.GraphicsType;
-import org.ovirt.engine.core.common.businessentities.Label;
 import org.ovirt.engine.core.common.businessentities.Permission;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -60,7 +60,6 @@ import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
 import org.ovirt.engine.core.common.businessentities.storage.DiskVmElement;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.locks.LockingGroup;
-import org.ovirt.engine.core.common.scheduling.AffinityGroup;
 import org.ovirt.engine.core.common.utils.CompatibilityVersionUtils;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.common.utils.VmDeviceCommonUtils;
@@ -373,9 +372,7 @@ public abstract class ImportVmCommandBase<T extends ImportVmParameters> extends 
      */
     protected void generateNewDiskId(List<DiskImage> diskImagesList, DiskImage disk) {
         Guid generatedGuid = generateNewDiskId(disk);
-        for (DiskImage diskImage : diskImagesList) {
-            diskImage.setId(generatedGuid);
-        }
+        diskImagesList.forEach(diskImage ->  diskImage.setId(generatedGuid));
     }
 
     /**
@@ -494,14 +491,6 @@ public abstract class ImportVmCommandBase<T extends ImportVmParameters> extends 
         // Left empty to override in ImportVmFromConfiguration
     }
 
-    protected List<AffinityGroup> mapAffinityGroups() {
-        return Collections.EMPTY_LIST;
-    }
-
-    protected List<Label> mapAffinityLabels() {
-        return Collections.EMPTY_LIST;
-    }
-
     protected void addPermissionsToDB() {
         // Left empty to be overridden by ImportVmFromConfiguration
     }
@@ -563,15 +552,21 @@ public abstract class ImportVmCommandBase<T extends ImportVmParameters> extends 
 
     protected void addVmStatic() {
         logImportEvents();
-        getVm().getStaticData().setId(getVmId());
-        getVm().getStaticData().setCreationDate(new Date());
-        getVm().getStaticData().setClusterId(getParameters().getClusterId());
-        getVm().getStaticData().setMinAllocatedMem(computeMinAllocatedMem());
-        getVm().getStaticData().setQuotaId(getParameters().getQuotaId());
+        getVm().setId(getVmId());
+        getVm().setVmCreationDate(new Date());
+        getVm().setClusterId(getParameters().getClusterId());
+        getVm().setMinAllocatedMem(computeMinAllocatedMem());
+        getVm().setQuotaId(getParameters().getQuotaId());
+
+        if (!osRepository.isSingleQxlDeviceEnabled(getVm().getVmOsId())
+                || getVm().getDefaultDisplayType() != DisplayType.qxl) {
+            getVm().setSingleQxlPci(false);
+        }
 
         // if "run on host" field points to a non existent vds (in the current cluster) -> remove field and continue
         if (!vmHandler.validateDedicatedVdsExistOnSameCluster(getVm().getStaticData()).isValid()) {
             getVm().setDedicatedVmForVdsList(Collections.emptyList());
+            getVm().setCpuPinning(null);
         }
 
         if (getVm().getOriginalTemplateGuid() != null && !VmTemplateHandler.BLANK_VM_TEMPLATE_ID.equals(getVm().getOriginalTemplateGuid())) {
@@ -579,7 +574,7 @@ public abstract class ImportVmCommandBase<T extends ImportVmParameters> extends 
             VmTemplate originalTemplate = vmTemplateDao.get(getVm().getOriginalTemplateGuid());
             if (originalTemplate != null) {
                 // in case the original template name has been changed in the meantime
-                getVm().getStaticData().setOriginalTemplateName(originalTemplate.getName());
+                getVm().setOriginalTemplateName(originalTemplate.getName());
             }
         }
 

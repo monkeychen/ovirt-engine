@@ -1,6 +1,9 @@
 package org.ovirt.engine.core.searchbackend;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.ovirt.engine.core.common.errors.SearchEngineIllegalCharacterException;
@@ -20,25 +23,20 @@ public abstract class SqlInjectionChecker {
     private static final String BACKSLASH_DOUBLE_QUOTE = "\\\\\"";
     private static final String QUOTE_QUOTE = "''";
     private static final String DELIMITERS = "'\"";
-    private HashSet<String> sqlInjectionExpressions = new HashSet<>();
-    private static final String[] ANSI_SQL_KEYWORDS = { " insert ", " delete ", " update ", " create ", " drop  ", " union ", " alter ",
-                                                 " if ", " else ", "sum(", "min(", "max(", "count(", "avg(", " having "};
+    private static final List<String> ANSI_SQL_KEYWORDS = Arrays.asList(
+            " insert ", " delete ", " update ", " create ", " drop  ", " union ", " alter ", " if ", " else ",
+            "sum(", "min(", "max(", "count(", "avg(", " having ");
+
+    private Set<String> sqlInjectionExpressions;
+
     SqlInjectionChecker() {
-        for (String s : ANSI_SQL_KEYWORDS) {
-            addInjectionExpression(s);
-        }
+        sqlInjectionExpressions = new HashSet<>(ANSI_SQL_KEYWORDS);
         sqlInjectionExpressions.add(getSqlCommandSeperator());
         sqlInjectionExpressions.add(getSqlConcat());
         sqlInjectionExpressions.addAll(getCommentExpressions());
         sqlInjectionExpressions.addAll(getInjectionFunctions());
     }
-    /**
-     * Adds an entry to injection expressions.
-     * @param Expr the expression.
-     */
-    public void addInjectionExpression(String Expr){
-        sqlInjectionExpressions.add(Expr);
-    }
+
     /**
      * Checks if the given sql has SQL Injection expressions
      * @param sql the sql string
@@ -46,7 +44,7 @@ public abstract class SqlInjectionChecker {
      */
     public boolean hasSqlInjection(String sql) {
         sql = removeAllStringValuesFromSql(sql);
-        if (sql.length() > 0) {
+        if (!sql.isEmpty()) {
             // replace all functions to have the format "f(" in order to match it exactly.
             sql = sql.replaceAll("\\s+\\(", "(");
             // look for sql injection expressions
@@ -78,18 +76,15 @@ public abstract class SqlInjectionChecker {
                 if(singleQuoteFound){
                 singleQuoteFound = false; // closing '
                 continue;
-                }
-                else if (!doubleQuoteFound){ // ignore single quote inside double quotes
+                } else if (!doubleQuoteFound){ // ignore single quote inside double quotes
                     singleQuoteFound = true; // opening '
                     continue;
                 }
-            }
-            else if (token.equals(DOUBLE_QUOTE_STR)) {
+            } else if (token.equals(DOUBLE_QUOTE_STR)) {
                 if(doubleQuoteFound){
                     doubleQuoteFound = false; // closing ""
                     continue;
-                }
-                else if (!singleQuoteFound){ // ignore double quote inside single quotes
+                } else if (!singleQuoteFound){ // ignore double quote inside single quotes
                     doubleQuoteFound = true; // opening "
                     continue;
                 }
@@ -129,7 +124,7 @@ public abstract class SqlInjectionChecker {
                     }
                     break;
                 case BACKSLASH: // A backslash should be formatted as \\
-                    if ((i > 0 && prev == BACKSLASH) || (next == QUOTE || next == PERCENT || next == BACKSLASH)) {
+                    if ((i > 0 && prev == BACKSLASH) || next == QUOTE || next == PERCENT || next == BACKSLASH) {
                         sb.append(c);
                     } else {
                         sb.append(BACKSLASH);
@@ -140,7 +135,7 @@ public abstract class SqlInjectionChecker {
                     sb.append(c);
                     break;
                 }
-                prev = c.charValue();
+                prev = c;
                 i++;
                 next = (i < sourceArray.length - 1) ? sourceArray[i + 1] : BLANK;
             }
@@ -160,9 +155,9 @@ public abstract class SqlInjectionChecker {
     /**
      * gets the database vendor specific sql comment begin/end definition
      */
-    protected abstract HashSet<String> getCommentExpressions();
+    protected abstract Set<String> getCommentExpressions();
     /**
      * gets the database vendor specific functions that are considered as sql injection.
      */
-    protected abstract HashSet<String> getInjectionFunctions();
+    protected abstract Set<String> getInjectionFunctions();
 }

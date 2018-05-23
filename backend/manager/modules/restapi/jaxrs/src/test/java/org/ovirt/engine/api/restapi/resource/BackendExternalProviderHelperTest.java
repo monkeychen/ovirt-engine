@@ -1,5 +1,7 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -8,7 +10,9 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.ExternalNetworkProviderConfiguration;
 import org.ovirt.engine.api.model.ExternalNetworkProviderConfigurations;
 import org.ovirt.engine.api.model.ExternalProvider;
@@ -18,6 +22,7 @@ import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendExternalProviderHelperTest extends AbstractBackendBaseTest {
 
     private final int PROVIDER_COUNT = NAMES.length;
@@ -55,12 +60,11 @@ public class BackendExternalProviderHelperTest extends AbstractBackendBaseTest {
                 getExternalNetworkProviderConfigurations(1);
         configurations.getExternalNetworkProviderConfigurations().get(0).getExternalNetworkProvider().setName(null);
 
-        try {
-            BackendExternalProviderHelper.completeExternalNetworkProviderConfigurations(resource, configurations);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, Response.Status.BAD_REQUEST.getStatusCode());
-        }
+        verifyFault(
+                assertThrows(
+                        WebApplicationException.class,
+                        () -> BackendExternalProviderHelper.completeExternalNetworkProviderConfigurations(resource, configurations)),
+                Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     @Test
@@ -80,12 +84,11 @@ public class BackendExternalProviderHelperTest extends AbstractBackendBaseTest {
         ExternalProviders providers = getExternalProviders(1);
         providers.getExternalProviders().get(0).setName(null);
 
-        try {
-            BackendExternalProviderHelper.completeExternalProviders(resource, providers);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, Response.Status.BAD_REQUEST.getStatusCode());
-        }
+        verifyFault(
+                assertThrows(
+                        WebApplicationException.class,
+                        () -> BackendExternalProviderHelper.completeExternalProviders(resource, providers)),
+                Response.Status.BAD_REQUEST.getStatusCode());
     }
 
     private void setUpQueryExpectations() {

@@ -255,7 +255,6 @@ all: \
 	generated-files \
 	validations \
 	$(BUILD_FILE) \
-	post-build-validations \
 	$(NULL)
 
 generated-files:	$(GENERATED)
@@ -277,15 +276,9 @@ maven:
 $(BUILD_FILE):
 	$(MAKE) maven
 
-post-build-validations:
-	if [ "$(BUILD_VALIDATION)" != 0 ]; then \
-		( cd build/validations && $(MVN) test -Dosinfo.properties=../../packaging/conf/osinfo-defaults.properties ); \
-	fi
-
 clean:
 	# Clean maven generated stuff:
 	$(MVN) clean $(EXTRA_BUILD_FLAGS)
-	( cd build/validations && $(MVN) clean )
 	rm -rf $(BUILD_FILE) tmp.dev.flist
 
 	# Clean files generated from templates:
@@ -564,6 +557,7 @@ install-dev:	\
 
 	install -d "$(DESTDIR)$(PKG_TMP_DIR)"
 	install -d "$(DESTDIR)$(PKG_CACHE_DIR)"
+	install -d "$(DESTDIR)$(PKG_STATE_DIR)/.ssh"
 	install -d "$(DESTDIR)$(PKG_STATE_DIR)/content"
 	install -d "$(DESTDIR)$(PKG_STATE_DIR)/setup/answers"
 	install -d "$(DESTDIR)$(PKG_LOG_DIR)/host-deploy"
@@ -572,6 +566,8 @@ install-dev:	\
 	install -d "$(DESTDIR)$(PKG_LOG_DIR)/dump"
 	install -d "$(DESTDIR)$(PKG_LOG_DIR)/ansible"
 	install -d "$(DESTDIR)$(PKG_LOG_DIR)/ova"
+
+	touch "$(DESTDIR)$(PKG_STATE_DIR)/.ssh/config"
 
 	if [ -e "$(DESTDIR)$(PKG_STATE_DIR)/jboss_runtime/deployments" ]; then \
 		touch "$(DESTDIR)$(PKG_STATE_DIR)/jboss_runtime/deployments/engine.ear.deployed"; \

@@ -96,7 +96,7 @@ public class EventsManager implements Observer {
     }
 
     public List<AuditLogEvent> getAuditLogEvents() throws SQLException {
-        HashSet<String> downEvents = new HashSet<>(eventMap.values());
+        Set<String> downEvents = new HashSet<>(eventMap.values());
         List<AuditLogEvent> auditLogEvents = new ArrayList<>();
         try (Connection connection = ds.getConnection();
              PreparedStatement ps = connection.prepareStatement(
@@ -227,7 +227,7 @@ public class EventsManager implements Observer {
             cs.setString(2, event.getLogTypeName());
             cs.setString(3, dispatchResult.getNotificationMethod().name());
             cs.setString(4, dispatchResult.getErrorMessage());
-            cs.setTimestamp(5, new java.sql.Timestamp(new Date().getTime()));
+            cs.setTimestamp(5, new Timestamp(new Date().getTime()));
             cs.setBoolean(6, dispatchResult.isSuccess());
             cs.executeUpdate();
         } catch (SQLException e) {

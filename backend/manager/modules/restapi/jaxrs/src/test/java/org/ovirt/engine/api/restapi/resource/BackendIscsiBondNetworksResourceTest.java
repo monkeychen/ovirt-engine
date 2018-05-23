@@ -1,8 +1,12 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Network;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.EditIscsiBondParameters;
@@ -11,6 +15,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIscsiBondNetworksResourceTest extends AbstractBackendNetworksResourceTest<BackendNetworksResource> {
     protected static final Guid ISCSI_BOND_ID = GUIDS[1];
     protected static final Guid NETWORK_ID = GUIDS[2];
@@ -33,7 +38,7 @@ public class BackendIscsiBondNetworksResourceTest extends AbstractBackendNetwork
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUriInfo(setUpBasicUriExpectations());
         Network network = getModel(0);
         network.setId(NETWORK_ID.toString());
@@ -57,7 +62,7 @@ public class BackendIscsiBondNetworksResourceTest extends AbstractBackendNetwork
     }
 
     @Override
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetNetworksByIscsiBondId,
                     IdQueryParameters.class,
@@ -69,7 +74,7 @@ public class BackendIscsiBondNetworksResourceTest extends AbstractBackendNetwork
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetNetworksByIscsiBondId,
                 IdQueryParameters.class,
                 new String[] { "Id" },

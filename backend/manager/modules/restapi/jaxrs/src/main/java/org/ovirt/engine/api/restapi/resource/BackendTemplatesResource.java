@@ -11,9 +11,11 @@ import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 
 import org.ovirt.engine.api.common.util.DetailHelper;
+import org.ovirt.engine.api.model.Configuration;
 import org.ovirt.engine.api.model.Console;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.DiskAttachment;
+import org.ovirt.engine.api.model.Initialization;
 import org.ovirt.engine.api.model.Template;
 import org.ovirt.engine.api.model.Templates;
 import org.ovirt.engine.api.model.VirtioScsi;
@@ -23,12 +25,15 @@ import org.ovirt.engine.api.resource.TemplatesResource;
 import org.ovirt.engine.api.restapi.logging.Messages;
 import org.ovirt.engine.api.restapi.types.DiskMapper;
 import org.ovirt.engine.api.restapi.types.RngDeviceMapper;
+import org.ovirt.engine.api.restapi.types.TemplateMapper;
+import org.ovirt.engine.api.restapi.types.VmMapper;
 import org.ovirt.engine.api.restapi.util.DisplayHelper;
 import org.ovirt.engine.api.restapi.util.IconHelper;
 import org.ovirt.engine.api.restapi.util.ParametersHelper;
 import org.ovirt.engine.api.restapi.util.VmHelper;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AddVmTemplateParameters;
+import org.ovirt.engine.core.common.action.ImportVmTemplateFromConfParameters;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.Entities;
 import org.ovirt.engine.core.common.businessentities.VmInit;
@@ -39,6 +44,7 @@ import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
 import org.ovirt.engine.core.common.businessentities.storage.DiskStorageType;
 import org.ovirt.engine.core.common.interfaces.SearchType;
 import org.ovirt.engine.core.common.queries.GetVmByVmNameForDataCenterParameters;
+import org.ovirt.engine.core.common.queries.GetVmFromConfigurationQueryParameters;
 import org.ovirt.engine.core.common.queries.GetVmTemplateParameters;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.IdsQueryParameters;
@@ -75,8 +81,7 @@ public class BackendTemplatesResource
     }
 
     @Override
-    public Response add(Template template) {
-        validateParameters(template, "name", "vm.id|name");
+    public Response addFromVm(Template template) {
         validateIconParameters(template);
         Guid clusterId = null;
         Cluster cluster = null;
@@ -96,22 +101,20 @@ public class BackendTemplatesResource
 
         // REVISIT: powershell has a IsVmTemlateWithSameNameExist safety check
         AddVmTemplateParameters params = new AddVmTemplateParameters(staticVm,
-                                       template.getName(),
-                                       template.getDescription());
+                template.getName(),
+                template.getDescription());
         if (template.getVersion() != null) {
             params.setBaseTemplateId(Guid.createGuidFromString(template.getVersion().getBaseTemplate().getId()));
             params.setTemplateVersionName(template.getVersion().getVersionName());
         }
         params.setConsoleEnabled(template.getConsole() != null && template.getConsole().isSetEnabled() ?
-                        template.getConsole().isEnabled() :
-                        !getConsoleDevicesForEntity(originalVm.getId()).isEmpty());
+                template.getConsole().isEnabled()
+                : !getConsoleDevicesForEntity(originalVm.getId()).isEmpty());
         params.setVirtioScsiEnabled(template.isSetVirtioScsi() && template.getVirtioScsi().isSetEnabled() ?
                 template.getVirtioScsi().isEnabled() : null);
-        if(template.isSetSoundcardEnabled()) {
-            params.setSoundDeviceEnabled(template.isSoundcardEnabled());
-        } else {
-            params.setSoundDeviceEnabled(!VmHelper.getSoundDevicesForEntity(this, originalVm.getId()).isEmpty());
-        }
+        params.setSoundDeviceEnabled(template.isSetSoundcardEnabled() ?
+                template.isSoundcardEnabled()
+                : !VmHelper.getSoundDevicesForEntity(this, originalVm.getId()).isEmpty());
         if (template.isSetRngDevice()) {
             params.setUpdateRngDevice(true);
             params.setRngDevice(RngDeviceMapper.map(template.getRngDevice(), null));
@@ -119,28 +122,27 @@ public class BackendTemplatesResource
 
         DisplayHelper.setGraphicsToParams(template.getDisplay(), params);
 
-        boolean isDomainSet = false;
-        if (template.isSetStorageDomain() && template.getStorageDomain().isSetId()) {
+        boolean domainSet = template.isSetStorageDomain() && template.getStorageDomain().isSetId();
+        if (domainSet) {
             params.setDestinationStorageDomainId(asGuid(template.getStorageDomain().getId()));
-            isDomainSet = true;
         }
         params.setDiskInfoDestinationMap(
-            getDestinationTemplateDiskMap(
-                template.getVm(),
-                originalVm.getId(),
-                params.getDestinationStorageDomainId(),
-                isDomainSet
-            )
-        );
+                getDestinationTemplateDiskMap(
+                        template.getVm(),
+                        originalVm.getId(),
+                        params.getDestinationStorageDomainId(),
+                        domainSet
+                        )
+                );
 
         setupOptionalParameters(params);
         IconHelper.setIconToParams(template, params);
 
         Response response = performCreate(
-            ActionType.AddVmTemplate,
-            params,
-            new QueryIdResolver<Guid>(QueryType.GetVmTemplate, GetVmTemplateParameters.class)
-        );
+                ActionType.AddVmTemplate,
+                params,
+                new QueryIdResolver<Guid>(QueryType.GetVmTemplate, GetVmTemplateParameters.class)
+                );
 
         Template result = (Template) response.getEntity();
         if (result != null) {
@@ -148,6 +150,31 @@ public class BackendTemplatesResource
         }
 
         return response;
+    }
+
+    @Override
+    public Response addFromConfiguration(Template template) {
+        Initialization initialization = template.getInitialization();
+        Configuration config = initialization.getConfiguration();
+        org.ovirt.engine.core.common.businessentities.VmTemplate templateConfiguration =
+                getEntity(org.ovirt.engine.core.common.businessentities.VmTemplate.class,
+                        QueryType.GetVmTemplateFromConfiguration,
+                        new GetVmFromConfigurationQueryParameters(VmMapper.map(config.getType(), null), config.getData().trim()),
+                        "");
+
+        template.setInitialization(null); // if configuration is provided, the initialization parameters cannot be overridden
+        TemplateMapper.map(template, templateConfiguration);
+
+        Guid clusterId = namedCluster(template) ? getClusterId(template) : asGuid(template.getCluster().getId());
+        ImportVmTemplateFromConfParameters parameters = new ImportVmTemplateFromConfParameters();
+        parameters.setVmTemplate(templateConfiguration);
+        parameters.setClusterId(clusterId);
+        if (initialization.isSetRegenerateIds()) {
+            parameters.setImportAsNewEntity(initialization.isRegenerateIds());
+        }
+        return performCreate(ActionType.ImportVmTemplateFromConfiguration,
+                parameters,
+                new QueryIdResolver<Guid>(QueryType.GetVmTemplate, GetVmTemplateParameters.class));
     }
 
     private void validateIconParameters(Template incoming) {
@@ -173,9 +200,9 @@ public class BackendTemplatesResource
         return getEntity(Cluster.class, QueryType.GetClusterById, new IdQueryParameters(id), "GetClusterById");
     }
 
-    protected HashMap<Guid, DiskImage> getDestinationTemplateDiskMap(Vm vm, Guid vmId, Guid storageDomainId,
+    protected Map<Guid, DiskImage> getDestinationTemplateDiskMap(Vm vm, Guid vmId, Guid storageDomainId,
             boolean isTemplateGeneralStorageDomainSet) {
-        HashMap<Guid, DiskImage> destinationTemplateDiskMap = null;
+        Map<Guid, DiskImage> destinationTemplateDiskMap = null;
         if (vm.isSetDiskAttachments() && vm.getDiskAttachments().isSetDiskAttachments()) {
             destinationTemplateDiskMap = new HashMap<>();
             Map<Guid, org.ovirt.engine.core.common.businessentities.storage.Disk> vmSourceDisks = queryVmDisksMap(vmId);

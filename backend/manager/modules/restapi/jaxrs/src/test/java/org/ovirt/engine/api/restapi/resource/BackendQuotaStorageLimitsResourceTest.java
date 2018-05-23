@@ -1,9 +1,14 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.QuotaStorageLimit;
 import org.ovirt.engine.api.model.QuotaStorageLimits;
 import org.ovirt.engine.core.common.businessentities.Quota;
@@ -12,6 +17,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendQuotaStorageLimitsResourceTest extends AbstractBackendBaseTest {
 
     private static final double STORAGE_SIZE_GB_USAGE = 20.0;
@@ -24,7 +30,7 @@ public class BackendQuotaStorageLimitsResourceTest extends AbstractBackendBaseTe
     protected BackendQuotaStorageLimitsResource collection;
 
     @Test
-    public void testListGlobalLimit() throws Exception {
+    public void testListGlobalLimit() {
         Quota quota = getQuota();
         quota.setGlobalQuotaStorage(getStorageGlobalCpuLimit());
         setUpGetEntityExpectations(quota);
@@ -35,7 +41,7 @@ public class BackendQuotaStorageLimitsResourceTest extends AbstractBackendBaseTe
     }
 
     @Test
-    public void testListNonGlobalLimit() throws Exception {
+    public void testListNonGlobalLimit() {
         Quota quota = getQuota();
         List<QuotaStorage> storageLimits = new LinkedList<>();
         QuotaStorage storageLimit1 = new QuotaStorage();
@@ -55,7 +61,7 @@ public class BackendQuotaStorageLimitsResourceTest extends AbstractBackendBaseTe
                 assertEquals(STORAGE_SIZE_GB, storageLimit.getLimit());
             }
             if (storageLimit.getStorageDomain().getId().equals(STORAGE_ID_2.toString())) {
-                assertTrue(storageLimit.getUsage() == STORAGE_SIZE_GB_USAGE);
+                assertEquals(STORAGE_SIZE_GB_USAGE, storageLimit.getUsage(), 0.0001);
             }
         }
 
@@ -83,7 +89,7 @@ public class BackendQuotaStorageLimitsResourceTest extends AbstractBackendBaseTe
         return quota;
     }
 
-    private void setUpGetEntityExpectations(Quota quota) throws Exception {
+    private void setUpGetEntityExpectations(Quota quota) {
         setUpGetEntityExpectations(QueryType.GetQuotaByQuotaId,
                 IdQueryParameters.class,
                 new String[] { "Id" },

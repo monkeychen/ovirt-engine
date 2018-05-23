@@ -39,7 +39,7 @@ import org.ovirt.engine.core.common.FeatureSupported;
 import org.ovirt.engine.core.common.VdcObjectType;
 import org.ovirt.engine.core.common.action.ActionReturnValue;
 import org.ovirt.engine.core.common.action.ActionType;
-import org.ovirt.engine.core.common.action.CreateAllSnapshotsFromVmParameters;
+import org.ovirt.engine.core.common.action.CreateSnapshotForVmParameters;
 import org.ovirt.engine.core.common.action.LockProperties;
 import org.ovirt.engine.core.common.action.LockProperties.Scope;
 import org.ovirt.engine.core.common.action.ProcessDownVmParameters;
@@ -122,6 +122,8 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
     private HostLocking hostLocking;
     @Inject
     private IsoDomainListSynchronizer isoDomainListSynchronizer;
+    @Inject
+    private VmPoolMonitor vmPoolMonitor;
     @Inject
     private VmStaticDao vmStaticDao;
     @Inject
@@ -216,7 +218,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
         setVdsId(getVm().getRunOnVds());
         if (getVds() != null) {
             try {
-                VDSReturnValue result = getVdsBroker()
+                VDSReturnValue result = vdsBroker
                         .runAsyncVdsCommand(
                                 VDSCommandType.Resume,
                                 new ResumeVDSCommandParameters(getVdsId(), getVm().getId()),
@@ -283,9 +285,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
                 setSucceeded(true);
                 rerun();
             }
-        }
-
-        else {
+        } else {
             runningFailed();
         }
     }
@@ -457,9 +457,9 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
 
         log.info("Creating stateless snapshot for VM '{}' ({})",
                 getVm().getName(), getVm().getId());
-        CreateAllSnapshotsFromVmParameters createAllSnapshotsFromVmParameters = buildCreateSnapshotParameters();
+        CreateSnapshotForVmParameters createAllSnapshotsFromVmParameters = buildCreateSnapshotParameters();
 
-        ActionReturnValue actionReturnValue = runInternalAction(ActionType.CreateAllSnapshotsFromVm,
+        ActionReturnValue actionReturnValue = runInternalAction(ActionType.CreateSnapshotForVm,
                 createAllSnapshotsFromVmParameters,
                 createContextForStatelessSnapshotCreation());
 
@@ -491,9 +491,9 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
         return getContext().clone().withoutCompensationContext();
     }
 
-    private CreateAllSnapshotsFromVmParameters buildCreateSnapshotParameters() {
-        CreateAllSnapshotsFromVmParameters parameters =
-                new CreateAllSnapshotsFromVmParameters(getVm().getId(), STATELESS_SNAPSHOT_DESCRIPTION, false);
+    private CreateSnapshotForVmParameters buildCreateSnapshotParameters() {
+        CreateSnapshotForVmParameters parameters =
+                new CreateSnapshotForVmParameters(getVm().getId(), STATELESS_SNAPSHOT_DESCRIPTION, false);
         parameters.setShouldBeLogged(false);
         parameters.setParentCommand(getActionType());
         parameters.setParentParameters(getParameters());
@@ -549,7 +549,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
 
         initParametersForExternalNetworks(getVds(), false);
 
-        VMStatus vmStatus = (VMStatus) getVdsBroker()
+        VMStatus vmStatus = (VMStatus) vdsBroker
                 .runAsyncVdsCommand(VDSCommandType.Create, buildCreateVmParameters(), this).getReturnValue();
 
         // Don't use the memory from the active snapshot anymore if there's a chance that disks were changed
@@ -580,8 +580,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
             if (FeatureSupported.isMemoryDisksOnDifferentDomainsSupported(getVm().getCompatibilityVersion())) {
                 parameters.setMemoryDumpImage(memoryDump);
                 parameters.setMemoryConfImage(memoryConf);
-            }
-            else {
+            } else {
                 parameters.setHibernationVolHandle(MemoryUtils.createHibernationVolumeString(memoryDump, memoryConf));
             }
 
@@ -757,7 +756,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
     protected void updateVmDevicesOnRun() {
         // Before running the VM we update its devices, as they may
         // need to be changed due to configuration option change
-        getVmDeviceUtils().updateVmDevicesOnRun(getVm(), this::getCluster);
+        getVmDeviceUtils().updateVmDevicesOnRun(getVm());
     }
 
     protected void updateCdPath() {
@@ -781,8 +780,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
                     if (!isPayloadExists(VmDeviceType.FLOPPY)) {
                         initializationType = InitializationType.Sysprep;
                     }
-                }
-                else {
+                } else {
                     if (!isPayloadExists(VmDeviceType.CDROM)) {
                         initializationType = InitializationType.CloudInit;
                     }
@@ -862,7 +860,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
             for (RepoImage map : repoFilesMap) {
                 String fileName = StringUtils.defaultString(map.getRepoImageId(), "");
                 Matcher matchToolPattern =
-                        Pattern.compile(IsoDomainListSynchronizer.REGEX_TOOL_PATTERN).matcher(fileName);
+                        Pattern.compile(isoDomainListSynchronizer.getRegexToolPattern()).matcher(fileName);
                 if (matchToolPattern.find()) {
                     // Get cluster version and tool version of Iso tool.
                     Version clusterVer = new Version(matchToolPattern.group(IsoDomainListSynchronizer.TOOL_CLUSTER_LEVEL));
@@ -895,7 +893,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
 
         if (attachCd) {
             String rhevToolsPath =
-                    String.format("%1$s%2$s_%3$s.iso", IsoDomainListSynchronizer.getGuestToolsSetupIsoPrefix(),
+                    String.format("%1$s%2$s_%3$s.iso", isoDomainListSynchronizer.getGuestToolsSetupIsoPrefix(),
                             selectedToolsClusterVersion, selectedToolsVersion);
 
             String isoDir = (String) runVdsCommand(VDSCommandType.IsoDirectory,
@@ -994,9 +992,8 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
     @Override
     protected void logValidationFailed() {
         addCustomValue("DueToError",
-                " due to a failed validation: " + Backend.getInstance()
-                .getErrorsTranslator()
-                .translateErrorText(getReturnValue().getValidationMessages()));
+                " due to a failed validation: " +
+                        backend.getErrorsTranslator().translateErrorText(getReturnValue().getValidationMessages()));
         auditLogDirector.log(this, AuditLogType.USER_FAILED_RUN_VM);
     }
 
@@ -1090,7 +1087,7 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
     @Override
     protected void endSuccessfully() {
         if (shouldEndSnapshotCreation()) {
-            backend.endAction(ActionType.CreateAllSnapshotsFromVm,
+            backend.endAction(ActionType.CreateSnapshotForVm,
                     getParameters().getImagesParameters().get(0),
                     getContext().clone().withoutCompensationContext().withoutExecutionContext().withoutLock());
 
@@ -1107,10 +1104,8 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
                 // could not run the vm don't try to run the end action again
                 getReturnValue().setEndActionTryAgain(false);
             }
-        }
-
-        // Hibernation (VMStatus.Suspended) treatment:
-        else {
+        } else {
+            // Hibernation (VMStatus.Suspended) treatment:
             super.endSuccessfully();
         }
     }
@@ -1151,17 +1146,18 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
     @Override
     protected void endWithFailure() {
         if (shouldEndSnapshotCreation()) {
-            ActionReturnValue actionReturnValue = backend.endAction(ActionType.CreateAllSnapshotsFromVm,
+            ActionReturnValue actionReturnValue = backend.endAction(ActionType.CreateSnapshotForVm,
                     getParameters().getImagesParameters().get(0), cloneContext().withoutExecutionContext()
                             .withoutLock());
 
             setSucceeded(actionReturnValue.getSucceeded());
             // we are not running the VM, of course,
             // since we couldn't create a snapshot.
-        }
-
-        else {
+        } else {
             super.endWithFailure();
+        }
+        if (getVm().getVmPoolId() != null) {
+            vmPoolMonitor.startingVmCompleted(getVmId(), "endWithFailure");
         }
     }
 
@@ -1171,6 +1167,9 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
         setFlow(RunVmFlow.RUNNING_SUCCEEDED);
         vmStaticDao.incrementDbGeneration(getVm().getId());
         super.runningSucceded();
+        if (getVm().getVmPoolId() != null) {
+            vmPoolMonitor.startingVmCompleted(getVmId(), "runningSucceded");
+        }
     }
 
     @Override
@@ -1180,6 +1179,17 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
             removeMemoryFromActiveSnapshot();
         }
         super.runningFailed();
+        if (getVm().getVmPoolId() != null) {
+            vmPoolMonitor.startingVmCompleted(getVmId(), "runningFailed");
+        }
+    }
+
+    @Override
+    public void reportCompleted() {
+        super.reportCompleted();
+        if (getVm().getVmPoolId() != null) {
+            vmPoolMonitor.startingVmCompleted(getVmId(), "reportCompleted");
+        }
     }
 
     private void removeMemoryFromActiveSnapshot() {
@@ -1258,6 +1268,11 @@ public class RunVmCommand<T extends RunVmParams> extends RunVmCommandBase<T>
     @Override
     public void onPowerringUp() {
         decreasePendingVm(vmStaticDao.get(getVmId()));
+    }
+
+    @Override
+    public void migrationProgressReported(int progress) {
+        // nothing to do
     }
 
     @Override

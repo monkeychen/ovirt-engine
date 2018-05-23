@@ -1,10 +1,14 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.BaseResource;
 import org.ovirt.engine.api.model.DataCenter;
 import org.ovirt.engine.api.model.Group;
@@ -18,7 +22,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
-public class BackendEntityAssignedPermissionsResourceTest
+public abstract class BackendEntityAssignedPermissionsResourceTest
         extends AbstractBackendAssignedPermissionsResourceTest {
 
     private Guid targetId;
@@ -49,7 +53,7 @@ public class BackendEntityAssignedPermissionsResourceTest
     }
 
     @Test
-    public void testAddIncompletePermission() throws Exception {
+    public void testAddIncompletePermission() {
         Permission model = new Permission();
         model.setDataCenter(new DataCenter());
         model.getDataCenter().setId(GUIDS[2].toString());
@@ -57,15 +61,13 @@ public class BackendEntityAssignedPermissionsResourceTest
         model.getRole().setId(GUIDS[3].toString());
 
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Permission", "add", "user|group.id");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "Permission", "add", "user|group.id");
     }
 
     @Test
-    public void testAddGroupPermission() throws Exception {
+    public void testAddGroupPermission() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddPermission,
                                   PermissionsOperationsParameters.class,

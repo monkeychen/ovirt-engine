@@ -16,6 +16,10 @@
 
 package org.ovirt.engine.api.restapi.types.openstack;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import org.ovirt.engine.api.model.OpenStackImageProvider;
 import org.ovirt.engine.api.restapi.types.AbstractInvertibleMappingTest;
 import org.ovirt.engine.core.common.businessentities.Provider;

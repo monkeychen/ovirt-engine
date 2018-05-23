@@ -11,11 +11,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
 import org.ovirt.engine.core.bll.ValidationResult;
@@ -45,6 +47,7 @@ import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmDeviceDao;
 import org.ovirt.engine.core.dao.network.VmNetworkInterfaceDao;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class HotPlugDiskToVmCommandTest extends BaseCommandTest {
 
     protected Guid diskImageGuid = Guid.newGuid();
@@ -96,7 +99,7 @@ public class HotPlugDiskToVmCommandTest extends BaseCommandTest {
     @InjectMocks
     protected HotPlugDiskToVmCommand<VmDiskOperationParameterBase> command = createCommand();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mockVds();
         mockVmDevice(false);
@@ -111,19 +114,19 @@ public class HotPlugDiskToVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateFailedVMNotFound() throws Exception {
+    public void validateFailedVMNotFound() {
         mockNullVm();
         ValidateTestUtils.runAndAssertValidateFailure(command, EngineMessage.ACTION_TYPE_FAILED_VM_NOT_FOUND);
     }
 
     @Test
-    public void validateFailedVMHasNotDisk() throws Exception {
+    public void validateFailedVMHasNotDisk() {
         mockVmStatusUp();
         ValidateTestUtils.runAndAssertValidateFailure(command, EngineMessage.ACTION_TYPE_FAILED_DISK_NOT_EXIST);
     }
 
     @Test
-    public void validateFailedVirtIODisk() throws Exception {
+    public void validateFailedVirtIODisk() {
         mockVmStatusUp();
         mockInterfaceList();
         when(osRepository.getOsName(0)).thenReturn("RHEL6");
@@ -132,7 +135,7 @@ public class HotPlugDiskToVmCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateFailedWrongPlugStatus() throws Exception {
+    public void validateFailedWrongPlugStatus() {
         mockVmStatusUp();
         mockInterfaceList();
         createDiskWrongPlug(true);

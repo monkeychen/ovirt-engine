@@ -16,14 +16,12 @@ import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 
 import org.apache.commons.lang.StringUtils;
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.ConcurrentChildCommandsExecutionCallback;
 import org.ovirt.engine.core.bll.DisableInPrepareMode;
 import org.ovirt.engine.core.bll.LockMessagesMatchUtil;
 import org.ovirt.engine.core.bll.NonTransactiveCommandAttribute;
 import org.ovirt.engine.core.bll.VmTemplateHandler;
 import org.ovirt.engine.core.bll.context.CommandContext;
-import org.ovirt.engine.core.bll.context.EngineContext;
 import org.ovirt.engine.core.bll.memory.MemoryUtils;
 import org.ovirt.engine.core.bll.snapshots.SnapshotsValidator;
 import org.ovirt.engine.core.bll.storage.disk.image.DisksFilter;
@@ -184,8 +182,7 @@ public class ExportVmCommand<T extends MoveOrCopyParameters> extends MoveOrCopyT
 
         // check if template exists only if asked for
         if (getParameters().getTemplateMustExists()) {
-            if (!checkTemplateInStorageDomain(getVm().getStoragePoolId(), getParameters().getStorageDomainId(),
-                    getVm().getVmtGuid(), getContext().getEngineContext())) {
+            if (!checkTemplateInStorageDomain(getVm().getStoragePoolId(), getVm().getVmtGuid())) {
                 return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_NOT_FOUND_ON_EXPORT_DOMAIN,
                         String.format("$TemplateName %1$s", getVm().getVmtName()));
             }
@@ -263,8 +260,7 @@ public class ExportVmCommand<T extends MoveOrCopyParameters> extends MoveOrCopyT
         if (getParameters().getCopyCollapse()) {
             Snapshot activeSnapshot = snapshotDao.get(getVmId(), SnapshotType.ACTIVE);
             return activeSnapshot.containsMemory() ? Collections.singleton(activeSnapshot) : Collections.emptyList();
-        }
-        else {
+        } else {
             return snapshotDao.getAll(getVmId()).stream().filter(Snapshot::containsMemory).collect(Collectors.toList());
         }
     }
@@ -301,7 +297,7 @@ public class ExportVmCommand<T extends MoveOrCopyParameters> extends MoveOrCopyT
     }
 
     private void updateCopyVmInSpm(Guid storagePoolId, VM vm, Guid storageDomainId) {
-        HashMap<Guid, KeyValuePairCompat<String, List<Guid>>> vmsAndMetaDictionary = new HashMap<>();
+        Map<Guid, KeyValuePairCompat<String, List<Guid>>> vmsAndMetaDictionary = new HashMap<>();
         List<DiskImage> vmImages = new ArrayList<>();
         List<LunDisk> lunDisks = new ArrayList<>();
         List<VmNetworkInterface> interfaces = vm.getInterfaces();
@@ -339,7 +335,7 @@ public class ExportVmCommand<T extends MoveOrCopyParameters> extends MoveOrCopyT
 
         lunDisks.addAll(DisksFilter.filterLunDisks(getVm().getDiskMap().values(), ONLY_NOT_SHAREABLE));
         lunDisks.forEach(lun -> lun.getLun()
-                .setLunConnections(new ArrayList<>(storageServerConnectionDao.getAllForLun(lun.getLun().getId()))));
+                .setLunConnections(storageServerConnectionDao.getAllForLun(lun.getLun().getId())));
         getVm().setVmtGuid(VmTemplateHandler.BLANK_VM_TEMPLATE_ID);
         FullEntityOvfData fullEntityOvfData = new FullEntityOvfData(vm);
         fullEntityOvfData.setClusterName(vm.getClusterName());
@@ -495,26 +491,6 @@ public class ExportVmCommand<T extends MoveOrCopyParameters> extends MoveOrCopyT
         return true;
     }
 
-    public static boolean checkTemplateInStorageDomain(Guid storagePoolId,
-            Guid storageDomainId,
-            final Guid tmplId,
-            EngineContext engineContext) {
-        GetAllFromExportDomainQueryParameters tempVar = new GetAllFromExportDomainQueryParameters(storagePoolId,
-                storageDomainId);
-        QueryReturnValue qretVal = Backend.getInstance().runInternalQuery(QueryType.GetTemplatesFromExportDomain,
-                tempVar, engineContext);
-
-        if (qretVal.getSucceeded()) {
-            if (!VmTemplateHandler.BLANK_VM_TEMPLATE_ID.equals(tmplId)) {
-                Map<VmTemplate, List<DiskImage>> templates = qretVal.getReturnValue();
-                return templates.keySet().stream().anyMatch(vmTemplate -> vmTemplate.getId().equals(tmplId));
-            } else {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public AuditLogType getAuditLogTypeValue() {
         switch (getActionState()) {
@@ -578,8 +554,7 @@ public class ExportVmCommand<T extends MoveOrCopyParameters> extends MoveOrCopyT
             updateCopyVmInSpm(getVm().getStoragePoolId(),
                     vm, getParameters()
                             .getStorageDomainId());
-        }
-        catch (EngineException e) {
+        } catch(EngineException e) {
             log.error("Updating VM OVF in export domain failed.", e);
             auditLogDirector.log(this, AuditLogType.IMPORTEXPORT_IMPORT_VM_FAILED_UPDATING_OVF);
         }

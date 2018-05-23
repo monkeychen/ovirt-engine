@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.uutils.ssh;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -25,18 +25,21 @@ import java.util.List;
 import javax.naming.AuthenticationException;
 import javax.naming.TimeLimitExceededException;
 
-import org.apache.commons.lang.SystemUtils;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 /*
  * Test properties
  * $ mvn -Dssh-host=host1 -Dssh-test-port=22 -Dssh-test-user=root -Dssh-test-password=password -Dssh-test-p12=a.p12 -Dssh-test-p12-alias=alias -Dssh-test-p12-password=password
  */
-
+@DisabledOnOs({OS.WINDOWS, OS.OTHER})
+@Tag("ssh")
 public class SSHDialogTest {
 
     private static final int BUFFER_SIZE = 10 * 1024;
@@ -174,10 +177,8 @@ public class SSHDialogTest {
                 entry.getPrivateKey());
     }
 
-    @BeforeClass
-    public static void init() throws IOException {
-        assumeTrue(SystemUtils.IS_OS_UNIX);
-
+    @BeforeAll
+    public static void init() {
         sshHost = System.getProperty("ssh-host");
         if (sshHost == null) {
             sshHost = "localhost";
@@ -217,14 +218,14 @@ public class SSHDialogTest {
         System.out.println("Key fingerprint is: " + OpenSSHUtils.getKeyString(sshKeyPair.getPublic(), "test"));
     }
 
-    @AfterClass
-    public static void terminate() throws Exception {
+    @AfterAll
+    public static void terminate() {
         if (sshd != null) {
             sshd.stop();
         }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         sshDialog = new SSHDialog();
         sshDialog.setHost(sshHost, sshPort);
@@ -234,7 +235,7 @@ public class SSHDialogTest {
         sshDialog.setHardTimeout(30 * 1000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (sshDialog != null) {
             sshDialog.close();
@@ -255,20 +256,20 @@ public class SSHDialogTest {
         sshDialog.authenticate();
     }
 
-    @Test(expected = AuthenticationException.class)
+    @Test
     public void testWrongKeyPair() throws Exception {
         sshDialog.setKeyPair(
                 KeyPairGenerator.getInstance("RSA").generateKeyPair());
         sshDialog.connect();
-        sshDialog.authenticate();
+        assertThrows(AuthenticationException.class, sshDialog::authenticate);
     }
 
-    @Test(expected = AuthenticationException.class)
+    @Test
     public void testWrongPassword() throws Exception {
         sshDialog.setKeyPair(null);
         sshDialog.setPassword("bad");
         sshDialog.connect();
-        sshDialog.authenticate();
+        assertThrows(AuthenticationException.class, sshDialog::authenticate);
     }
 
     @Test
@@ -294,7 +295,7 @@ public class SSHDialogTest {
         }
     }
 
-    @Test(expected = TimeLimitExceededException.class)
+    @Test
     public void testTimeout() throws Throwable {
         Sink sink = new Sink(
                 new String[] {
@@ -305,14 +306,16 @@ public class SSHDialogTest {
         sshDialog.setSoftTimeout(1 * 1000);
         sshDialog.connect();
         sshDialog.authenticate();
-        sshDialog.executeCommand(
-                sink,
-                "cat",
-                null);
-        sink.exception();
+        assertThrows(TimeLimitExceededException.class, () -> {
+            sshDialog.executeCommand(
+                    sink,
+                    "cat",
+                    null);
+            sink.exception();
+        });
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testStderr() throws Throwable {
         try (final InputStream start = new ByteArrayInputStream("start\n".getBytes("UTF-8"))) {
             Sink sink = new Sink(
@@ -325,13 +328,15 @@ public class SSHDialogTest {
                             "text1",
                             "text2"
                     });
-            sshDialog.connect();
-            sshDialog.authenticate();
-            sshDialog.executeCommand(
-                    sink,
-                    "echo message >&2 && cat",
-                    new InputStream[] { start });
-            sink.exception();
+            assertThrows(RuntimeException.class, () -> {
+                sshDialog.connect();
+                sshDialog.authenticate();
+                sshDialog.executeCommand(
+                        sink,
+                        "echo message >&2 && cat",
+                        new InputStream[] { start });
+                sink.exception();
+            });
         }
     }
 

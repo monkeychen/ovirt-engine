@@ -876,6 +876,19 @@ BEGIN
 END;$PROCEDURE$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION GetVdsStaticByVdsIds (v_vds_ids UUID[])
+RETURNS SETOF vds_static STABLE AS $PROCEDURE$
+BEGIN
+    RETURN QUERY
+
+    SELECT vds_static.*
+    FROM vds_static
+    WHERE vds_id = ANY(v_vds_ids);
+
+    RETURN;
+END;$PROCEDURE$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION GetVdsStaticByVdsName (v_host_name VARCHAR(255))
 RETURNS SETOF vds_static STABLE AS $PROCEDURE$
 BEGIN
@@ -1325,18 +1338,6 @@ RETURNS VOID AS $PROCEDURE$
 BEGIN
     UPDATE vds_dynamic
     SET net_config_dirty = v_net_config_dirty
-    WHERE vds_id = v_vds_guid;
-END;$PROCEDURE$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION UpdateVdsDynamicDnsResolverConfigurationId (
-    v_vds_guid UUID,
-    v_dns_resolver_configuration_id UUID
-    )
-RETURNS VOID AS $PROCEDURE$
-BEGIN
-    UPDATE vds_dynamic
-    SET dns_resolver_configuration_id = v_dns_resolver_configuration_id
     WHERE vds_id = v_vds_guid;
 END;$PROCEDURE$
 LANGUAGE plpgsql;

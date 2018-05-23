@@ -49,7 +49,6 @@ import org.ovirt.engine.core.dao.DiskLunMapDao;
 import org.ovirt.engine.core.dao.StorageDomainStaticDao;
 import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VdsDao;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmStaticDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.utils.ReplacementUtils;
@@ -78,8 +77,6 @@ public class UpdateStoragePoolCommand<T extends StoragePoolManagementParameter> 
     private StorageDomainStaticDao storageDomainStaticDao;
     @Inject
     private VdsDao vdsDao;
-    @Inject
-    private VmDao vmDao;
     @Inject
     private DiskLunMapDao diskLunMapDao;
 
@@ -301,17 +298,15 @@ public class UpdateStoragePoolCommand<T extends StoragePoolManagementParameter> 
                 .getCompatibilityVersion())) {
             if (!isStoragePoolVersionSupported()) {
                 return failValidation(VersionSupport.getUnsupportedVersionMessage());
-            }
-            // decreasing of compatibility version is allowed under conditions
-            else if (getStoragePool().getCompatibilityVersion().compareTo(getOldStoragePool().getCompatibilityVersion()) < 0) {
+            } else if (getStoragePool().getCompatibilityVersion().compareTo(getOldStoragePool().getCompatibilityVersion()) < 0) {
+                // decreasing of compatibility version is allowed under conditions
                 if (!poolDomains.isEmpty() && !isCompatibilityVersionChangeAllowedForDomains(poolDomains)) {
                     return false;
                 }
                 List<Network> networks = networkDao.getAllForDataCenter(getStoragePoolId());
                 for (Network network : networks) {
                     NetworkValidator validator = getNetworkValidator(network);
-                    if (!getManagementNetworkUtil().isManagementNetwork(network.getId())
-                            || !validator.canNetworkCompatibilityBeDecreased()) {
+                    if (!getManagementNetworkUtil().isManagementNetwork(network.getId())) {
                         return failValidation(EngineMessage.ACTION_TYPE_FAILED_CANNOT_DECREASE_DATA_CENTER_COMPATIBILITY_VERSION);
                     }
                 }
@@ -376,7 +371,7 @@ public class UpdateStoragePoolCommand<T extends StoragePoolManagementParameter> 
     }
 
     protected NetworkValidator getNetworkValidator(Network network) {
-        return new NetworkValidator(vmDao, network);
+        return new NetworkValidator(network);
     }
 
     @Override

@@ -1,20 +1,24 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.api.restapi.resource.BackendHostsResourceTest.ROOT_PASSWORD;
 import static org.ovirt.engine.api.restapi.resource.BackendHostsResourceTest.getModel;
 import static org.ovirt.engine.api.restapi.resource.BackendHostsResourceTest.setUpEntityExpectations;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.Cluster;
 import org.ovirt.engine.api.model.Host;
@@ -25,15 +29,20 @@ import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
+@ExtendWith(MockConfigExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendResourceTest extends AbstractBackendBaseTest {
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule(mockConfig(ConfigValues.OrganizationName, "oVirt"));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.OrganizationName, "oVirt"));
+    }
 
     BackendHostResource resource;
 
     @Override
+    @BeforeEach
     public void setUp() {
         super.setUp();
         setUpParentMock(resource.getParent());
@@ -46,24 +55,24 @@ public class BackendResourceTest extends AbstractBackendBaseTest {
     }
 
     @Test
-    public void testQueryWithoutFilter() throws Exception {
+    public void testQueryWithoutFilter() {
         resource.setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(false);
         resource.get();
     }
 
-    @Test(expected = javax.ws.rs.WebApplicationException.class)
-    public void testQueryWithFilter() throws Exception {
+    @Test
+    public void testQueryWithFilter() {
         List<String> filterValue = new ArrayList<>();
         filterValue.add("true");
         reset(httpHeaders);
         when(httpHeaders.getRequestHeader(USER_FILTER_HEADER)).thenReturn(filterValue);
         resource.setUriInfo(setUpBasicUriExpectations());
-        resource.get();
+        assertThrows(WebApplicationException.class, () -> resource.get());
     }
 
     @Test
-    public void testActionWithCorrelationId() throws Exception {
+    public void testActionWithCorrelationId() {
         setUpGetEntityExpectations(false);
         resource.getCurrent().getParameters().put("correlation_id", "Some-Correlation-id");
         resource.setUriInfo(setUpActionExpectations(ActionType.UpdateVds,
@@ -77,13 +86,13 @@ public class BackendResourceTest extends AbstractBackendBaseTest {
         resource.install(action);
     }
 
-    @Test(expected = MalformedIdException.class)
-    public void testBadGuidValidation() throws Exception {
+    @Test
+    public void testBadGuidValidation() {
         setUpGetEntityExpectations(false);
         Host host = new Host();
         host.setCluster(new Cluster());
         host.getCluster().setId("!!!");
-        resource.update(host);
+        assertThrows(MalformedIdException.class, () -> resource.update(host));
     }
 
     @Override
@@ -95,7 +104,7 @@ public class BackendResourceTest extends AbstractBackendBaseTest {
     }
 
     @Test
-    public void testUpdateCantDo() throws Exception {
+    public void testUpdateCantDo() {
         setUpGetEntityWithNoCertificateInfoExpectations();
 
         resource.setUriInfo(setUpActionExpectations(ActionType.UpdateVds,
@@ -106,20 +115,16 @@ public class BackendResourceTest extends AbstractBackendBaseTest {
                 true,
                 "ACTION_TYPE_FAILED_IMPORT_DISKS_ALREADY_EXIST"));
 
-        try {
-            resource.update(getModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, "ACTION_TYPE_FAILED_IMPORT_DISKS_ALREADY_EXIST", 409);
-        }
+        verifyFault(
+                assertThrows(WebApplicationException.class, () -> resource.update(getModel(0))),
+                "ACTION_TYPE_FAILED_IMPORT_DISKS_ALREADY_EXIST", 409);
     }
 
-    private void setUpGetEntityWithNoCertificateInfoExpectations() throws Exception {
+    private void setUpGetEntityWithNoCertificateInfoExpectations() {
         setUpGetEntityWithNoCertificateInfoExpectations(1, false, getEntity(0));
     }
 
-    private void setUpGetEntityWithNoCertificateInfoExpectations(int times, boolean notFound, VDS entity)
-            throws Exception {
+    private void setUpGetEntityWithNoCertificateInfoExpectations(int times, boolean notFound, VDS entity) {
         while (times-- > 0) {
             setUpGetEntityExpectations(QueryType.GetVdsByVdsId,
                     IdQueryParameters.class,
@@ -129,7 +134,7 @@ public class BackendResourceTest extends AbstractBackendBaseTest {
         }
     }
 
-    protected void setUpGetEntityExpectations(boolean filter) throws Exception {
+    protected void setUpGetEntityExpectations(boolean filter) {
         setUpGetEntityExpectations(QueryType.GetVdsByVdsId,
                 IdQueryParameters.class,
                 new String[] { "Id", "Filtered" },

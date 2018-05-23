@@ -22,9 +22,9 @@ import org.ovirt.engine.ui.uicompat.UIConstants;
 /**
  * Model object representing List of errata (singular: Erratum) for a VM, Host, or the engine itself (aka System).
  *
- * @see {@link EngineErrataListModel}
- * @see {@link HostErrataListModel}
- * @see {@link VmErrataListModel}
+ * @see EngineErrataListModel
+ * @see HostErrataListModel
+ * @see VmErrataListModel
  *
  */
 public abstract class AbstractErrataListModel extends ListWithSimpleDetailsModel<HasErrata, Erratum> {
@@ -84,8 +84,7 @@ public abstract class AbstractErrataListModel extends ListWithSimpleDetailsModel
                 // manual client-side filter
                 // TODO: Use filtering and pagination options by GetErrataCountsParameters.setErrataFilter(filter)
                 setItems(filter(unfilteredResultList));
-            }
-            else {
+            } else {
                 setMessage(constants.katelloProblemRetrievingErrata() + " " + returnValue.getExceptionMessage()); //$NON-NLS-1$
             }
         });

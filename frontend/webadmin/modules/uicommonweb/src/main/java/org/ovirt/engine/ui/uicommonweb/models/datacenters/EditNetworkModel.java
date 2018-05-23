@@ -68,8 +68,7 @@ public class EditNetworkModel extends NetworkModel {
 
     @Override
     protected void initMtu() {
-        boolean isCustomMtu = getNetwork().getMtu() != 0;
-        getMtuSelector().setSelectedItem(isCustomMtu ? MtuSelector.customMtu : MtuSelector.defaultMtu);
+        getMtuSelector().setSelectedItem(getNetwork().isDefaultMtu() ? MtuSelector.defaultMtu : MtuSelector.customMtu);
         getMtu().setEntity(isCustomMtu() ? getNetwork().getMtu() : null);
     }
 
@@ -101,6 +100,7 @@ public class EditNetworkModel extends NetworkModel {
     protected void onExportChanged() {
         super.onExportChanged();
         if (getExternal().getEntity()) {
+            getName().setIsChangeable(false);
             getHasVLanTag().setIsChangeable(false);
             getVLanTag().setIsChangeable(false);
             getExternalProviders().setIsChangeable(false);

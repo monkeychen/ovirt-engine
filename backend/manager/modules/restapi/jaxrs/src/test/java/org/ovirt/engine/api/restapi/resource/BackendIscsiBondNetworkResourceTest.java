@@ -1,12 +1,18 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.EditIscsiBondParameters;
 import org.ovirt.engine.core.common.businessentities.IscsiBond;
@@ -14,6 +20,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIscsiBondNetworkResourceTest
         extends AbstractBackendNetworkResourceTest<BackendIscsiBondNetworkResource> {
 
@@ -26,7 +33,7 @@ public class BackendIscsiBondNetworkResourceTest
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1, getIscsiBondContainingNetwork());
         setUpEntityQueryExpectations(QueryType.GetNetworkById,
@@ -39,20 +46,14 @@ public class BackendIscsiBondNetworkResourceTest
     }
 
     @Test
-    public void testGetWithInvalidNetworkId() throws Exception {
+    public void testGetWithInvalidNetworkId() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1, getIscsiBondWithNoMatchingNetworks());
-
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGetNetworkNotFound() throws Exception {
+    public void testGetNetworkNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1, getIscsiBondContainingNetwork());
 
@@ -63,16 +64,11 @@ public class BackendIscsiBondNetworkResourceTest
                 new Object[] { NETWORK_ID },
                 entities);
 
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(2, getIscsiBondContainingNetwork());
         setUpEntityQueryExpectations(
@@ -96,7 +92,7 @@ public class BackendIscsiBondNetworkResourceTest
         assertEquals(200, response.getStatus());
     }
 
-    protected void setUpEntityQueryExpectations(int times, IscsiBond iscsiBond) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, IscsiBond iscsiBond) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetIscsiBondById,
                     IdQueryParameters.class,

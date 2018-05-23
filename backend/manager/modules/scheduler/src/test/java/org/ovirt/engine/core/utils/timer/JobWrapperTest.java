@@ -1,9 +1,9 @@
 package org.ovirt.engine.core.utils.timer;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JobWrapperTest {
 
@@ -20,7 +20,7 @@ public class JobWrapperTest {
     }
 
     @Test
-    public void testMethodAllowsConcurrent() throws Exception {
+    public void testMethodAllowsConcurrent() {
         assertFalse(JobWrapper.methodAllowsConcurrent(new Dummy(), "serialOnly"));
         assertTrue(JobWrapper.methodAllowsConcurrent(new Dummy(), "normalJob"));
     }

@@ -26,7 +26,7 @@ public class RemoveStorageQosCommand extends RemoveQosCommandBase<StorageQos, Qo
 
     @Override
     protected QosDao<StorageQos> getQosDao() {
-        return dbFacade.getStorageQosDao();
+        return storageQosDao;
     }
 
     @Override

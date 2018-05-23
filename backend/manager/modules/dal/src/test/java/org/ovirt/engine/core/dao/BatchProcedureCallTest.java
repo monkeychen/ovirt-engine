@@ -1,8 +1,8 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.Tags;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dal.dbbroker.CustomMapSqlParameterSource;
@@ -19,24 +18,12 @@ import org.ovirt.engine.core.dal.dbbroker.DbEngineDialect;
 import org.ovirt.engine.core.dal.dbbroker.SimpleJdbcCallsHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
-public class BatchProcedureCallTest extends BaseDaoTestCase {
-
-    private TagDao dao;
-
+public class BatchProcedureCallTest extends BaseDaoTestCase<TagDao> {
     @Inject
     private DbEngineDialect dbEngineDialect;
 
     @Inject
     private SimpleJdbcCallsHandler jdbcCallsHandler;
-
-    public BatchProcedureCallTest() {
-    }
-
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        dao = dbFacade.getTagDao();
-    }
 
     protected CustomMapSqlParameterSource getParamsSource(Tags tag) {
         CustomMapSqlParameterSource paramsSource = new CustomMapSqlParameterSource(dbEngineDialect);

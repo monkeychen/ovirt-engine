@@ -1,15 +1,13 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.businessentities.storage.ImageTransfer;
 import org.ovirt.engine.core.common.businessentities.storage.ImageTransferPhase;
@@ -23,14 +21,6 @@ import org.ovirt.engine.core.compat.Guid;
 public class ImageTransferDaoTest extends BaseGenericDaoTestCase<Guid, ImageTransfer, ImageTransferDao> {
 
     private static final int TOTAL_IMAGE_TRANSFERS = 2;
-
-    @Inject
-    private ImageTransferDao dao;
-
-    @Override
-    protected ImageTransferDao prepareDao() {
-        return dao;
-    }
 
     @Override
     protected int getEntitiesTotalCount() {
@@ -78,8 +68,8 @@ public class ImageTransferDaoTest extends BaseGenericDaoTestCase<Guid, ImageTran
     public void testGetByVdsId() {
         List<ImageTransfer> imageTransfers = dao.getByVdsId(FixturesTool.HOST_ID);
         assertNotNull(imageTransfers);
-        assertTrue("Transfers must be associated with the specified host",
-                imageTransfers.stream()
-                        .allMatch(imageTransfer -> imageTransfer.getVdsId().equals(FixturesTool.HOST_ID)));
+        assertTrue(imageTransfers.stream()
+                        .allMatch(imageTransfer -> imageTransfer.getVdsId().equals(FixturesTool.HOST_ID)),
+                "Transfers must be associated with the specified host");
     }
 }

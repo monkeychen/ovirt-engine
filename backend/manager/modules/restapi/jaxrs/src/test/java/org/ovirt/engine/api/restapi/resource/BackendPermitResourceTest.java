@@ -1,17 +1,24 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Permit;
 import org.ovirt.engine.core.common.action.ActionGroupsToRoleParameter;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.businessentities.ActionGroup;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendPermitResourceTest extends AbstractBackendSubResourceTest<Permit, ActionGroup, BackendPermitResource> {
 
     private static final Guid ROLE_ID = new Guid("11111111-1111-1111-1111-111111111111");
@@ -21,24 +28,18 @@ public class BackendPermitResourceTest extends AbstractBackendSubResourceTest<Pe
     }
 
     @Test
-    public void testGetBadId() throws Exception {
+    public void testGetBadId() {
         doTestGetNotFound("foo");
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         doTestGetNotFound("11111");
     }
 
-    private void doTestGetNotFound(String id) throws Exception {
+    private void doTestGetNotFound(String id) {
         BackendPermitResource resource = new BackendPermitResource(id, new BackendPermitsResource(ROLE_ID));
-        resource.getParent().setMappingLocator(mapperLocator);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
@@ -52,29 +53,24 @@ public class BackendPermitResourceTest extends AbstractBackendSubResourceTest<Pe
     }
 
     @Test
-    public void testRemoveBadId() throws Exception {
+    public void testRemoveBadId() {
         doTestRemoveNotFound("foo");
     }
 
     @Test
-    public void testRemoveNotFound() throws Exception {
+    public void testRemoveNotFound() {
         doTestRemoveNotFound("11111");
     }
 
-    private void doTestRemoveNotFound(String id) throws Exception {
+    private void doTestRemoveNotFound(String id) {
         initResource(resource.parent);
         resource.id = id;
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::remove));
         resource.id = "1";
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         initResource(resource.parent);
         List<ActionGroup> actionGroups = new ArrayList<>();
         actionGroups.add(ActionGroup.forValue(1));
@@ -88,16 +84,16 @@ public class BackendPermitResourceTest extends AbstractBackendSubResourceTest<Pe
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         initResource(resource.parent);
         List<ActionGroup> actionGroups = new ArrayList<>();
         actionGroups.add(ActionGroup.forValue(1));
@@ -107,12 +103,8 @@ public class BackendPermitResourceTest extends AbstractBackendSubResourceTest<Pe
                 new Object[] { GUIDS[1], actionGroups },
                 valid,
                 success));
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
     private void verifyPermit(Permit permit, ActionGroup action) {
         assertEquals(Integer.toString(action.getId()), permit.getId());

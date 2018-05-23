@@ -1,10 +1,11 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VmStatistics;
 import org.ovirt.engine.core.compat.Guid;
 
@@ -35,11 +36,6 @@ public class VmStatisticsDaoTest extends BaseGenericDaoTestCase<Guid, VmStatisti
     }
 
     @Override
-    protected VmStatisticsDao prepareDao() {
-        return dbFacade.getVmStatisticsDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
@@ -50,13 +46,13 @@ public class VmStatisticsDaoTest extends BaseGenericDaoTestCase<Guid, VmStatisti
         return 0;
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testGetAll() {
-        dao.getAll();
+        assertThrows(UnsupportedOperationException.class, () -> dao.getAll());
     }
 
     @Test
-    public void testUpdateAll() throws Exception {
+    public void testUpdateAll() {
         VmStatistics existingVm = dao.get(FixturesTool.VM_RHEL5_POOL_57);
         VmStatistics existingVm2 = dao.get(FixturesTool.VM_RHEL5_POOL_51);
         existingVm.setCpuSys(50.0);

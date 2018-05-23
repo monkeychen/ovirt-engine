@@ -1,13 +1,18 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Icon;
 import org.ovirt.engine.core.common.businessentities.VmIcon;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIconsResourceTest
         extends AbstractBackendCollectionResourceTest<Icon, VmIcon, BackendIconsResource> {
 
@@ -52,7 +57,7 @@ public class BackendIconsResourceTest
     }
 
     @Override
-     protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+     protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetAllVmIcons,
                 QueryParametersBase.class,
                 new String[] {},

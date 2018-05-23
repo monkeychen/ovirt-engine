@@ -146,9 +146,8 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
     @SuppressWarnings("unused") // used by AuditLogger via reflection
     public String getDueToMigrationError() {
         if (migrationErrorCode != null) {
-            return " due to an Error: " + Backend.getInstance()
-            .getVdsErrorsTranslator()
-            .translateErrorTextSingle(migrationErrorCode.name(), true);
+            return " due to an Error: " +
+                    backend.getVdsErrorsTranslator().translateErrorTextSingle(migrationErrorCode.name(), true);
         }
         return " ";
     }
@@ -241,7 +240,8 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
 
     protected boolean perform() {
         try {
-            getParameters().setStartTime(new Date());
+            getParameters().setTotalMigrationTime(new Date());
+            getParameters().resetStartTime();
 
             if (unplugPassthroughNics() && connectLunDisks(getDestinationVdsId()) && migrateVm()) {
                 ExecutionHandler.setAsyncJob(getExecutionContext(), true);
@@ -353,7 +353,7 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
     }
 
     private boolean migrateVm() {
-        setActionReturnValue(getVdsBroker()
+        setActionReturnValue(vdsBroker
                 .runAsyncVdsCommand(
                         VDSCommandType.Migrate,
                         createMigrateVDSCommandParameters(),
@@ -525,8 +525,7 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
             updateVmAfterMigrationToDifferentCluster();
             plugPassthroughNics();
             initParametersForExternalNetworks(destinationVds, true);
-        }
-        finally {
+        } finally {
             super.runningSucceded();
         }
     }
@@ -844,9 +843,8 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
     @Override
     protected void logValidationFailed() {
         addCustomValue("DueToMigrationError",
-                " due to a failed validation: " + Backend.getInstance()
-                .getErrorsTranslator()
-                .translateErrorText(getReturnValue().getValidationMessages()));
+                " due to a failed validation: " +
+                        backend.getErrorsTranslator().translateErrorText(getReturnValue().getValidationMessages()));
         auditLogDirector.log(this, AuditLogType.VM_MIGRATION_FAILED);
     }
 
@@ -912,7 +910,10 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
     @SuppressWarnings("unused") // used by AuditLogger via reflection
     // Duration: time that took for the actual migration
     public String getDuration() {
-        return DurationFormatUtils.formatDurationWords(new Date().getTime() - getParameters().getStartTime().getTime(), true, true);
+        Date start = getParameters().getStartTime() != null
+                ? getParameters().getStartTime()
+                : getParameters().getTotalMigrationTime();
+        return DurationFormatUtils.formatDurationWords(new Date().getTime() - start.getTime(), true, true);
     }
 
     @SuppressWarnings("unused") // used by AuditLogger via reflection
@@ -975,6 +976,11 @@ public class MigrateVmCommand<T extends MigrateVmParameters> extends RunVmComman
     @Override
     public void onPowerringUp() {
         // nothing to do
+    }
+
+    @Override
+    public void migrationProgressReported(int progress) {
+        getParameters().setStartTime(new Date());
     }
 
     @Override

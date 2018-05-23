@@ -16,12 +16,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
 import org.ovirt.engine.core.bll.ValidationResult;
@@ -39,17 +40,15 @@ import org.ovirt.engine.core.common.businessentities.StorageDomain;
 import org.ovirt.engine.core.common.businessentities.StorageDomainStatus;
 import org.ovirt.engine.core.common.businessentities.StorageDomainType;
 import org.ovirt.engine.core.common.businessentities.StoragePool;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.osinfo.OsRepository;
 import org.ovirt.engine.core.common.utils.VmInitToOpenStackMetadataAdapter;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.ClusterDao;
 import org.ovirt.engine.core.dao.UnregisteredOVFDataDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
 import org.ovirt.engine.core.utils.ovf.OvfManager;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ImportVMFromConfigurationCommandTest extends BaseCommandTest {
     private Guid vmId = Guid.newGuid();
     private static final Guid storageDomainId = new Guid("7e2a7eac-3b76-4d45-a7dd-caae8fe0f588");
@@ -67,9 +66,6 @@ public class ImportVMFromConfigurationCommandTest extends BaseCommandTest {
             new ImportVmFromConfigurationCommand<>(createParametersWhenImagesExistOnTargetStorageDomain(), null);
 
     private ImportValidator validator;
-
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule();
 
     @Mock
     private UnregisteredOVFDataDao unregisteredOVFDataDao;
@@ -99,7 +95,7 @@ public class ImportVMFromConfigurationCommandTest extends BaseCommandTest {
     @Mock
     private VmInitToOpenStackMetadataAdapter openStackMetadataAdapter;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         doReturn(cluster).when(cmd).getCluster();
         doReturn(emptyList()).when(cmd).getImages();
@@ -122,9 +118,6 @@ public class ImportVMFromConfigurationCommandTest extends BaseCommandTest {
         when(validator.validateStorageExistForUnregisteredEntity(anyList(), anyBoolean(), any(), any()))
                 .thenReturn(ValidationResult.VALID);
 
-        mcr.mockConfigValue(ConfigValues.VM32BitMaxMemorySizeInMB, Version.getLast(), 20480);
-        mcr.mockConfigValue(ConfigValues.VM64BitMaxMemorySizeInMB, Version.getLast(), 4194304);
-        mcr.mockConfigValue(ConfigValues.VMPpc64BitMaxMemorySizeInMB, Version.getLast(), 1048576);
         ValidateTestUtils.runAndAssertValidateSuccess(cmd);
     }
 

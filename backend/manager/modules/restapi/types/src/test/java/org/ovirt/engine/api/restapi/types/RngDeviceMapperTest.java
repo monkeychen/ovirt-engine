@@ -1,8 +1,8 @@
 package org.ovirt.engine.api.restapi.types;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Rate;
 import org.ovirt.engine.api.model.RngDevice;
 import org.ovirt.engine.api.model.RngSource;
@@ -12,7 +12,7 @@ import org.ovirt.engine.core.common.businessentities.VmRngDevice;
 public class RngDeviceMapperTest {
 
     @Test
-    public void testMapFromBackendToRest() throws Exception {
+    public void testMapFromBackendToRest() {
         VmRngDevice entity = new VmRngDevice();
         entity.setBytes(11);
         entity.setPeriod(10);
@@ -30,7 +30,7 @@ public class RngDeviceMapperTest {
     }
 
     @Test
-    public void testMapFromRestToBackend() throws Exception {
+    public void testMapFromRestToBackend() {
         RngDevice model = new RngDevice();
         model.setSource(RngSource.HWRNG);
         model.setRate(new Rate());

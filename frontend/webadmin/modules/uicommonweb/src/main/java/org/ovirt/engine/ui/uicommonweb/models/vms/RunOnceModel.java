@@ -37,6 +37,7 @@ import org.ovirt.engine.ui.uicommonweb.models.HasEntity;
 import org.ovirt.engine.ui.uicommonweb.models.ListModel;
 import org.ovirt.engine.ui.uicommonweb.models.Model;
 import org.ovirt.engine.ui.uicommonweb.models.vms.key_value.KeyValueModel;
+import org.ovirt.engine.ui.uicommonweb.validation.CpuNameValidation;
 import org.ovirt.engine.ui.uicommonweb.validation.I18NExtraNameOrNoneValidation;
 import org.ovirt.engine.ui.uicommonweb.validation.IValidation;
 import org.ovirt.engine.ui.uicommonweb.validation.LengthValidation;
@@ -1046,47 +1047,38 @@ public abstract class RunOnceModel extends Model {
         if (ev.matchesDefinition(ListModel.selectedItemChangedEventDefinition)) {
             if (sender == getIsoImage()) {
                 IsoImage_SelectedItemChanged();
-            }
-            else if (sender == getFloppyImage()) {
+            } else if (sender == getFloppyImage()) {
                 floppyImage_SelectedItemChanged();
             }
-        }
-        else if (ev.matchesDefinition(HasEntity.entityChangedEventDefinition)) {
+        } else if (ev.matchesDefinition(HasEntity.entityChangedEventDefinition)) {
             if (sender == getAttachFloppy()) {
                 attachFloppy_EntityChanged();
-            }
-            else if (sender == getAttachIso()) {
+            } else if (sender == getAttachIso()) {
                 attachIso_EntityChanged();
-            }
-            else if (sender == getIsVmFirstRun()) {
+            } else if (sender == getIsVmFirstRun()) {
                 isVmFirstRun_EntityChanged();
-            }
-            else if (sender == getUseAlternateCredentials()) {
+            } else if (sender == getUseAlternateCredentials()) {
                 useAlternateCredentials_EntityChanged();
-            }
-            else if (sender == getDisplayConsole_Vnc_IsSelected() && ((EntityModel<Boolean>) sender).getEntity()) {
+            } else if (sender == getDisplayConsole_Vnc_IsSelected() && ((EntityModel<Boolean>) sender).getEntity()) {
                 getRunOnceHeadlessModeIsSelected().setEntity(false);
                 getDisplayConsole_Spice_IsSelected().setEntity(false);
                 getVncKeyboardLayout().setIsChangeable(true);
                 getSpiceFileTransferEnabled().setIsChangeable(false);
                 getSpiceCopyPasteEnabled().setIsChangeable(false);
-            }
-            else if (sender == getDisplayConsole_Spice_IsSelected() && ((EntityModel<Boolean>) sender).getEntity()) {
+            } else if (sender == getDisplayConsole_Spice_IsSelected() && ((EntityModel<Boolean>) sender).getEntity()) {
                 getRunOnceHeadlessModeIsSelected().setEntity(false);
                 getDisplayConsole_Vnc_IsSelected().setEntity(false);
                 getVncKeyboardLayout().setIsChangeable(false);
                 getSpiceFileTransferEnabled().setIsChangeable(true);
                 getSpiceCopyPasteEnabled().setIsChangeable(true);
-            }
-            else if (sender == getRunOnceHeadlessModeIsSelected() && ((EntityModel<Boolean>) sender).getEntity()) {
+            } else if (sender == getRunOnceHeadlessModeIsSelected() && ((EntityModel<Boolean>) sender).getEntity()) {
                 getDisplayConsole_Vnc_IsSelected().setEntity(false);
                 getDisplayConsole_Spice_IsSelected().setEntity(false);
 
                 getVncKeyboardLayout().setIsChangeable(false);
                 getSpiceFileTransferEnabled().setIsChangeable(false);
                 getSpiceCopyPasteEnabled().setIsChangeable(false);
-            }
-            else if (sender == getIsAutoAssign()) {
+            } else if (sender == getIsAutoAssign()) {
                 isAutoAssign_EntityChanged(sender, args);
             }
         }
@@ -1189,8 +1181,7 @@ public abstract class RunOnceModel extends Model {
 
         if (getIsAutoAssign().getEntity() != null && !getIsAutoAssign().getEntity()) {
             getDefaultHost().validateSelectedItem(new IValidation[] { new NotEmptyValidation() });
-        }
-        else {
+        } else {
             getDefaultHost().setIsValid(true);
         }
 
@@ -1208,7 +1199,7 @@ public abstract class RunOnceModel extends Model {
         boolean cloudInitIsValid = getVmInitModel().validate();
 
         getEmulatedMachine().validateSelectedItem(new IValidation[] { new I18NExtraNameOrNoneValidation(), new LengthValidation(BusinessEntitiesDefinitions.VM_EMULATED_MACHINE_SIZE) });
-        getCustomCpu().validateSelectedItem(new IValidation[] { new I18NExtraNameOrNoneValidation(), new LengthValidation(BusinessEntitiesDefinitions.VM_CPU_NAME_SIZE) });
+        getCustomCpu().validateSelectedItem(new IValidation[] { new CpuNameValidation(), new LengthValidation(BusinessEntitiesDefinitions.VM_CPU_NAME_SIZE) });
 
         return getIsoImage().getIsValid()
                 && getFloppyImage().getIsValid()
@@ -1230,8 +1221,7 @@ public abstract class RunOnceModel extends Model {
             if (validate()) {
                 onRunOnce();
             }
-        }
-        else if (command == cancelCommand) {
+        } else if (command == cancelCommand) {
             commandTarget.executeCommand(command);
         }
     }

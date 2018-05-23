@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -12,7 +15,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.StorageDomain;
@@ -37,6 +42,7 @@ import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTemplateDiskResourceTest
         extends AbstractBackendSubResourceTest<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk, BackendTemplateDiskResource> {
 
@@ -48,23 +54,19 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetVmTemplatesDisks,
                                      IdQueryParameters.class,
                                      new String[] { "Id" },
                                      new Object[] { TEMPLATE_ID },
                                      new ArrayList<DiskImage>());
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
 
@@ -87,7 +89,7 @@ public class BackendTemplateDiskResourceTest
 
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetVmTemplatesDisks,
                     IdQueryParameters.class,
@@ -98,7 +100,7 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testExport() throws Exception {
+    public void testExport() {
         setUriInfo(setUpActionExpectations(ActionType.ExportRepoImage,
                 ExportRepoImageParameters.class,
                 new String[]{"ImageGroupID", "DestinationDomainId"},
@@ -112,28 +114,21 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendStorageDomainVmResource(null, "foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendStorageDomainVmResource(null, "foo")));
     }
 
     @Test
-    public void testIncompleteExport() throws Exception {
+    public void testIncompleteExport() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.export(new Action());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "Action", "export", "storageDomain.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> resource.export(new Action())),
+                "Action", "export", "storageDomain.id|name");
     }
 
     @Test
-    public void testCopyBySdId() throws Exception {
+    public void testCopyBySdId() {
         setUpEntityQueryExpectations(QueryType.GetDiskByDiskId,
                 IdQueryParameters.class,
                 new String[] { "Id" },
@@ -150,17 +145,17 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testCopyBySdNameWithoutFilter() throws Exception {
+    public void testCopyBySdNameWithoutFilter() {
         testCopyBySdName(false);
     }
 
     @Test
-    public void testCopyBySdNameWithFilter() throws Exception {
+    public void testCopyBySdNameWithFilter() {
         testCopyBySdName(true);
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations(1);
         setUriInfo(setUpActionExpectations(ActionType.RemoveDisk,
                 RemoveDiskParameters.class,
@@ -172,7 +167,7 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testRemoveByStorageDomain() throws Exception {
+    public void testRemoveByStorageDomain() {
         setUpGetEntityExpectations(1);
         UriInfo uriInfo = setUpActionExpectations(
             ActionType.RemoveDisk,
@@ -189,7 +184,7 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testRemoveForced() throws Exception {
+    public void testRemoveForced() {
         setUpGetEntityExpectations(1);
         UriInfo uriInfo = setUpActionExpectations(
             ActionType.RemoveDisk,
@@ -216,16 +211,16 @@ public class BackendTemplateDiskResourceTest
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(1);
         setUriInfo(setUpActionExpectations(ActionType.RemoveDisk,
                 RemoveDiskParameters.class,
@@ -233,15 +228,11 @@ public class BackendTemplateDiskResourceTest
                 new Object[] { GUIDS[1] },
                 valid,
                 success));
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
-    protected void testCopyBySdName(boolean isFiltered) throws Exception {
+    protected void testCopyBySdName(boolean isFiltered) {
         setUriInfo(setUpBasicUriExpectations());
 
         if (isFiltered) {
@@ -251,8 +242,7 @@ public class BackendTemplateDiskResourceTest
                     new String[] {},
                     new Object[] {},
                     Collections.singletonList(getStorageDomainEntity()));
-        }
-        else {
+        } else {
             setUpEntityQueryExpectations(QueryType.GetStorageDomainByName,
                     NameQueryParameters.class,
                     new String[] { "Name" },
@@ -314,19 +304,16 @@ public class BackendTemplateDiskResourceTest
         return action;
     }
 
-    private void verifyActionResponse(Response r) throws Exception {
+    private void verifyActionResponse(Response r) {
         verifyActionResponse(r, "templates/" + TEMPLATE_ID + "/disks/" + DISK_ID, false);
     }
 
     @Test
-    public void testIncompleteCopy() throws Exception {
+    public void testIncompleteCopy() {
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.copy(new Action());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Action", "copy", "storageDomain.id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> resource.copy(new Action())),
+                        "Action", "copy", "storageDomain.id|name");
     }
 
     protected UriInfo setUpActionExpectations(ActionType task,

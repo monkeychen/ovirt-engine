@@ -1,22 +1,21 @@
 package org.ovirt.engine.core.utils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.common.businessentities.network.NetworkCluster;
 import org.ovirt.engine.core.common.businessentities.network.Nic;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkInterface;
 import org.ovirt.engine.core.common.businessentities.network.Vlan;
 
+@ExtendWith(RandomUtilsSeedingExtension.class)
 public class NetworkUtilsTest {
 
     private static final String IFACE_NAME = "eth1";
-
-    @Rule
-    public RandomUtilsSeedingRule rusr = new RandomUtilsSeedingRule();
 
     @Test
     public void interfaceBasedOn() {
@@ -104,5 +103,18 @@ public class NetworkUtilsTest {
         final String IP_ADDRESS = "192.0.2.1";
         final String URL = String.format("https://%s/someting", IP_ADDRESS);
         assertEquals(IP_ADDRESS, NetworkUtils.getIpAddress(URL));
+    }
+
+    @Test
+    public void testStripIpv6ZoneId() {
+        assertEquals("fe80::1",     NetworkUtils.stripIpv6ZoneIndex("fe80::1"));
+        assertEquals("fe80::1/64",  NetworkUtils.stripIpv6ZoneIndex("fe80::1/64"));
+        assertEquals("fe80::1",     NetworkUtils.stripIpv6ZoneIndex("fe80::1%"));
+        assertEquals("fe80::1",     NetworkUtils.stripIpv6ZoneIndex("fe80::1%1"));
+        assertEquals("fe80::1",     NetworkUtils.stripIpv6ZoneIndex("fe80::1%eth0"));
+        assertEquals("fe80::1",     NetworkUtils.stripIpv6ZoneIndex("fe80::1%eth0/64"));
+        assertEquals("",            NetworkUtils.stripIpv6ZoneIndex("%"));
+        assertEquals("",            NetworkUtils.stripIpv6ZoneIndex(""));
+        assertNull(NetworkUtils.stripIpv6ZoneIndex(null));
     }
 }

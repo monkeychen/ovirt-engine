@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -12,9 +15,10 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import org.ovirt.engine.api.model.Fault;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.MacPool;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.MacPoolParameters;
@@ -23,6 +27,7 @@ import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendMacPoolsResourceTest
         extends AbstractBackendCollectionResourceTest<MacPool, org.ovirt.engine.core.common.businessentities.MacPool, BackendMacPoolsResource> {
 
@@ -39,7 +44,7 @@ public class BackendMacPoolsResourceTest
     }
 
     @Test
-    public void testAddMacPool() throws Exception {
+    public void testAddMacPool() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddMacPool,
                 MacPoolParameters.class,
@@ -62,16 +67,16 @@ public class BackendMacPoolsResourceTest
     }
 
     @Test
-    public void testAddMacPoolCantDo() throws Exception {
+    public void testAddMacPoolCantDo() {
         doTestBadAddMacPool(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddMacPoolFailure() throws Exception {
+    public void testAddMacPoolFailure() {
         doTestBadAddMacPool(true, false, FAILURE);
     }
 
-    private void doTestBadAddMacPool(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddMacPool(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(ActionType.AddMacPool,
                 MacPoolParameters.class,
                 new String[] {},
@@ -80,24 +85,16 @@ public class BackendMacPoolsResourceTest
                 success));
         MacPool model = getModel(0);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         MacPool model = createIncompleteMacPool();
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "MacPool", "add", getIncompleteFields());
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "MacPool", "add", getIncompleteFields());
     }
 
     protected String[] getIncompleteFields() {
@@ -110,9 +107,9 @@ public class BackendMacPoolsResourceTest
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Override
@@ -126,41 +123,29 @@ public class BackendMacPoolsResourceTest
 
     @Override
     @Test
-    public void testListFailure() throws Exception {
+    public void testListFailure() {
         setUpMacPoolsQueryExpectations(FAILURE);
         UriInfo uriInfo = setUpUriExpectations(null);
         collection.setUriInfo(uriInfo);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Override
     @Test
-    public void testListCrash() throws Exception {
+    public void testListCrash() {
         Throwable t = new RuntimeException(FAILURE);
         setUpMacPoolsQueryExpectations(t);
 
         UriInfo uriInfo = setUpUriExpectations(null);
         collection.setUriInfo(uriInfo);
 
-
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     @Override
     @Test
-    public void testListCrashClientLocale() throws Exception {
+    public void testListCrashClientLocale() {
         UriInfo uriInfo = setUpUriExpectations(null);
         locales.add(CLIENT_LOCALE);
 
@@ -168,14 +153,7 @@ public class BackendMacPoolsResourceTest
         setUpMacPoolsQueryExpectations(t);
         collection.setUriInfo(uriInfo);
 
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        } finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     private void setUpMacPoolsQueryExpectations(Object failure) {

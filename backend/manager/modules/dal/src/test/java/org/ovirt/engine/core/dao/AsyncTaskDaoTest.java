@@ -1,17 +1,17 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.VdcObjectType;
 import org.ovirt.engine.core.common.action.ActionParametersBase;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -26,18 +26,16 @@ import org.ovirt.engine.core.compat.TransactionScopeOption;
 /**
  * {@code AsyncTaskDaoTest} performs tests against the {@link AsyncTaskDao} type.
  */
-public class AsyncTaskDaoTest extends BaseDaoTestCase {
+public class AsyncTaskDaoTest extends BaseDaoTestCase<AsyncTaskDao> {
     private static final int TASK_COUNT = 2;
-    private AsyncTaskDao dao;
     private AsyncTask newAsyncTask;
     private AsyncTask existingAsyncTask;
 
+    @BeforeEach
     @Override
-    @Before
     public void setUp() throws Exception {
         super.setUp();
 
-        dao = dbFacade.getAsyncTaskDao();
         ActionParametersBase params = new ActionParametersBase();
         params.setSessionId("ASESSIONID");
         params.setTransactionScopeOption(TransactionScopeOption.RequiresNew);

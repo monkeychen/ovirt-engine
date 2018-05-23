@@ -1,6 +1,12 @@
 package org.ovirt.engine.api.restapi.types;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.AffinityGroup;
 import org.ovirt.engine.api.model.AffinityRule;
 import org.ovirt.engine.api.model.Host;
@@ -54,7 +60,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testVmsRule() throws Exception {
+    public void testVmsRule() {
         AffinityGroup model = new AffinityGroup();
         model.setEnforcing(true);
         model.setPositive(false);
@@ -65,12 +71,12 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.NEGATIVE, entity.getVmAffinityRule());
-        assertEquals(true, entity.isVmEnforcing());
-        assertEquals(true, entity.isVmAffinityEnabled());
+        assertTrue(entity.isVmEnforcing());
+        assertTrue(entity.isVmAffinityEnabled());
     }
 
     @Test
-    public void testVmsRuleNeg() throws Exception {
+    public void testVmsRuleNeg() {
         AffinityGroup model = new AffinityGroup();
         model.setEnforcing(false);
         model.setPositive(true);
@@ -81,12 +87,12 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.POSITIVE, entity.getVmAffinityRule());
-        assertEquals(false, entity.isVmEnforcing());
-        assertEquals(true, entity.isVmAffinityEnabled());
+        assertFalse(entity.isVmEnforcing());
+        assertTrue(entity.isVmAffinityEnabled());
     }
 
     @Test
-    public void testVmsRuleStructure() throws Exception {
+    public void testVmsRuleStructure() {
         AffinityGroup model = new AffinityGroup();
 
         AffinityRule rule = new AffinityRule();
@@ -102,12 +108,12 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.NEGATIVE, entity.getVmAffinityRule());
-        assertEquals(true, entity.isVmEnforcing());
-        assertEquals(true, entity.isVmAffinityEnabled());
+        assertTrue(entity.isVmEnforcing());
+        assertTrue(entity.isVmAffinityEnabled());
     }
 
     @Test
-    public void testVmsRuleStructureNeg() throws Exception {
+    public void testVmsRuleStructureNeg() {
         AffinityGroup model = new AffinityGroup();
 
         AffinityRule rule = new AffinityRule();
@@ -123,12 +129,12 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.POSITIVE, entity.getVmAffinityRule());
-        assertEquals(false, entity.isVmEnforcing());
-        assertEquals(true, entity.isVmAffinityEnabled());
+        assertFalse(entity.isVmEnforcing());
+        assertTrue(entity.isVmAffinityEnabled());
     }
 
     @Test
-    public void testVmsRuleStructureDisabled() throws Exception {
+    public void testVmsRuleStructureDisabled() {
         AffinityGroup model = new AffinityGroup();
 
         AffinityRule rule = new AffinityRule();
@@ -144,12 +150,12 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.DISABLED, entity.getVmAffinityRule());
-        assertEquals(true, entity.isVmEnforcing());
-        assertEquals(false, entity.isVmAffinityEnabled());
+        assertTrue(entity.isVmEnforcing());
+        assertFalse(entity.isVmAffinityEnabled());
     }
 
     @Test
-    public void testVmsRuleStructureWins() throws Exception {
+    public void testVmsRuleStructureWins() {
         AffinityGroup model = new AffinityGroup();
         model.setEnforcing(false);
         model.setPositive(false);
@@ -167,15 +173,16 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.POSITIVE, entity.getVmAffinityRule());
-        assertEquals(true, entity.isVmEnforcing());
-        assertEquals(true, entity.isVmAffinityEnabled());
+        assertTrue(entity.isVmEnforcing());
+        assertTrue(entity.isVmAffinityEnabled());
     }
 
     @Test
-    public void testHostsRuleStructure() throws Exception {
+    public void testHostsRuleStructure() {
         AffinityGroup model = new AffinityGroup();
 
         AffinityRule rule = new AffinityRule();
+        rule.setEnabled(true);
         rule.setEnforcing(true);
         rule.setPositive(false);
 
@@ -187,14 +194,15 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.NEGATIVE, entity.getVdsAffinityRule());
-        assertEquals(true, entity.isVdsEnforcing());
+        assertTrue(entity.isVdsEnforcing());
     }
 
     @Test
-    public void testHostsRuleStructureNeg() throws Exception {
+    public void testHostsRuleStructureNeg() {
         AffinityGroup model = new AffinityGroup();
 
         AffinityRule rule = new AffinityRule();
+        rule.setEnabled(true);
         rule.setEnforcing(false);
         rule.setPositive(true);
 
@@ -206,11 +214,11 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         AffinityGroupMapper.map(model, entity);
 
         assertEquals(EntityAffinityRule.POSITIVE, entity.getVdsAffinityRule());
-        assertEquals(false, entity.isVdsEnforcing());
+        assertFalse(entity.isVdsEnforcing());
     }
 
     @Test
-    public void testHostAffinityRestOutput() throws  Exception {
+    public void testHostAffinityRestOutput() {
         org.ovirt.engine.core.common.scheduling.AffinityGroup entity =
                 new org.ovirt.engine.core.common.scheduling.AffinityGroup();
         entity.setId(Guid.Empty);
@@ -229,7 +237,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testHostAffinityNegRestOutput() throws  Exception {
+    public void testHostAffinityNegRestOutput() {
         org.ovirt.engine.core.common.scheduling.AffinityGroup entity =
                 new org.ovirt.engine.core.common.scheduling.AffinityGroup();
         entity.setId(Guid.Empty);
@@ -248,7 +256,25 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testVmAffinityRestOutput() throws  Exception {
+    public void testHostAffinityDisabledRestOutput() {
+        org.ovirt.engine.core.common.scheduling.AffinityGroup entity =
+                new org.ovirt.engine.core.common.scheduling.AffinityGroup();
+        entity.setId(Guid.Empty);
+        entity.setClusterId(Guid.Empty);
+        entity.setVdsEnforcing(true);
+        entity.setVdsAffinityRule(EntityAffinityRule.DISABLED);
+
+        AffinityGroup model = new AffinityGroup();
+
+        AffinityGroupMapper.map(entity, model);
+
+        assertNotNull(model.getHostsRule());
+        assertEquals(false, model.getHostsRule().isEnabled());
+        assertEquals(true, model.getHostsRule().isEnforcing());
+    }
+
+    @Test
+    public void testVmAffinityRestOutput() {
         org.ovirt.engine.core.common.scheduling.AffinityGroup entity =
                 new org.ovirt.engine.core.common.scheduling.AffinityGroup();
         entity.setId(Guid.Empty);
@@ -269,7 +295,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testVmAffinityNegRestOutput() throws  Exception {
+    public void testVmAffinityNegRestOutput() {
         org.ovirt.engine.core.common.scheduling.AffinityGroup entity =
                 new org.ovirt.engine.core.common.scheduling.AffinityGroup();
         entity.setId(Guid.Empty);
@@ -290,7 +316,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testVmAffinityDisabledRestOutput() throws  Exception {
+    public void testVmAffinityDisabledRestOutput() {
         org.ovirt.engine.core.common.scheduling.AffinityGroup entity =
                 new org.ovirt.engine.core.common.scheduling.AffinityGroup();
         entity.setId(Guid.Empty);
@@ -306,12 +332,12 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
         assertEquals(false, model.getVmsRule().isEnabled());
         assertEquals(false, model.getVmsRule().isPositive());
         assertEquals(true, model.getVmsRule().isEnforcing());
-        assertEquals(null, model.isPositive());
+        assertNull(model.isPositive());
         assertEquals(true, model.isEnforcing());
     }
 
     @Test
-    public void testVmIds() throws Exception {
+    public void testVmIds() {
         AffinityGroup model = new AffinityGroup();
 
         Vm vm = new Vm();
@@ -329,7 +355,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testVmIdsReplacement() throws Exception {
+    public void testVmIdsReplacement() {
         AffinityGroup model = new AffinityGroup();
 
         Vm vm = new Vm();
@@ -349,7 +375,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testHostIds() throws Exception {
+    public void testHostIds() {
         AffinityGroup model = new AffinityGroup();
 
         Host host = new Host();
@@ -367,7 +393,7 @@ public class AffinityGroupMapperTest extends AbstractInvertibleMappingTest<Affin
     }
 
     @Test
-    public void testHostIdsReplacement() throws Exception {
+    public void testHostIdsReplacement() {
         AffinityGroup model = new AffinityGroup();
 
         Host host = new Host();

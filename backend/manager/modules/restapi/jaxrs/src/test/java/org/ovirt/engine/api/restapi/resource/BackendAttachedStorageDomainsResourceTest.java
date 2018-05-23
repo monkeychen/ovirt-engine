@@ -1,5 +1,9 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -12,8 +16,10 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.StorageDomain;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AttachStorageDomainToPoolParameters;
@@ -28,6 +34,7 @@ import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.StorageDomainAndPoolQueryParameters;
 import org.ovirt.engine.core.common.queries.StorageServerConnectionQueryParametersBase;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendAttachedStorageDomainsResourceTest
     extends AbstractBackendCollectionResourceTest<StorageDomain,
                                                   org.ovirt.engine.core.common.businessentities.StorageDomain,
@@ -39,12 +46,12 @@ public class BackendAttachedStorageDomainsResourceTest
 
     @Override
     @Test
-    @Ignore
-    public void testQuery() throws Exception {
+    @Disabled
+    public void testQuery() {
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpGetConnection(1);
@@ -79,7 +86,7 @@ public class BackendAttachedStorageDomainsResourceTest
     }
 
     @Test
-    public void testAddByName() throws Exception {
+    public void testAddByName() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpGetConnection(1);
@@ -113,16 +120,16 @@ public class BackendAttachedStorageDomainsResourceTest
     }
 
     @Test
-    public void testAddCantDo() throws Exception {
+    public void testAddCantDo() {
         doTestBadAdd(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddFailure() throws Exception {
+    public void testAddFailure() {
         doTestBadAdd(true, false, FAILURE);
     }
 
-    private void doTestBadAdd(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAdd(boolean valid, boolean success, String detail) {
         setUriInfo(setUpActionExpectations(ActionType.AttachStorageDomainToPool,
                                            AttachStorageDomainToPoolParameters.class,
                                            new String[] { "StorageDomainId", "StoragePoolId" },
@@ -133,28 +140,20 @@ public class BackendAttachedStorageDomainsResourceTest
         StorageDomain model = new StorageDomain();
         model.setId(GUIDS[0].toString());
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         StorageDomain model = new StorageDomain();
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "StorageDomain", "add", "id|name");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "StorageDomain", "add", "id|name");
     }
 
 
-    private void setUpGetConnection(int times) throws Exception {
+    private void setUpGetConnection(int times) {
         for (int i=0; i<times; i++) {
             setUpGetEntityExpectations(QueryType.GetStorageServerConnectionById,
                     StorageServerConnectionQueryParametersBase.class,
@@ -182,7 +181,7 @@ public class BackendAttachedStorageDomainsResourceTest
 
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetStorageDomainsByStoragePoolId,

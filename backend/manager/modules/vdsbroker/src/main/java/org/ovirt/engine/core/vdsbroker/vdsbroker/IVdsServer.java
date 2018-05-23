@@ -12,10 +12,13 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterHookContentInfoReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterHooksListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterHostsPubKeyReturn;
+import org.ovirt.engine.core.vdsbroker.gluster.GlusterLocalLogicalVolumeListReturn;
+import org.ovirt.engine.core.vdsbroker.gluster.GlusterLocalPhysicalVolumeListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterServersListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterServicesReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterTaskInfoReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterTasksListReturn;
+import org.ovirt.engine.core.vdsbroker.gluster.GlusterVDOVolumeListReturn;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterVolumeGeoRepConfigList;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterVolumeGeoRepStatus;
 import org.ovirt.engine.core.vdsbroker.gluster.GlusterVolumeGeoRepStatusDetail;
@@ -62,8 +65,6 @@ public interface IVdsServer {
     StatusOnlyReturn shutdown(String vmId, String timeout, String message, boolean reboot);
 
     StatusOnlyReturn setDestroyOnReboot(String vmId);
-
-    OneVmReturn pause(String vmId);
 
     StatusOnlyReturn hibernate(String vmId, String hiberVolHandle);
 
@@ -254,8 +255,6 @@ public interface IVdsServer {
 
     StatusOnlyReturn snapshot(String vmId, Map<String, String>[] disks, String memory, boolean frozen);
 
-    AlignmentScanReturn getDiskAlignment(String vmId, Map<String, String> driveSpecs);
-
     ImageSizeReturn diskSizeExtend(String vmId, Map<String, String> diskParams, String newSize);
 
     StatusOnlyReturn merge(String vmId, Map<String, String> drive,
@@ -327,6 +326,12 @@ public interface IVdsServer {
             String volumeName,
             String brickName,
             String volumeStatusOption);
+
+    GlusterLocalLogicalVolumeListReturn glusterLogicalVolumeList();
+
+    GlusterLocalPhysicalVolumeListReturn glusterPhysicalVolumeList();
+
+    GlusterVDOVolumeListReturn glusterVDOVolumeList();
 
     GlusterVolumesListReturn glusterVolumesList(Guid clusterId);
 

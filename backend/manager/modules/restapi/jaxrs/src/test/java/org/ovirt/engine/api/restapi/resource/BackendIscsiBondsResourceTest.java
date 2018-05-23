@@ -1,11 +1,16 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.IscsiBond;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AddIscsiBondParameters;
@@ -13,6 +18,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIscsiBondsResourceTest
     extends AbstractBackendCollectionResourceTest<IscsiBond, org.ovirt.engine.core.common.businessentities.IscsiBond, BackendIscsiBondsResource> {
 
@@ -40,7 +46,7 @@ public class BackendIscsiBondsResourceTest
     }
 
     @Test
-    public void testAddIscsiBond() throws Exception {
+    public void testAddIscsiBond() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddIscsiBond,
                 AddIscsiBondParameters.class,
@@ -78,7 +84,7 @@ public class BackendIscsiBondsResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetIscsiBondsByStoragePoolId,
                 IdQueryParameters.class,
                 new String[] { "Id" },

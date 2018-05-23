@@ -233,6 +233,14 @@ public class VM implements Queryable, BusinessEntityWithStatus<Guid, VMStatus>, 
         this.vmStatic.setCustomEmulatedMachine(value);
     }
 
+    public BiosType getBiosType() {
+        return this.vmStatic.getBiosType();
+    }
+
+    public void setBiosType(BiosType biosType) {
+        this.vmStatic.setBiosType(biosType);
+    }
+
     public String getStopReason() {
         return this.vmDynamic.getStopReason();
     }
@@ -327,10 +335,6 @@ public class VM implements Queryable, BusinessEntityWithStatus<Guid, VMStatus>, 
 
     public void setAutoStartup(boolean value) {
         vmStatic.setAutoStartup(value);
-    }
-
-    public Guid fetchDedicatedVmForSingleHost(){
-        return vmStatic.fetchDedicatedVmForSingleHost();
     }
 
     public List<Guid> getDedicatedVmForVdsList() {
@@ -1257,7 +1261,7 @@ public class VM implements Queryable, BusinessEntityWithStatus<Guid, VMStatus>, 
     /**
      * assumption: Qumranet Agent version stored in app_list by "Qumranet Agent" name. Qumranet Agent version,
      * received from vds in format : a.b.d there is no major revision received from vds - always 0
-     * @see {@link Version}
+     * @see Version
      */
     public Version getGuestAgentVersion() {
         return privateGuestAgentVersion;

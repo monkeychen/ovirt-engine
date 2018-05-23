@@ -1,39 +1,41 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.VdcObjectType;
 import org.ovirt.engine.core.common.businessentities.Permission;
 import org.ovirt.engine.core.common.businessentities.RoleType;
 import org.ovirt.engine.core.common.businessentities.aaa.DbUser;
 import org.ovirt.engine.core.compat.Guid;
 
-public class DbUserDaoTest extends BaseDaoTestCase {
+public class DbUserDaoTest extends BaseDaoTestCase<DbUserDao> {
     private static final Guid ADMIN_ROLE_TYPE_FROM_FIXTURE_ID = new Guid("F5972BFA-7102-4D33-AD22-9DD421BFBA78");
     private static final Guid SYSTEM_OBJECT_ID = new Guid("AAA00000-0000-0000-0000-123456789AAA");
-
-    private DbUserDao dao;
+    @Inject
+    private PermissionDao permissionDao;
     private DbUser existingUser;
     private DbUser deletableUser;
     private DbUser newUser;
     private Guid vm;
 
+    @BeforeEach
     @Override
-    @Before
     public void setUp() throws Exception {
         super.setUp();
 
-        dao = dbFacade.getDbUserDao();
         vm = FixturesTool.VM_RHEL5_POOL_50;
 
         existingUser = dao
@@ -232,10 +234,10 @@ public class DbUserDaoTest extends BaseDaoTestCase {
      * Ensures that inserting an user with no external id fails, as it has a
      * not null constraint.
      */
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testSaveUserWithoutExternalIdFails() {
         newUser.setExternalId(null);
-        dao.save(newUser);
+        assertThrows(RuntimeException.class, () -> dao.save(newUser));
     }
 
     /**
@@ -243,11 +245,11 @@ public class DbUserDaoTest extends BaseDaoTestCase {
      * an existing user fails, as there is a unique constraint for that pair
      * of attributes.
      */
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testSaveUserDuplicatedDomainAndExternalId() {
         newUser.setDomain(existingUser.getDomain());
         newUser.setExternalId(existingUser.getExternalId());
-        dao.save(newUser);
+        assertThrows(RuntimeException.class, () -> dao.save(newUser));
     }
 
     /**
@@ -266,16 +268,14 @@ public class DbUserDaoTest extends BaseDaoTestCase {
     public void testUpdateLastAdminCheckStatus() {
 
         // Getting a nonAdmin user that is defined in the fixtures
-        DbUser nonAdminUser =
-                dbFacade.getDbUserDao().getByUsernameAndDomain("userportal2@testportal.redhat.com",
-                        "testportal.redhat.com");
+        DbUser nonAdminUser = dao.getByUsernameAndDomain("userportal2@testportal.redhat.com", "testportal.redhat.com");
 
         assertNotNull(nonAdminUser);
         assertFalse(nonAdminUser.isAdmin());
 
         // execute and validate when not admin
         dao.updateLastAdminCheckStatus(nonAdminUser.getId());
-        nonAdminUser = dbFacade.getDbUserDao().get(nonAdminUser.getId());
+        nonAdminUser = dao.get(nonAdminUser.getId());
 
         assertFalse(nonAdminUser.isAdmin());
 
@@ -289,12 +289,12 @@ public class DbUserDaoTest extends BaseDaoTestCase {
         perms.setObjectType(VdcObjectType.System);
 
         // Save the permission to the DB and make sure it has been saved
-        dbFacade.getPermissionDao().save(perms);
-        assertNotNull(dbFacade.getPermissionDao().get(perms.getId()));
+        permissionDao.save(perms);
+        assertNotNull(permissionDao.get(perms.getId()));
 
         // execute and validate when admin
         dao.updateLastAdminCheckStatus(nonAdminUser.getId());
-        nonAdminUser = dbFacade.getDbUserDao().get(nonAdminUser.getId());
+        nonAdminUser = dao.get(nonAdminUser.getId());
 
         assertTrue(nonAdminUser.isAdmin());
     }

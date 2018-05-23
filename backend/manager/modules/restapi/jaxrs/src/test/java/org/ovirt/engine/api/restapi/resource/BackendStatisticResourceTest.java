@@ -1,5 +1,6 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -14,11 +15,14 @@ import java.util.UUID;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.Statistic;
 import org.ovirt.engine.core.common.businessentities.VDS;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStatisticResourceTest extends AbstractBackendSubResourceTest<Statistic, VDS, BackendStatisticResource<Host, VDS>> {
 
     private static final String STATISTIC_ID = UUID.nameUUIDFromBytes(STATISTICS[1].getBytes()).toString();
@@ -53,12 +57,7 @@ public class BackendStatisticResourceTest extends AbstractBackendSubResourceTest
     public void testGetBadGuid() throws Exception {
         setUriInfo(setUpBasicUriExpectations());
         setUpQueryExpectations(new String[] {"cpu.burnout", "cpu.meltdown", "cpu.vapourized"}, false);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     private void setUpQueryExpectations(String[] names, boolean link) throws Exception {

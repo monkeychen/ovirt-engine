@@ -1,15 +1,15 @@
 package org.ovirt.engine.core.dao.gluster;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterHookContentType;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterHookEntity;
 import org.ovirt.engine.core.common.businessentities.gluster.GlusterHookStage;
@@ -19,14 +19,13 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class GlusterHooksDaoTest extends BaseDaoTestCase {
+public class GlusterHooksDaoTest extends BaseDaoTestCase<GlusterHooksDao> {
     private static final String GLUSTER_COMMAND = "start volume";
     private static final String EXISTING_HOOK_NAME = "28cifs_config";
     private static final String HOOK_NAME = "georep";
     private static final String CHECKSUM = "0127f712fc008f857e77a2f3f179c710";
     private static final String CONTENT = "Sample text for hook content ";
     private static final String CHECKSUM_HOOK1_SERVER1 = "bf35fa420d3e0f669e27b337062bf19f510480d4";
-    private GlusterHooksDao dao;
 
     private GlusterHookEntity getGlusterHook() {
         GlusterHookEntity hook = new GlusterHookEntity();
@@ -53,12 +52,6 @@ public class GlusterHooksDaoTest extends BaseDaoTestCase {
         serverHook.setContentType(contentType);
         serverHook.setChecksum(checksum);
         return serverHook;
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        dao = dbFacade.getGlusterHooksDao();
     }
 
     @Test

@@ -61,7 +61,7 @@ import org.ovirt.engine.core.vdsbroker.vdsbroker.CancelMigrationVDSParameters;
 @InternalCommandAttribute
 @NonTransactiveCommandAttribute
 public class MaintenanceNumberOfVdssCommand<T extends MaintenanceNumberOfVdssParameters> extends CommandBase<T> {
-    private final HashMap<Guid, VDS> vdssToMaintenance = new HashMap<>();
+    private final Map<Guid, VDS> vdssToMaintenance = new HashMap<>();
     private final List<PermissionSubject> inspectedEntitiesMap;
     private Map<String, Pair<String, String>> sharedLockMap;
 
@@ -247,8 +247,7 @@ public class MaintenanceNumberOfVdssCommand<T extends MaintenanceNumberOfVdssPar
                             && (vds.getStatus() != VDSStatus.NonOperational
                             && (vds.getStatus() != VDSStatus.InstallFailed))) {
                         result = failValidation(EngineMessage.VDS_CANNOT_MAINTENANCE_VDS_IS_NOT_OPERATIONAL);
-                    }
-                    else {
+                    } else {
                         List<VM> vms = vmDao.getAllRunningForVds(vdsId);
                         if (!vms.isEmpty()) {
                             vdsWithRunningVMs.add(vdsId);

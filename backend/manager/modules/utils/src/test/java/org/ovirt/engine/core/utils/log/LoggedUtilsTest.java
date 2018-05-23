@@ -1,9 +1,9 @@
 package org.ovirt.engine.core.utils.log;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.utils.log.Logged.LogLevel;
 import org.slf4j.Logger;
 
@@ -61,17 +61,17 @@ public class LoggedUtilsTest {
     /* --- Tests for the method "getObjectId" --- */
 
     @Test
-    public void testGetObjectIdFromNull() throws Exception {
+    public void testGetObjectIdFromNull() {
         assertEquals("0", LoggedUtils.getObjectId(null));
     }
 
     @Test
-    public void testGetObjectIdUniqueForDifferentObjects() throws Exception {
+    public void testGetObjectIdUniqueForDifferentObjects() {
         assertTrue(!LoggedUtils.getObjectId(new Object()).equals(LoggedUtils.getObjectId(new Object())));
     }
 
     @Test
-    public void testGetObjectIdConsistentForSameObject() throws Exception {
+    public void testGetObjectIdConsistentForSameObject() {
         Object obj = new Object();
         assertEquals(LoggedUtils.getObjectId(obj), LoggedUtils.getObjectId(obj));
     }
@@ -79,12 +79,12 @@ public class LoggedUtilsTest {
     /* --- Tests for the method "getAnnotation" --- */
 
     @Test
-    public void testGetAnnotationFromNull() throws Exception {
+    public void testGetAnnotationFromNull() {
         assertNull(LoggedUtils.getAnnotation(null));
     }
 
     @Test
-    public void testGetAnnotationFromClass() throws Exception {
+    public void testGetAnnotationFromClass() {
         Logged logged = LoggedUtils.getAnnotation(new LoggedClass());
 
         assertEquals(LogLevel.OFF, logged.executionLevel());
@@ -94,12 +94,12 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testGetAnnotationFromSubclass() throws Exception {
+    public void testGetAnnotationFromSubclass() {
         assertSame(LoggedUtils.getAnnotation(new LoggedClass()), LoggedUtils.getAnnotation(new LoggedSubclass()));
     }
 
     @Test
-    public void testGetAnnotationFromOverridingSubclass() throws Exception {
+    public void testGetAnnotationFromOverridingSubclass() {
         Logged logged = LoggedUtils.getAnnotation(new LoggedOverridingSubclass());
 
         assertEquals(LogLevel.DEBUG, logged.executionLevel());
@@ -111,7 +111,7 @@ public class LoggedUtilsTest {
     /* --- Tests for the method "determineMessage" --- */
 
     @Test
-    public void testDetermineMessageReturnsObjectForParameterExpansion() throws Exception {
+    public void testDetermineMessageReturnsObjectForParameterExpansion() {
         Object obj = new Object();
         Logger log = mock(Logger.class);
         when(log.isDebugEnabled()).thenReturn(true);
@@ -121,16 +121,18 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testDetermineMessageReturnsClassNameForNoParameterExpansion() throws Exception {
+    public void testDetermineMessageReturnsClassNameForNoParameterExpansion() {
         Logger log = mock(Logger.class);
 
-        assertEquals("LoggedUtils.determineMessage shouldn't return parameter expansion for a disabled log level.",
+        assertEquals(
                 Object.class.getName(),
                 LoggedUtils.determineMessage(log,
-                        LoggedOverridingSubclassNoParameters.class.getAnnotation(Logged.class), new Object()));
-        assertEquals("LoggedUtils.determineMessage shouldn't return parameter expansion when diabled completely.",
+                        LoggedOverridingSubclassNoParameters.class.getAnnotation(Logged.class), new Object()),
+                "LoggedUtils.determineMessage shouldn't return parameter expansion for a disabled log level.");
+        assertEquals(
                 Object.class.getName(),
-                LoggedUtils.determineMessage(log, LoggedClass.class.getAnnotation(Logged.class), new Object()));
+                LoggedUtils.determineMessage(log, LoggedClass.class.getAnnotation(Logged.class), new Object()),
+                "LoggedUtils.determineMessage shouldn't return parameter expansion when diabled completely.");
     }
 
     /* --- Tests for the method "log" --- */
@@ -144,7 +146,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogTrace() throws Exception {
+    public void testLogTrace() {
         helpTestLog(LogLevel.TRACE, new LogSetup() {
             @Override
             public void setup(Logger mock, String message, Object... args) {
@@ -159,7 +161,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogDebug() throws Exception {
+    public void testLogDebug() {
         helpTestLog(LogLevel.DEBUG, new LogSetup() {
             @Override
             public void setup(Logger mock, String message, Object... args) {
@@ -174,7 +176,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogInfo() throws Exception {
+    public void testLogInfo() {
         helpTestLog(LogLevel.INFO, new LogSetup() {
             @Override
             public void setup(Logger mock, String message, Object... args) {
@@ -189,7 +191,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogWarn() throws Exception {
+    public void testLogWarn() {
         helpTestLog(LogLevel.WARN, new LogSetup() {
             @Override
             public void setup(Logger mock, String message, Object... args) {
@@ -204,7 +206,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogError() throws Exception {
+    public void testLogError() {
         helpTestLog(LogLevel.ERROR, new LogSetup() {
             @Override
             public void setup(Logger mock, String message, Object... args) {
@@ -219,7 +221,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogFatal() throws Exception {
+    public void testLogFatal() {
         helpTestLog(LogLevel.FATAL, new LogSetup() {
             @Override
             public void setup(Logger mock, String message, Object... args) {
@@ -236,21 +238,21 @@ public class LoggedUtilsTest {
     /* --- Tests for the method "logEntry" --- */
 
     @Test
-    public void testLogEntryDoesntLogWhenNoAnnotation() throws Exception {
+    public void testLogEntryDoesntLogWhenNoAnnotation() {
         Logger log = mock(Logger.class);
         LoggedUtils.logEntry(log, "", new Object());
         verifyZeroInteractions(log);
     }
 
     @Test
-    public void testLogEntryDoesntLogWhenLogLevelInactive() throws Exception {
+    public void testLogEntryDoesntLogWhenLogLevelInactive() {
         Logger log = mock(Logger.class);
         LoggedUtils.logEntry(log, "", new LoggedOverridingSubclass());
         verifyNoLogging(log);
     }
 
     @Test
-    public void testLogEntryLogsWhenLogLevelActive() throws Exception {
+    public void testLogEntryLogsWhenLogLevelActive() {
         String id = "";
         Logger log = mock(Logger.class);
         when(log.isDebugEnabled()).thenReturn(true);
@@ -262,21 +264,21 @@ public class LoggedUtilsTest {
     /* --- Tests for the method "logReturn" --- */
 
     @Test
-    public void testLogReturnDoesntLogWhenNoAnnotation() throws Exception {
+    public void testLogReturnDoesntLogWhenNoAnnotation() {
         Logger log = mock(Logger.class);
         LoggedUtils.logReturn(log, "", new Object(), new Object());
         verifyZeroInteractions(log);
     }
 
     @Test
-    public void testLogReturnDoesntLogWhenLogLevelInactive() throws Exception {
+    public void testLogReturnDoesntLogWhenLogLevelInactive() {
         Logger log = mock(Logger.class);
         LoggedUtils.logReturn(log, "", new LoggedOverridingSubclass(), new Object());
         verifyNoLogging(log);
     }
 
     @Test
-    public void testLogReturnLogsWhenLogLevelActiveAndNoExpandReturn() throws Exception {
+    public void testLogReturnLogsWhenLogLevelActiveAndNoExpandReturn() {
         String id = "";
         Logger log = mock(Logger.class);
         when(log.isInfoEnabled()).thenReturn(true);
@@ -286,7 +288,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogReturnLogsWhenLogLevelActiveAndExpandReturn() throws Exception {
+    public void testLogReturnLogsWhenLogLevelActiveAndExpandReturn() {
         String id = "";
         Logger log = mock(Logger.class);
         when(log.isDebugEnabled()).thenReturn(true);
@@ -296,7 +298,7 @@ public class LoggedUtilsTest {
     }
 
     @Test
-    public void testLogReturnLogsWhenLogLevelActiveAndExpandReturnButNullReturn() throws Exception {
+    public void testLogReturnLogsWhenLogLevelActiveAndExpandReturnButNullReturn() {
         String id = "";
         Logger log = mock(Logger.class);
         when(log.isDebugEnabled()).thenReturn(true);
@@ -308,21 +310,21 @@ public class LoggedUtilsTest {
     /* --- Tests for the method "logError" --- */
 
     @Test
-    public void testLogErrorDoesntLogWhenNoAnnotation() throws Exception {
+    public void testLogErrorDoesntLogWhenNoAnnotation() {
         Logger log = mock(Logger.class);
         LoggedUtils.logError(log, "", new Object(), new Exception());
         verifyZeroInteractions(log);
     }
 
     @Test
-    public void testLogErrorDoesntLogWhenLogLevelInactive() throws Exception {
+    public void testLogErrorDoesntLogWhenLogLevelInactive() {
         Logger log = mock(Logger.class);
         LoggedUtils.logError(log, "", new LoggedOverridingSubclass(), new Exception());
         verifyNoLogging(log);
     }
 
     @Test
-    public void testLogErrorLogsWhenLogLevelActive() throws Exception {
+    public void testLogErrorLogsWhenLogLevelActive() {
         String id = "";
         Logger log = mock(Logger.class);
 

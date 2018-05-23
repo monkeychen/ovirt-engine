@@ -65,8 +65,6 @@ import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.common.vdscommands.IrsBaseVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
-import org.ovirt.engine.core.common.vdscommands.VDSParametersBase;
-import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.TransactionScopeOption;
 import org.ovirt.engine.core.dal.dbbroker.auditloghandling.AuditLogDirector;
@@ -139,6 +137,8 @@ public abstract class StorageHandlingCommandBase<T extends StoragePoolParameters
     private MetadataDiskDescriptionHandler metadataDiskDescriptionHandler;
     @Inject
     protected StorageHelperDirector storageHelperDirector;
+    @Inject
+    protected StoragePoolStatusHandler storagePoolStatusHandler;
 
     protected StorageHandlingCommandBase(T parameters, CommandContext commandContext) {
         super(parameters, commandContext);
@@ -376,7 +376,7 @@ public abstract class StorageHandlingCommandBase<T extends StoragePoolParameters
                 storagePoolDao.update(getStoragePool());
                 return null;
             });
-            StoragePoolStatusHandler.poolStatusChanged(getStoragePool().getId(), getStoragePool().getStatus());
+            storagePoolStatusHandler.poolStatusChanged(getStoragePool().getId(), getStoragePool().getStatus());
         }
     }
 
@@ -743,12 +743,6 @@ public abstract class StorageHandlingCommandBase<T extends StoragePoolParameters
 
     protected void executeInScope(TransactionScopeOption scope, TransactionMethod<?> code) {
         TransactionSupport.executeInScope(scope, code);
-    }
-
-    @Override
-    public VDSReturnValue runVdsCommand(VDSCommandType commandType, VDSParametersBase parameters) throws
-            EngineException {
-        return super.runVdsCommand(commandType, parameters);
     }
 
     public CinderBroker getCinderBroker() {

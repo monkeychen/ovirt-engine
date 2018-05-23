@@ -3,6 +3,7 @@ package org.ovirt.engine.core.common.businessentities;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.constraints.Size;
 import javax.validation.groups.Default;
@@ -41,9 +42,9 @@ public class VmTemplate extends VmBase implements BusinessEntityWithStatus<Guid,
     private String storagePoolName;
 
     @EditableVmTemplateField
-    private HashMap<Guid, DiskImage> diskImageMap;
+    private Map<Guid, DiskImage> diskImageMap;
 
-    private HashMap<Guid, DiskImage> diskTemplateMap;
+    private Map<Guid, DiskImage> diskTemplateMap;
 
     private VmEntityType templateType;
 
@@ -93,7 +94,7 @@ public class VmTemplate extends VmBase implements BusinessEntityWithStatus<Guid,
                       String userDefinedProperties,
                       String predefinedProperties,
                       String customProperties,
-                      String emulatedMachine, String customCpuName,
+                      String emulatedMachine, BiosType biosType, String customCpuName,
                       Guid smallIconId,
                       Guid largeIconId,
                       int numOfIoThreads,
@@ -158,6 +159,7 @@ public class VmTemplate extends VmBase implements BusinessEntityWithStatus<Guid,
                 predefinedProperties,
                 customProperties,
                 emulatedMachine,
+                biosType,
                 customCpuName,
                 smallIconId,
                 largeIconId,
@@ -265,7 +267,7 @@ public class VmTemplate extends VmBase implements BusinessEntityWithStatus<Guid,
     }
 
     @JsonIgnore
-    public HashMap<Guid, DiskImage> getDiskTemplateMap() {
+    public Map<Guid, DiskImage> getDiskTemplateMap() {
         return diskTemplateMap;
     }
 
@@ -282,11 +284,11 @@ public class VmTemplate extends VmBase implements BusinessEntityWithStatus<Guid,
     }
 
     @JsonIgnore
-    public HashMap<Guid, DiskImage> getDiskImageMap() {
+    public Map<Guid, DiskImage> getDiskImageMap() {
         return diskImageMap;
     }
 
-    public void setDiskImageMap(HashMap<Guid, DiskImage> value) {
+    public void setDiskImageMap(Map<Guid, DiskImage> value) {
         diskImageMap = value;
     }
 

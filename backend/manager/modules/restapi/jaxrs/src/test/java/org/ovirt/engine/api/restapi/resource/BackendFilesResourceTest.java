@@ -1,13 +1,20 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.File;
 import org.ovirt.engine.core.common.businessentities.StorageDomainType;
@@ -18,6 +25,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendFilesResourceTest
     extends AbstractBackendCollectionResourceTest<File, String, BackendFilesResource> {
 
@@ -26,13 +34,13 @@ public class BackendFilesResourceTest
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         BackendFileResource resource = new BackendFileResource(NAMES[0], collection);
         collection.setUriInfo(setUpUriExpectations(null));
         setUpQueryExpectations("", null);
@@ -40,21 +48,16 @@ public class BackendFilesResourceTest
     }
 
     @Test
-    public void testBadGet() throws Exception {
+    public void testBadGet() {
         BackendFileResource resource = new BackendFileResource("foo", collection);
         collection.setUriInfo(setUpUriExpectations(null));
         setUpQueryExpectations("", null);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Override
     @Test
-    public void testList() throws Exception {
+    public void testList() {
         UriInfo uriInfo = setUpUriExpectations(null);
         collection.setUriInfo(uriInfo);
         setupGetStorageDomainExpectations(StorageDomainType.ISO);
@@ -64,24 +67,20 @@ public class BackendFilesResourceTest
     }
 
     @Test
-    public void testListNonIso() throws Exception {
-        try {
+    public void testListNonIso() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> {
             UriInfo uriInfo = setUpUriExpectations(null);
 
             setupGetStorageDomainExpectations(StorageDomainType.Data);
 
             collection.setUriInfo(uriInfo);
             verifyCollection(getCollection());
-
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        }));
     }
 
     @Override
     @Test
-    public void testListCrashClientLocale() throws Exception {
+    public void testListCrashClientLocale() {
         UriInfo uriInfo = setUpUriExpectations(null);
         locales.add(CLIENT_LOCALE);
 
@@ -94,19 +93,12 @@ public class BackendFilesResourceTest
                 AbstractBackendCollectionResourceTest.FAILURE);
         collection.setUriInfo(uriInfo);
         setupGetStorageDomainExpectations(StorageDomainType.ISO);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        } finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     @Test
     @Override
-    public void testListCrash() throws Exception {
+    public void testListCrash() {
         UriInfo uriInfo = setUpUriExpectations(null);
 
         Throwable t = new RuntimeException(FAILURE);
@@ -118,12 +110,7 @@ public class BackendFilesResourceTest
                 AbstractBackendCollectionResourceTest.FAILURE);
         setupGetStorageDomainExpectations(StorageDomainType.ISO);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     @Override
@@ -133,12 +120,12 @@ public class BackendFilesResourceTest
         Fault fault = (Fault) wae.getResponse().getEntity();
         assertEquals(reason, fault.getReason());
         assertNotNull(fault.getDetail());
-        assertTrue("expected detail to include: " + t.getMessage(), fault.getDetail().contains(t.getMessage()));
+        assertTrue(fault.getDetail().contains(t.getMessage()), "expected detail to include: " + t.getMessage());
     }
 
     @Test
     @Override
-    public void testListFailure() throws Exception {
+    public void testListFailure() {
         UriInfo uriInfo = setUpUriExpectations(null);
         setUpEntityQueryExpectations(QueryType.GetImagesList,
                 GetImagesListParameters.class,
@@ -148,13 +135,7 @@ public class BackendFilesResourceTest
                 AbstractBackendCollectionResourceTest.FAILURE);
         setupGetStorageDomainExpectations(StorageDomainType.ISO);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     private void setupGetStorageDomainExpectations(org.ovirt.engine.core.common.businessentities.StorageDomainType type) {
@@ -173,7 +154,7 @@ public class BackendFilesResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetImagesList,
@@ -214,7 +195,7 @@ public class BackendFilesResourceTest
     }
 
     @Override
-    protected void verifyCollection(List<File> collection) throws Exception {
+    protected void verifyCollection(List<File> collection) {
         assertNotNull(collection);
         assertEquals(NAMES.length, collection.size());
         for (int i = 0; i < NAMES.length; i++) {

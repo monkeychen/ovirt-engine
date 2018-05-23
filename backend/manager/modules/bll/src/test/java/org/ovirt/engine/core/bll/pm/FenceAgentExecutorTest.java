@@ -1,6 +1,6 @@
 package org.ovirt.engine.core.bll.pm;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -8,14 +8,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.businessentities.FencingPolicy;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -27,18 +28,15 @@ import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dal.dbbroker.auditloghandling.AuditLogDirector;
-import org.ovirt.engine.core.utils.MockConfigRule;
 import org.ovirt.engine.core.vdsbroker.ResourceManager;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FenceAgentExecutorTest {
     private static final Guid FENCECD_HOST_ID = new Guid("11111111-1111-1111-1111-111111111111");
     private static final Guid PROXY_HOST_ID = new Guid("44444444-4444-4444-4444-444444444444");
     private static final Guid SECOND_PROXY_HOST_ID = new Guid("77777777-7777-7777-7777-777777777777");
     private static final Guid FENCE_AGENT_ID = new Guid("55555555-5555-5555-5555-555555555555");
-
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule();
 
     private VDS vds = new VDS();
 
@@ -58,7 +56,7 @@ public class FenceAgentExecutorTest {
     @InjectMocks
     private FenceAgentExecutor executor = new FenceAgentExecutor(vds, new FencingPolicy());
 
-    @Before
+    @BeforeEach
     public void setup() {
         setUpVds();
         doReturn(proxyLocator).when(executor).getProxyLocator();

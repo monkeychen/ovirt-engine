@@ -1,32 +1,30 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.scheduling.ClusterPolicy;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.scheduling.ClusterPolicyDao;
 
-public class ClusterPolicyDaoTest extends BaseDaoTestCase {
+public class ClusterPolicyDaoTest extends BaseDaoTestCase<ClusterPolicyDao> {
 
     private static final int NUMBER_OF_CLUSTER_POLICIES = 2;
 
-    private ClusterPolicyDao dao;
     private ClusterPolicy existingPolicy;
     private ClusterPolicy dummyPolicy;
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        dao = dbFacade.getClusterPolicyDao();
         existingPolicy = dao.get(FixturesTool.CLUSTER_POLICY_EVEN_DISTRIBUTION, Collections.emptyMap());
         createDummyPolicy();
     }
@@ -85,12 +83,8 @@ public class ClusterPolicyDaoTest extends BaseDaoTestCase {
         dummyPolicy.setName("Dummy policy");
         dummyPolicy.setDescription("Dummy policy description");
         dummyPolicy.setLocked(false);
-        ArrayList<Guid> filters = new ArrayList<>();
-        filters.add(FixturesTool.POLICY_UNIT_MIGRATION);
-        dummyPolicy.setFilters(filters);
-        HashMap<Guid, Integer> filterPositionMap = new HashMap<>();
-        filterPositionMap.put(FixturesTool.POLICY_UNIT_MIGRATION, 1);
-        dummyPolicy.setFilterPositionMap(filterPositionMap);
+        dummyPolicy.setFilters(Collections.singletonList(FixturesTool.POLICY_UNIT_MIGRATION));
+        dummyPolicy.setFilterPositionMap(Collections.singletonMap(FixturesTool.POLICY_UNIT_MIGRATION, 1));
         dummyPolicy.setParameterMap(new LinkedHashMap<>());
     }
 }

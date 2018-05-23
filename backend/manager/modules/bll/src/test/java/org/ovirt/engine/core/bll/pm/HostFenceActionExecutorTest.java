@@ -1,10 +1,11 @@
 package org.ovirt.engine.core.bll.pm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -12,11 +13,13 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.FencingPolicy;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.pm.FenceActionType;
@@ -25,18 +28,18 @@ import org.ovirt.engine.core.common.businessentities.pm.FenceOperationResult;
 import org.ovirt.engine.core.common.businessentities.pm.FenceOperationResult.Status;
 import org.ovirt.engine.core.common.businessentities.pm.PowerStatus;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.FenceAgentDao;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, InjectorExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class HostFenceActionExecutorTest {
     private static Guid FENCECD_HOST_ID = new Guid("11111111-1111-1111-1111-111111111111");
 
     @Mock
-    DbFacade dbFacade;
-
-    @Mock
-    FenceAgentDao fenceAgentDao;
+    @InjectedMock
+    public FenceAgentDao fenceAgentDao;
 
     @Mock
     VDS fencedHost;
@@ -51,15 +54,15 @@ public class HostFenceActionExecutorTest {
 
     List<FenceAgent> fenceAgents;
 
-    @Before
+    @BeforeEach
     public void setup() {
-        when(dbFacade.getFenceAgentDao()).thenReturn(fenceAgentDao);
-
         when(fencedHost.getId()).thenReturn(FENCECD_HOST_ID);
 
         executor = spy(new HostFenceActionExecutor(fencedHost, new FencingPolicy()));
-        doReturn(dbFacade).when(executor).getDbFacade();
         doReturn(agentExecutor1).doReturn(agentExecutor2).when(executor).createFenceActionExecutor(any());
+        doNothing().when(executor).alertActionSkippedAlreadyInStatus(any(), any());
+        doNothing().when(executor).alertActionSkippedFencingDisabledInPolicy();
+
     }
 
     /**
@@ -234,6 +237,46 @@ public class HostFenceActionExecutorTest {
                 executor.createFenceActionExecutor(createConcurrentAgentsList(2, 1))
                         instanceof ConcurrentAgentsFenceActionExecutor);
     }
+
+    @Test
+    public void hostPowerOffSkippedWhenFenceStatusIsOff() {
+        mockFenceAgent();
+
+        // result of fence action invoked on specified agent
+        mockFenceResult(
+                agentExecutor1,
+                new FenceOperationResult(Status.SKIPPED_ALREADY_IN_STATUS, PowerStatus.OFF));
+        FenceOperationResult result = executor.fence(FenceActionType.STOP);
+        assertEquals(result.getStatus(), Status.SKIPPED_ALREADY_IN_STATUS);
+    }
+
+    @Test
+    public void hostPowerOnSkippedWhenFenceStatusIsOn() {
+        mockFenceAgent();
+
+        // result of fence action invoked on specified agent
+        mockFenceResult(
+                agentExecutor1,
+                new FenceOperationResult(Status.SKIPPED_ALREADY_IN_STATUS, PowerStatus.ON));
+        FenceOperationResult result = executor.fence(FenceActionType.START);
+        assertEquals(result.getStatus(), Status.SKIPPED_ALREADY_IN_STATUS);
+    }
+
+    @Test
+    public void hostPowerOnSkippedWhenFencingDisabledInClusterPolicy() {
+        FencingPolicy fencingPolicy = new FencingPolicy();
+        fencingPolicy.setFencingEnabled(false);
+        executor.setFencingPolicy(fencingPolicy);
+        mockFenceAgent();
+
+        // result of fence action invoked on specified agent
+        mockFenceResult(
+                agentExecutor1,
+                new FenceOperationResult(Status.SKIPPED_DUE_TO_POLICY, PowerStatus.OFF));
+        FenceOperationResult result = executor.fence(FenceActionType.STOP);
+        assertEquals(result.getStatus(), Status.SKIPPED_DUE_TO_POLICY);
+    }
+
 
     protected FenceAgent createFenceAgent(int order) {
         FenceAgent agent = new FenceAgent();

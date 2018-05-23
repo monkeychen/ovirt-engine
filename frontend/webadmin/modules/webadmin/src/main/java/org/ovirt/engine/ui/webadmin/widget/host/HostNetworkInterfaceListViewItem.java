@@ -63,6 +63,7 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
     private static final String RATE_DIVIDER = "rate-divider"; // $NON-NLS-1$
     private static final String NIC_SPEED_DROP = "nic-speed-drop"; // $NON-NLS-1$
     private static final String NETWORK_DATA_ROW = "network-data-row"; // $NON-NLS-1$
+    private static final String NETWORK_LIST_ITEM = "network-list-item"; // $NON-NLS-1$
 
     private ExpandableListViewItem logicalNetworkExpand;
 
@@ -74,7 +75,6 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
     public HostNetworkInterfaceListViewItem(String name, HostInterfaceLineModel entity) {
         super(name, entity);
         applyHostInterfaceSpecificStyles();
-        expansionLinkContainer.addStyleName(EXPANSION_CONTAINER);
         expansionLinkContainer.add(createDetailAdditionalInfo());
         listGroupItem.add(expansionLinkContainer);
         logicalNetworkContainer = createLogicalNetworkContainer();
@@ -91,13 +91,9 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
 
     private void applyHostInterfaceSpecificStyles() {
         // Modify some styling from a standard list view item to allow for what we are trying to achieve.
-        mainInfoPanel.getElement().getStyle().setPaddingBottom(0, Unit.PX);
-        mainInfoPanel.getElement().getStyle().setPaddingTop(0, Unit.PX);
-        detailedInfoContainer.getElement().getStyle().setMarginLeft(0, Unit.PX);
-        detailedInfoContainer.getElement().getStyle().setWidth(100, Unit.PCT);
+        listGroupItem.addStyleName(NETWORK_LIST_ITEM);
+        expansionLinkContainer.addStyleName(EXPANSION_CONTAINER);
         descriptionPanel.getElement().getStyle().setWidth(10, Unit.PCT);
-        descriptionHeaderPanel.getElement().getStyle().setWidth(100, Unit.PCT);
-        descriptionHeaderPanel.getElement().getStyle().setFontSize(20, Unit.PX);
         descriptionPanel.removeStyleName(PatternflyConstants.PF_LIST_VIEW_DESCRIPTION);
     }
 
@@ -159,7 +155,7 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
     private IsWidget createMacColumn(VdsNetworkInterface hostInterface) {
         Column macCol = new Column(ColumnSize.SM_2);
         DListElement dl = Document.get().createDLElement();
-        addReverseDetailItem(SafeHtmlUtils.fromSafeConstant(constants.macInterface()),
+        addDetailItem(SafeHtmlUtils.fromSafeConstant(constants.macInterface()),
                 SafeHtmlUtils.fromString(hostInterface.getMacAddress() != null ? hostInterface.getMacAddress()
                         : constants.unAvailablePropertyLabel()), dl);
         macCol.getElement().appendChild(dl);
@@ -169,7 +165,7 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
     private IsWidget createRxColumn(HostInterface hostInterface) {
         Column rxCol = new Column(ColumnSize.SM_3);
         DListElement dl = Document.get().createDLElement();
-        addReverseDetailItem(templates.sub(constants.rxRate(), constants.mbps()),
+        addDetailItem(templates.sub(constants.rxRate(), constants.mbps()),
                 SafeHtmlUtils.fromString(rateRenderer.render(new Double[] { hostInterface.getRxRate(),
                         hostInterface.getSpeed().doubleValue() })), dl);
         dl.addClassName(Styles.PULL_LEFT);
@@ -178,7 +174,7 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
         divider.addStyleName(RATE_DIVIDER);
         rxCol.add(divider);
         dl = Document.get().createDLElement();
-        addReverseDetailItem(templates.sub(constants.rxTotal(), constants.bytes()),
+        addDetailItem(templates.sub(constants.rxTotal(), constants.bytes()),
                 SafeHtmlUtils.fromString(totalRenderer.render(hostInterface.getRxTotal())), dl);
         dl.addClassName(Styles.PULL_LEFT);
         rxCol.getElement().appendChild(dl);
@@ -188,7 +184,7 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
     private IsWidget createTxColumn(HostInterface hostInterface) {
         Column txCol = new Column(ColumnSize.SM_3);
         DListElement dl = Document.get().createDLElement();
-        addReverseDetailItem(templates.sub(constants.txRate(), constants.mbps()),
+        addDetailItem(templates.sub(constants.txRate(), constants.mbps()),
                 SafeHtmlUtils.fromString(rateRenderer.render(new Double[] { hostInterface.getTxRate(),
                         hostInterface.getSpeed().doubleValue() })), dl);
         dl.addClassName(Styles.PULL_LEFT);
@@ -197,7 +193,7 @@ public class HostNetworkInterfaceListViewItem extends PatternflyListViewItem<Hos
         divider.addStyleName(RATE_DIVIDER);
         txCol.add(divider);
         dl = Document.get().createDLElement();
-        addReverseDetailItem(templates.sub(constants.txTotal(), constants.bytes()),
+        addDetailItem(templates.sub(constants.txTotal(), constants.bytes()),
                 SafeHtmlUtils.fromString(totalRenderer.render(hostInterface.getTxTotal())), dl);
         dl.addClassName(Styles.PULL_LEFT);
         txCol.getElement().appendChild(dl);

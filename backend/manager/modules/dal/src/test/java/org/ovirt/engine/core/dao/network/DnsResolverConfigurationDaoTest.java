@@ -1,12 +1,12 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.DnsResolverConfiguration;
 import org.ovirt.engine.core.common.businessentities.network.NameServer;
 import org.ovirt.engine.core.compat.Guid;
@@ -34,30 +34,13 @@ public class DnsResolverConfigurationDaoTest
     }
 
     @Override
-    protected DnsResolverConfigurationDao prepareDao() {
-        return dbFacade.getDnsResolverConfigurationDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
 
     @Override
     protected int getEntitiesTotalCount() {
-        return 2;
-    }
-
-    public DnsResolverConfiguration dnsResolverConfigurationFromFixtures() {
-        DnsResolverConfiguration expected = new DnsResolverConfiguration();
-
-        expected.setId(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION);
-        expected.setNameServers(Arrays.asList(
-                new NameServer("192.168.1.2"),
-                new NameServer("2002:0db8:85a3:0000:0000:8a2e:0370:7334")
-        ));
-
-        return expected;
+        return 3;
     }
 
     @Test
@@ -76,8 +59,8 @@ public class DnsResolverConfigurationDaoTest
 
     @Test
     public void testRemoveByVdsDynamicId() {
-        assertNotNull(dao.get(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION));
-        dao.removeByVdsDynamicId(FixturesTool.GLUSTER_SERVER_UUID3);
-        assertNull(dao.get(FixturesTool.EXISTING_DNS_RESOLVER_CONFIGURATION));
+        assertNotNull(dao.get(FixturesTool.VDS_GLUSTER_SERVER2));
+        dao.removeByVdsDynamicId(FixturesTool.VDS_GLUSTER_SERVER2);
+        assertNull(dao.get(FixturesTool.VDS_GLUSTER_SERVER2));
     }
 }

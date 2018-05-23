@@ -2,9 +2,10 @@ package org.ovirt.engine.ui.uicommonweb.models.users;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Set;
 
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.EventNotificationEntity;
@@ -85,9 +86,8 @@ public class UserEventNotifierListModel extends SearchableListModel<DbUser, Even
         model.setHelpTag(HelpTag.add_event_notification);
         model.setHashName("add_event_notification"); //$NON-NLS-1$
 
-        ArrayList<EventNotificationEntity> eventTypes =
-                ApplicationModeHelper.getModeSpecificEventNotificationTypeList();
-        Map<EventNotificationEntity, HashSet<AuditLogType>> availableEvents =
+        List<EventNotificationEntity> eventTypes = ApplicationModeHelper.getModeSpecificEventNotificationTypeList();
+        Map<EventNotificationEntity, Set<AuditLogType>> availableEvents =
                 AsyncDataProvider.getInstance().getAvailableNotificationEvents();
 
         Translator translator = EnumTranslator.getInstance();
@@ -134,8 +134,7 @@ public class UserEventNotifierListModel extends SearchableListModel<DbUser, Even
         model.setEventGroupModels(list);
         if (!StringHelper.isNullOrEmpty(getEntity().getEmail())) {
             model.getEmail().setEntity(getEntity().getEmail());
-        }
-        else if (items.size() > 0) {
+        } else if (items.size() > 0) {
             model.getEmail().setEntity(items.iterator().next().getMethodAddress());
         }
 
@@ -214,8 +213,7 @@ public class UserEventNotifierListModel extends SearchableListModel<DbUser, Even
                         model.getEmail().getEntity(),
                         getEntity().getId(), ""), "")); //$NON-NLS-1$ //$NON-NLS-2$
             }
-        }
-        else {
+        } else {
             for (SelectionTreeNodeModel a : added) {
                 toAddList.add(new EventSubscriptionParametesBase(new EventSubscriber(a.getTitle(),
                         EventNotificationMethod.SMTP,
@@ -279,8 +277,7 @@ public class UserEventNotifierListModel extends SearchableListModel<DbUser, Even
     private void updateActionAvailability() {
         if (getEntity() == null || getEntity().isGroup()) {
             getManageEventsCommand().setIsExecutionAllowed(false);
-        }
-        else {
+        } else {
             getManageEventsCommand().setIsExecutionAllowed(true);
         }
     }

@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -11,8 +14,10 @@ import java.util.UUID;
 
 import javax.ws.rs.core.Response.Status;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.Statistic;
 import org.ovirt.engine.api.model.StatisticKind;
@@ -23,6 +28,7 @@ import org.ovirt.engine.api.model.Values;
 import org.ovirt.engine.api.resource.StatisticResource;
 import org.ovirt.engine.core.common.businessentities.VDS;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStatisticsResourceTest extends AbstractBackendCollectionResourceTest<Statistic, VDS, BackendStatisticsResource<Host, VDS>> {
 
     static final String[] STATISTICS = { "data.corrupted", "data.burned", "data.mislaid" };
@@ -41,13 +47,13 @@ public class BackendStatisticsResourceTest extends AbstractBackendCollectionReso
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Test
-    public void testSubResourceLocator() throws Exception {
+    public void testSubResourceLocator() {
         String id = UUID.nameUUIDFromBytes(STATISTICS[1].getBytes()).toString();
         assertTrue(collection.getStatisticResource(id) instanceof StatisticResource);
     }
@@ -111,7 +117,7 @@ public class BackendStatisticsResourceTest extends AbstractBackendCollectionReso
     }
 
     @Override
-    protected void verifyCollection(List<Statistic> collection) throws Exception {
+    protected void verifyCollection(List<Statistic> collection) {
         assertNotNull(collection);
         assertEquals(STATISTICS.length, collection.size());
         for (int i = 0; i < STATISTICS.length; i++) {

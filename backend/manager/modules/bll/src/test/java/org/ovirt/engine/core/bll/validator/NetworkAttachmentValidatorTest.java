@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.bll.validator;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -14,11 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hamcrest.Matcher;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.ovirt.engine.core.bll.DbDependentTestBase;
+import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.network.IPv4Address;
@@ -32,13 +30,11 @@ import org.ovirt.engine.core.common.businessentities.network.ProviderNetwork;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.VdsDao;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.network.NetworkClusterDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.utils.ReplacementUtils;
 
-@RunWith(MockitoJUnitRunner.class)
-public class NetworkAttachmentValidatorTest extends DbDependentTestBase {
+public class NetworkAttachmentValidatorTest extends BaseCommandTest {
 
     private static final Guid CLUSTER_ID = Guid.newGuid();
     private static final String HOST_NAME = "hostName";
@@ -56,9 +52,6 @@ public class NetworkAttachmentValidatorTest extends DbDependentTestBase {
     @Mock
     private NetworkValidator networkValidatorMock;
 
-    @Mock
-    private VmDao vmDao;
-
     private final VDS host;
 
     public NetworkAttachmentValidatorTest() {
@@ -69,12 +62,7 @@ public class NetworkAttachmentValidatorTest extends DbDependentTestBase {
     }
 
     private NetworkAttachmentValidator createNetworkAttachmentValidator(NetworkAttachment attachment) {
-        return new NetworkAttachmentValidator(attachment,
-            host,
-            networkClusterDaoMock,
-            networkDaoMock,
-            vdsDaoMock,
-            vmDao);
+        return new NetworkAttachmentValidator(attachment, host, networkClusterDaoMock, networkDaoMock, vdsDaoMock);
     }
 
     @Test

@@ -1,8 +1,12 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Session;
 import org.ovirt.engine.api.model.Sessions;
 import org.ovirt.engine.api.restapi.resource.aaa.BackendUserResource;
@@ -12,6 +16,7 @@ import org.ovirt.engine.core.common.queries.GetDbUserByUserNameAndDomainQueryPar
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmSessionsResourceTest extends AbstractBackendResourceTest<Session, VM> {
 
     BackendVmSessionsResource resource = new BackendVmSessionsResource(GUIDS[0]);
@@ -35,7 +40,7 @@ public class BackendVmSessionsResourceTest extends AbstractBackendResourceTest<S
     }
 
     @Test
-    public void testList() throws Exception {
+    public void testList() {
         BackendUserResource userResourceMock = mock(BackendUserResource.class);
         resource.setUserResource(userResourceMock);
         resource.setUriInfo(setUpBasicUriExpectations());

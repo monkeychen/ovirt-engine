@@ -54,7 +54,8 @@ CREATE OR REPLACE FUNCTION InsertGlusterVolumeDetails (
     v_volume_id UUID,
     v_total_space BIGINT,
     v_used_space BIGINT,
-    v_free_space BIGINT
+    v_free_space BIGINT,
+    v_confirmed_free_space BIGINT
     )
 RETURNS VOID AS $PROCEDURE$
 BEGIN
@@ -63,6 +64,7 @@ BEGIN
         total_space,
         used_space,
         free_space,
+        confirmed_free_space,
         _update_date
         )
     VALUES (
@@ -70,6 +72,7 @@ BEGIN
         v_total_space,
         v_used_space,
         v_free_space,
+        v_confirmed_free_space,
         LOCALTIMESTAMP
         );
 END;$PROCEDURE$
@@ -114,7 +117,9 @@ CREATE OR REPLACE FUNCTION InsertGlusterVolumeBrickDetails (
     v_brick_id UUID,
     v_total_space BIGINT,
     v_used_space BIGINT,
-    v_free_space BIGINT
+    v_free_space BIGINT,
+    v_confirmed_free_space BIGINT,
+    v_confirmed_total_space BIGINT
     )
 RETURNS VOID AS $PROCEDURE$
 BEGIN
@@ -123,6 +128,8 @@ BEGIN
         total_space,
         used_space,
         free_space,
+        confirmed_free_space,
+        confirmed_total_space,
         _update_date
         )
     VALUES (
@@ -130,6 +137,8 @@ BEGIN
         v_total_space,
         v_used_space,
         v_free_space,
+        v_confirmed_free_space,
+        v_confirmed_total_space,
         LOCALTIMESTAMP
         );
 END;$PROCEDURE$
@@ -615,7 +624,8 @@ CREATE OR REPLACE FUNCTION UpdateGlusterVolumeDetails (
     v_volume_id UUID,
     v_total_space BIGINT,
     v_used_space BIGINT,
-    v_free_space BIGINT
+    v_free_space BIGINT,
+    v_confirmed_free_space BIGINT
     )
 RETURNS VOID AS $PROCEDURE$
 BEGIN
@@ -623,6 +633,7 @@ BEGIN
     SET total_space = v_total_space,
         used_space = v_used_space,
         free_space = v_free_space,
+        confirmed_free_space = v_confirmed_free_space,
         _update_date = LOCALTIMESTAMP
     WHERE volume_id = v_volume_id;
 END;$PROCEDURE$
@@ -657,7 +668,9 @@ CREATE OR REPLACE FUNCTION UpdateGlusterVolumeBrickDetails (
     v_brick_id UUID,
     v_total_space BIGINT,
     v_used_space BIGINT,
-    v_free_space BIGINT
+    v_free_space BIGINT,
+    v_confirmed_free_space BIGINT,
+    v_confirmed_total_space BIGINT
     )
 RETURNS VOID AS $PROCEDURE$
 BEGIN
@@ -665,6 +678,8 @@ BEGIN
     SET total_space = v_total_space,
         used_space = v_used_space,
         free_space = v_free_space,
+        confirmed_free_space = v_confirmed_free_space,
+        confirmed_total_space = v_confirmed_total_space,
         _update_date = LOCALTIMESTAMP
     WHERE brick_id = v_brick_id;
 END;$PROCEDURE$

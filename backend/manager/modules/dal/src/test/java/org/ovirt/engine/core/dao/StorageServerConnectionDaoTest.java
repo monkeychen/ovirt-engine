@@ -1,10 +1,10 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
+
 import org.apache.commons.collections.CollectionUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.NfsVersion;
 import org.ovirt.engine.core.common.businessentities.StorageDomainStatus;
 import org.ovirt.engine.core.common.businessentities.StoragePoolIsoMap;
@@ -31,6 +33,11 @@ public class StorageServerConnectionDaoTest
 
     private static final int SERVER_CONNECTION_COUNT_FOR_SPECIFIC_STORAGE = 7;
     private static final String EXISTING_DOMAIN_STORAGE_NAME = "G95OWd-Wvck-vftu-pMq9-9SAC-NF3E-ulDPsQ";
+
+    @Inject
+    private StoragePoolIsoMapDao storagePoolIsoMapDao;
+    @Inject
+    private StorageServerConnectionLunMapDao storageServerConnectionLunMapDao;
 
     @Override
     protected StorageServerConnections generateNewEntity() {
@@ -53,11 +60,6 @@ public class StorageServerConnectionDaoTest
     @Override
     protected String getExistingEntityId() {
         return "0cc146e8-e5ed-482c-8814-270bc48c297f";
-    }
-
-    @Override
-    protected StorageServerConnectionDao prepareDao() {
-        return dbFacade.getStorageServerConnectionDao();
     }
 
     @Override
@@ -174,26 +176,25 @@ public class StorageServerConnectionDaoTest
     public void getStorageConnectionsByStorageTypeWithRecords(EnumSet<StorageDomainStatus> statuses,
             Collection<Guid> expectedDomains) {
         List<StoragePoolIsoMap> poolIsoMap =
-                dbFacade.getStoragePoolIsoMapDao().getAllForStoragePool(FixturesTool.STORAGE_POOL_MIXED_TYPES);
+                storagePoolIsoMapDao.getAllForStoragePool(FixturesTool.STORAGE_POOL_MIXED_TYPES);
         List<Guid> storageDomainIds = poolIsoMap.stream()
                 .filter(isoMap -> statuses.contains(isoMap.getStatus()))
                 .map(StoragePoolIsoMap::getStorageId)
                 .collect(Collectors.toList());
 
-        assertTrue("the list of the pool domains expected to be in the given statuses doesn't match the queried data",
-                CollectionUtils.isEqualCollection(expectedDomains, storageDomainIds));
+        assertTrue(CollectionUtils.isEqualCollection(expectedDomains, storageDomainIds),
+                "the list of the pool domains expected to be in the given statuses doesn't match the queried data");
 
         List<StorageServerConnections> result =
                 dao.getStorageConnectionsByStorageTypeAndStatus(FixturesTool.STORAGE_POOL_MIXED_TYPES,
                         StorageType.NFS,
                         statuses);
 
-        assertFalse("there should be connections for the tested domains to verify the correctness", result.isEmpty());
+        assertFalse(result.isEmpty(), "there should be connections for the tested domains to verify the correctness");
 
         for (StorageServerConnections storageServerConnection : result) {
-            assertEquals("connections were loaded with incorrect storage type",
-                    StorageType.NFS,
-                    storageServerConnection.getStorageType());
+            assertEquals(StorageType.NFS, storageServerConnection.getStorageType(),
+                    "connections were loaded with incorrect storage type");
         }
 
         List<StorageServerConnections> domainConnections = new LinkedList<>();
@@ -201,8 +202,8 @@ public class StorageServerConnectionDaoTest
             domainConnections.addAll(dao.getAllForDomain(domainId));
         }
 
-        assertTrue("the connections loaded by the given dao function should match the connections loaded separately",
-                CollectionUtils.isEqualCollection(domainConnections, result));
+        assertTrue(CollectionUtils.isEqualCollection(domainConnections, result),
+                "the connections loaded by the given dao function should match the connections loaded separately");
     }
 
     private Set<String> getLunConnections(List<LUNStorageServerConnectionMap> lunConns) {
@@ -214,10 +215,10 @@ public class StorageServerConnectionDaoTest
      */
     @Test
     public void testgetAllForVolumeGroup() {
-        Set<String> lunConns1 = getLunConnections(dbFacade.getStorageServerConnectionLunMapDao().getAll(FixturesTool.LUN_ID1));
-        Set<String> lunConns2 = getLunConnections(dbFacade.getStorageServerConnectionLunMapDao().getAll(FixturesTool.LUN_ID2));
-        assertTrue("Both LUNs should have at least one mutual connection",
-                CollectionUtils.containsAny(lunConns1, lunConns2));
+        Set<String> lunConns1 = getLunConnections(storageServerConnectionLunMapDao.getAll(FixturesTool.LUN_ID1));
+        Set<String> lunConns2 = getLunConnections(storageServerConnectionLunMapDao.getAll(FixturesTool.LUN_ID2));
+        assertTrue(CollectionUtils.containsAny(lunConns1, lunConns2),
+                "Both LUNs should have at least one mutual connection");
 
         List<StorageServerConnections> result =
                 dao.getAllForVolumeGroup(EXISTING_DOMAIN_STORAGE_NAME);

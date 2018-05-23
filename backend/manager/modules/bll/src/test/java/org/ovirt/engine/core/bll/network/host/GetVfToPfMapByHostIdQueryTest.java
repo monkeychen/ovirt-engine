@@ -1,21 +1,18 @@
 package org.ovirt.engine.core.bll.network.host;
 
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.ovirt.engine.core.bll.AbstractQueryTest;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.compat.Guid;
 
-@RunWith(MockitoJUnitRunner.class)
 public class GetVfToPfMapByHostIdQueryTest
         extends AbstractQueryTest<IdQueryParameters, GetVfToPfMapByHostIdQuery<IdQueryParameters>> {
 
@@ -31,7 +28,7 @@ public class GetVfToPfMapByHostIdQueryTest
         IdQueryParameters paramsMock = getQueryParameters();
         when(paramsMock.getId()).thenReturn(hostId);
 
-        final HashMap<Guid, Guid> expected = new HashMap<>();
+        final Map<Guid, Guid> expected = new HashMap<>();
         when(networkDeviceHelper.getVfMap(hostId)).thenReturn(expected);
 
         getQuery().executeQueryCommand();

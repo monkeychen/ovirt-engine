@@ -1,12 +1,18 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Application;
 import org.ovirt.engine.api.model.Applications;
 import org.ovirt.engine.api.resource.VmApplicationResource;
@@ -16,6 +22,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmApplicationsResourceTest extends AbstractBackendResourceTest {
 
     BackendVmApplicationsResource resource;
@@ -43,7 +50,7 @@ public class BackendVmApplicationsResourceTest extends AbstractBackendResourceTe
     }
 
     @Test
-    public void testList() throws Exception {
+    public void testList() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(QueryType.GetVmByVmId,
                     IdQueryParameters.class,
@@ -87,18 +94,14 @@ public class BackendVmApplicationsResourceTest extends AbstractBackendResourceTe
     }
 
     @Test
-    public void testSubResourceLocator() throws Exception {
+    public void testSubResourceLocator() {
         assertTrue(resource.getApplicationResource(VM_ID.toString()) instanceof VmApplicationResource);
     }
 
     @Test
-    public void testSubResourceLocatorBadGuid() throws Exception {
-        try {
-            resource.getApplicationResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testSubResourceLocatorBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> resource.getApplicationResource("foo")));
     }
 
 }

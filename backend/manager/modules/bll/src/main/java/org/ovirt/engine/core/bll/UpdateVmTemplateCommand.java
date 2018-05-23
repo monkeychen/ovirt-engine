@@ -160,7 +160,8 @@ public class UpdateVmTemplateCommand<T extends UpdateVmTemplateParameters> exten
             }
         }
 
-        Version effectiveCompatibilityVersion = CompatibilityVersionUtils.getEffective(getParameters().getVmTemplateData(), this::getCluster);
+        Version effectiveCompatibilityVersion =
+                CompatibilityVersionUtils.getEffective(getParameters().getVmTemplateData(), this::getCluster);
         if (getParameters().getVmTemplateData().getVmType() == VmType.HighPerformance
                 && !FeatureSupported.isHighPerformanceTypeSupported(effectiveCompatibilityVersion)) {
             return failValidation(EngineMessage.ACTION_TYPE_FAILED_HIGH_PERFORMANCE_IS_NOT_SUPPORTED,
@@ -405,8 +406,7 @@ public class UpdateVmTemplateCommand<T extends UpdateVmTemplateParameters> exten
         }
         if (getVmTemplate().isTrustedService() && !getCluster().supportsTrustedService()) {
             auditLogDirector.log(this, AuditLogType.USER_UPDATE_VM_TEMPLATE_FROM_TRUSTED_TO_UNTRUSTED);
-        }
-        else if (!getVmTemplate().isTrustedService() && getCluster().supportsTrustedService()) {
+        } else if (!getVmTemplate().isTrustedService() && getCluster().supportsTrustedService()) {
             auditLogDirector.log(this, AuditLogType.USER_UPDATE_VM_TEMPLATE_FROM_UNTRUSTED_TO_TRUSTED);
         }
     }
@@ -436,7 +436,7 @@ public class UpdateVmTemplateCommand<T extends UpdateVmTemplateParameters> exten
 
         getVmDeviceUtils().updateConsoleDevice(getVmTemplateId(), getParameters().isConsoleEnabled());
         if (oldTemplate.getUsbPolicy() != getVmTemplate().getUsbPolicy() || oldTemplate.getVmType() != getVmTemplate().getVmType()) {
-            getVmDeviceUtils().updateUsbSlots(oldTemplate, getVmTemplate(), this::getCluster);
+            getVmDeviceUtils().updateUsbSlots(oldTemplate, getVmTemplate());
         }
         getVmDeviceUtils().updateVirtioScsiController(getVmTemplate(), getParameters().isVirtioScsiEnabled());
         if (getParameters().isBalloonEnabled() != null) {

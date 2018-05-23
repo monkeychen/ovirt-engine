@@ -51,8 +51,7 @@ public class NewDiskModel extends AbstractDiskModel {
                     String newDescription;
                     if (numOfChars <= -1 || numOfChars >= selectedLunModel.getLunId().length()) {
                         newDescription = selectedLunModel.getLunId();
-                    }
-                    else {
+                    } else {
                         newDescription = selectedLunModel.getLunId().substring(selectedLunModel.getLunId().length() - numOfChars);
                     }
                     getDescription().setEntity(newDescription);
@@ -213,14 +212,17 @@ public class NewDiskModel extends AbstractDiskModel {
         return super.validate() && getSize().getIsValid() && getStorageDomain().getIsValid();
     }
 
-    protected int getMinimumDiskSize() {
+    public int getMinimumDiskSize() {
         return 1;
     }
 
     @Override
     protected void updateVolumeType(StorageType storageType) {
-        getVolumeType().setSelectedItem(storageType.isBlockDomain() ? VolumeType.Preallocated : VolumeType.Sparse);
-        volumeType_SelectedItemChanged();
+        // In case the user didn't select any specific allocation policy, it will be change according to the storage
+        // domain type
+        if (!isUserSelectedVolumeType) {
+            getVolumeType().setSelectedItem(storageType.isBlockDomain() ? VolumeType.Preallocated : VolumeType.Sparse);
+        }
     }
 
     @Override

@@ -1,33 +1,25 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.storage.ImageFileType;
 import org.ovirt.engine.core.common.businessentities.storage.RepoImage;
 import org.ovirt.engine.core.compat.Guid;
 import org.springframework.dao.DuplicateKeyException;
 
-public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    private RepoFileMetaDataDao repoFileMetaDataDao;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        repoFileMetaDataDao = dbFacade.getRepoFileMetaDataDao();
-    }
+public class RepoFileMetaDataDaoTest extends BaseDaoTestCase<RepoFileMetaDataDao> {
+    @Inject
+    private StorageDomainDao storageDomainDao;
 
     /**
      * Ensures that saving a domain works as expected.
@@ -35,18 +27,15 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testSave() {
         // Fetch the file from cache table
-        List<RepoImage> listOfRepoFiles = repoFileMetaDataDao
-                .getRepoListForStorageDomain(FixturesTool.STORAGE_DOMAIN_NFS_ISO,
-                        ImageFileType.ISO);
+        List<RepoImage> listOfRepoFiles =
+                dao.getRepoListForStorageDomain(FixturesTool.STORAGE_DOMAIN_NFS_ISO, ImageFileType.ISO);
         assertNotNull(listOfRepoFiles);
         assertTrue(listOfRepoFiles.isEmpty());
 
         RepoImage newRepoFileMap = getNewIsoRepoFile();
-        repoFileMetaDataDao.addRepoFileMap(newRepoFileMap);
+        dao.addRepoFileMap(newRepoFileMap);
 
-        listOfRepoFiles = repoFileMetaDataDao
-                .getRepoListForStorageDomain(FixturesTool.STORAGE_DOMAIN_NFS_ISO,
-                        ImageFileType.ISO);
+        listOfRepoFiles = dao.getRepoListForStorageDomain(FixturesTool.STORAGE_DOMAIN_NFS_ISO, ImageFileType.ISO);
         assertFalse(listOfRepoFiles.isEmpty());
     }
 
@@ -56,16 +45,14 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testRemove() {
         // Should get one iso file
-        List<RepoImage> listOfRepoFiles = repoFileMetaDataDao
-                .getRepoListForStorageDomain(FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3,
-                        ImageFileType.ISO);
+        List<RepoImage> listOfRepoFiles = dao.getRepoListForStorageDomain
+                (FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3, ImageFileType.ISO);
 
         assertNotNull(listOfRepoFiles);
         assertFalse(listOfRepoFiles.isEmpty());
 
         // Remove the file from cache table
-        repoFileMetaDataDao.removeRepoDomainFileList(FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3,
-                ImageFileType.ISO);
+        dao.removeRepoDomainFileList(FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3, ImageFileType.ISO);
         listOfRepoFiles = getActiveIsoDomain();
 
         assertNotNull(listOfRepoFiles);
@@ -78,7 +65,7 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testRemoveByRemoveIsoDomain() {
         // Should get one iso file
-        List<RepoImage> listOfRepoFiles = repoFileMetaDataDao
+        List<RepoImage> listOfRepoFiles = dao
                 .getRepoListForStorageDomain(FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3,
                         ImageFileType.ISO);
 
@@ -86,7 +73,6 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
         assertFalse(listOfRepoFiles.isEmpty());
 
         // Test remove Iso
-        StorageDomainDao storageDomainDao = dbFacade.getStorageDomainDao();
         storageDomainDao.remove(FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3);
         listOfRepoFiles = getActiveIsoDomain();
 
@@ -100,11 +86,10 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testInsertRepoFileAndFetchItAgain() {
         RepoImage newRepoFileMap = getNewIsoRepoFile();
-        repoFileMetaDataDao.addRepoFileMap(newRepoFileMap);
+        dao.addRepoFileMap(newRepoFileMap);
 
-        List<RepoImage> listOfRepoFiles = repoFileMetaDataDao
-                .getRepoListForStorageDomain(FixturesTool.STORAGE_DOMAIN_NFS_ISO,
-                        ImageFileType.ISO);
+        List<RepoImage> listOfRepoFiles =
+                dao.getRepoListForStorageDomain(FixturesTool.STORAGE_DOMAIN_NFS_ISO, ImageFileType.ISO);
 
         assertNotNull(listOfRepoFiles);
         assertFalse(listOfRepoFiles.isEmpty());
@@ -121,7 +106,7 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testUpdateRepoFileByRemoveAndInsert() {
         RepoImage newRepoFileMap = getNewIsoRepoFile();
-        repoFileMetaDataDao.addRepoFileMap(newRepoFileMap);
+        dao.addRepoFileMap(newRepoFileMap);
 
         // Fetch the file from cache table
         List<RepoImage> listOfRepoFiles = getActiveIsoDomain();
@@ -136,10 +121,10 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
                 + newRepoFileMap.getRepoImageId());
 
         // Remove the file from cache table
-        repoFileMetaDataDao.removeRepoDomainFileList(FixturesTool.STORAGE_DOMAIN_NFS_ISO, ImageFileType.ISO);
+        dao.removeRepoDomainFileList(FixturesTool.STORAGE_DOMAIN_NFS_ISO, ImageFileType.ISO);
 
         // Add the new updated file into the cache table.
-        repoFileMetaDataDao.addRepoFileMap(newRepoFileMap);
+        dao.addRepoFileMap(newRepoFileMap);
 
         // Fetch the updated File.
         listOfRepoFiles = getActiveIsoDomain();
@@ -168,12 +153,10 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testPrimaryKeyValidation() {
         RepoImage newRepoFileMap = getNewIsoRepoFile();
-        repoFileMetaDataDao.addRepoFileMap(newRepoFileMap);
-
-        expectedException.expect(DuplicateKeyException.class);
+        dao.addRepoFileMap(newRepoFileMap);
 
         // Should enter here since its a violation of primary key
-        repoFileMetaDataDao.addRepoFileMap(newRepoFileMap);
+        assertThrows(DuplicateKeyException.class, () -> dao.addRepoFileMap(newRepoFileMap));
     }
 
     /**
@@ -182,9 +165,7 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     @Test
     public void testFetchNotExistingRepoFileListById() {
         Guid falseGuid = new Guid("11111111-1111-1111-1111-111111111111");
-        List<RepoImage> listOfRepoFiles = repoFileMetaDataDao
-                .getRepoListForStorageDomain(falseGuid,
-                        ImageFileType.ISO);
+        List<RepoImage> listOfRepoFiles = dao.getRepoListForStorageDomain(falseGuid, ImageFileType.ISO);
 
         assertNotNull(listOfRepoFiles);
         assertTrue(listOfRepoFiles.isEmpty());
@@ -202,9 +183,8 @@ public class RepoFileMetaDataDaoTest extends BaseDaoTestCase {
     }
 
     private List<RepoImage> getActiveIsoDomain() {
-        return repoFileMetaDataDao
-                .getRepoListForStorageDomain(FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3,
-                        ImageFileType.ISO);
+        return dao.getRepoListForStorageDomain
+                (FixturesTool.SHARED_ISO_STORAGE_DOMAIN_FOR_SP2_AND_SP3, ImageFileType.ISO);
     }
 
 }

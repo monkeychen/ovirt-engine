@@ -16,33 +16,34 @@ limitations under the License.
 
 package org.ovirt.engine.core.common.utils.ansible;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.common.utils.Pair;
-import org.ovirt.engine.core.utils.MockEngineLocalConfigRule;
+import org.ovirt.engine.core.utils.MockEngineLocalConfigExtension;
 
+@ExtendWith(MockEngineLocalConfigExtension.class)
 public class AnsibleCommandBuilderTest {
 
+    private static final String OVIRT_HOME = "/var/lib/ovirt-engine/";
     private static final String PRIVATE_KEY = "--private-key=/etc/pki/ovirt-engine/keys/engine_id_rsa";
     private static final String ANSIBLE_PLAYBOOK = "myplaybook.yml";
     private static final String ANSIBLE_PLAYBOOK_FULL_PATH = "/usr/share/ovirt-engine/playbooks/myplaybook.yml";
+    private static final String IGNORE_SSH_CONFIG = "--ssh-common-args=-F " + OVIRT_HOME + ".ssh/config";
     private static final String ANSIBLE_LOG_LEVEL = "-v";
 
-    @ClassRule
-    public static MockEngineLocalConfigRule mockEngineLocalConfigRule;
-
-    static {
-        mockEngineLocalConfigRule = new MockEngineLocalConfigRule(
-            new MockEngineLocalConfigRule.KeyValue("ENGINE_PKI", "/etc/pki/ovirt-engine/"),
-            new MockEngineLocalConfigRule.KeyValue("ENGINE_USR", "/usr/share/ovirt-engine/"),
-            new MockEngineLocalConfigRule.KeyValue("ENGINE_VAR", "/var/lib/ovirt-engine/"),
-            new MockEngineLocalConfigRule.KeyValue("ENGINE_LOG", "/var/log/ovirt-engine/")
+    public static Stream<Pair<String, String>> mockEngineLocalConfiguration() {
+        return Stream.of(
+                new Pair<>("ENGINE_PKI", "/etc/pki/ovirt-engine/"),
+                new Pair<>("ENGINE_USR", "/usr/share/ovirt-engine/"),
+                new Pair<>("ENGINE_VAR", OVIRT_HOME),
+                new Pair<>("ENGINE_LOG", "/var/log/ovirt-engine/")
         );
     }
 
@@ -52,6 +53,7 @@ public class AnsibleCommandBuilderTest {
         assertEquals(
             join(
                 AnsibleCommandBuilder.ANSIBLE_COMMAND,
+                IGNORE_SSH_CONFIG,
                 ANSIBLE_LOG_LEVEL,
                 PRIVATE_KEY,
                 ANSIBLE_PLAYBOOK_FULL_PATH
@@ -68,7 +70,10 @@ public class AnsibleCommandBuilderTest {
                 .playbook(ANSIBLE_PLAYBOOK)
         );
 
-        assertEquals(join(AnsibleCommandBuilder.ANSIBLE_COMMAND, PRIVATE_KEY, ANSIBLE_PLAYBOOK_FULL_PATH), command);
+        assertEquals(
+            join(AnsibleCommandBuilder.ANSIBLE_COMMAND, IGNORE_SSH_CONFIG, PRIVATE_KEY, ANSIBLE_PLAYBOOK_FULL_PATH),
+            command
+        );
     }
 
     @Test
@@ -82,6 +87,7 @@ public class AnsibleCommandBuilderTest {
         assertEquals(
             join(
                 AnsibleCommandBuilder.ANSIBLE_COMMAND,
+                IGNORE_SSH_CONFIG,
                 ANSIBLE_LOG_LEVEL,
                 PRIVATE_KEY,
                 "--inventory=" + inventoryFile,
@@ -99,7 +105,13 @@ public class AnsibleCommandBuilderTest {
                 .playbook(ANSIBLE_PLAYBOOK)
         );
         assertEquals(
-            join(AnsibleCommandBuilder.ANSIBLE_COMMAND, "-vv", PRIVATE_KEY, ANSIBLE_PLAYBOOK_FULL_PATH),
+            join(
+                AnsibleCommandBuilder.ANSIBLE_COMMAND,
+                IGNORE_SSH_CONFIG,
+                "-vv",
+                PRIVATE_KEY,
+                ANSIBLE_PLAYBOOK_FULL_PATH
+            ),
             command
         );
     }
@@ -112,7 +124,7 @@ public class AnsibleCommandBuilderTest {
                 .playbook(ANSIBLE_PLAYBOOK)
         );
         assertEquals(
-            join(AnsibleCommandBuilder.ANSIBLE_COMMAND, PRIVATE_KEY, ANSIBLE_PLAYBOOK_FULL_PATH),
+            join(AnsibleCommandBuilder.ANSIBLE_COMMAND, IGNORE_SSH_CONFIG, PRIVATE_KEY, ANSIBLE_PLAYBOOK_FULL_PATH),
             command
         );
     }
@@ -131,6 +143,7 @@ public class AnsibleCommandBuilderTest {
         assertEquals(
             join(
                 AnsibleCommandBuilder.ANSIBLE_COMMAND,
+                IGNORE_SSH_CONFIG,
                 ANSIBLE_LOG_LEVEL,
                 PRIVATE_KEY,
                 "--extra-vars=a=1",
@@ -159,6 +172,7 @@ public class AnsibleCommandBuilderTest {
         assertEquals(
             join(
                 AnsibleCommandBuilder.ANSIBLE_COMMAND,
+                IGNORE_SSH_CONFIG,
                 "-vvv",
                 "--private-key=/mykey",
                 "--inventory=/myinventory",

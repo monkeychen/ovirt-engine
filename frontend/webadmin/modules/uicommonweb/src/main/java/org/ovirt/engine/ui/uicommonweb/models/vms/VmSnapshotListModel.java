@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -144,13 +145,13 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
         canSelectSnapshot = value;
     }
 
-    private HashMap<Guid, SnapshotModel> snapshotsMap;
+    private Map<Guid, SnapshotModel> snapshotsMap;
 
-    public HashMap<Guid, SnapshotModel> getSnapshotsMap() {
+    public Map<Guid, SnapshotModel> getSnapshotsMap() {
         return snapshotsMap;
     }
 
-    public void setSnapshotsMap(HashMap<Guid, SnapshotModel> value) {
+    public void setSnapshotsMap(Map<Guid, SnapshotModel> value) {
         snapshotsMap = value;
         onPropertyChanged(new PropertyChangedEventArgs("SnapshotsMap")); //$NON-NLS-1$
     }
@@ -220,8 +221,7 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
 
         if (snapshots.stream().anyMatch(s -> s.getStatus() == SnapshotStatus.IN_PREVIEW)) {
             updatePreviewedDiskSnapshots(snapshots);
-        }
-        else {
+        } else {
             updateItems(snapshots);
         }
     }
@@ -541,7 +541,7 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
             return;
         }
 
-        final UnitVmModel model = new UnitVmModel(createNewTemplateBehavior(), this);
+        final UnitVmModel model = new UnitVmModel(createNewTemplateBehavior(snapshot.getId()), this);
         setWindow(model);
         model.startProgress();
 
@@ -567,8 +567,8 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
         }), snapshot.getId());
     }
 
-    protected NewTemplateVmModelBehavior createNewTemplateBehavior() {
-        return new NewTemplateVmModelBehavior();
+    protected NewTemplateVmModelBehavior createNewTemplateBehavior(Guid snapshotId) {
+        return new NewTemplateVmModelBehavior(snapshotId);
     }
 
     private void onCloneTemplate() {
@@ -584,11 +584,9 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
 
         if (!model.validate(false)) {
             model.setIsValid(false);
-        }
-        else  if (model.getIsSubTemplate().getEntity()) {
+        } else  if (model.getIsSubTemplate().getEntity()) {
             postNameUniqueCheck(vm);
-        }
-        else {
+        } else {
             String name = model.getName().getEntity();
 
             // Check name uniqueness.
@@ -604,8 +602,7 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
                                     model.getName().setIsValid(false);
                                     model.setIsValid(false);
                                     model.fireValidationCompleteEvent();
-                                }
-                                else {
+                                } else {
                                     postNameUniqueCheck(vm);
                                 }
 
@@ -713,7 +710,7 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
         vm.setUseHostCpuFlags(model.getHostCpu().getEntity());
         vm.setDiskMap(behavior.getVm().getDiskMap());
 
-        HashMap<Guid, DiskImage> imageToDestinationDomainMap =
+        Map<Guid, DiskImage> imageToDestinationDomainMap =
                 model.getDisksAllocationModel().getImageToDestinationDomainMap();
 
         AddVmFromSnapshotParameters parameters =
@@ -769,7 +766,7 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
         boolean isVmConfigurationBroken = snapshot != null && snapshot.isVmConfigurationBroken();
 
         getCanSelectSnapshot().setEntity(!isPreviewing && !isLocked && !isStateless
-                && ActionUtils.canExecute(vmList, VM.class, ActionType.CreateAllSnapshotsFromVm));
+                && ActionUtils.canExecute(vmList, VM.class, ActionType.CreateSnapshotForVm));
         getNewCommand().setIsExecutionAllowed(!isPreviewing && !isLocked && !isVmImageLocked && !isStateless);
         getPreviewCommand().setIsExecutionAllowed(isSelected && !isLocked && !isPreviewing && isVmDown && !isStateless);
         getCustomPreviewCommand().setIsExecutionAllowed(getPreviewCommand().getIsExecutionAllowed());
@@ -799,44 +796,31 @@ public class VmSnapshotListModel extends SearchableListModel<VM, Snapshot> {
 
         if (command == getNewCommand()) {
             newEntity();
-        }
-        else if (command == getPreviewCommand()) {
+        } else if (command == getPreviewCommand()) {
             preview();
-        }
-        else if (command == getCustomPreviewCommand()) {
+        } else if (command == getCustomPreviewCommand()) {
             customPreview();
-        }
-        else if (command == getCommitCommand()) {
+        } else if (command == getCommitCommand()) {
             commit();
-        }
-        else if (command == getUndoCommand()) {
+        } else if (command == getUndoCommand()) {
             undo();
-        }
-        else if (command == getRemoveCommand()) {
+        } else if (command == getRemoveCommand()) {
             remove();
-        }
-        else if (command == getCloneVmCommand()) {
+        } else if (command == getCloneVmCommand()) {
             cloneVM();
-        }
-        else if (command == getCloneTemplateCommand()) {
+        } else if (command == getCloneTemplateCommand()) {
             cloneTemplate();
-        }
-        else if ("OnNewTemplate".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnNewTemplate".equals(command.getName())) { //$NON-NLS-1$
             onCloneTemplate();
-        }
-        else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
             onRemove();
-        }
-        else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
             cancel();
-        }
-        else if ("OnCloneVM".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnCloneVM".equals(command.getName())) { //$NON-NLS-1$
             onCloneVM();
-        }
-        else if ("OnPreview".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnPreview".equals(command.getName())) { //$NON-NLS-1$
             onPreview();
-        }
-        else if ("OnCustomPreview".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnCustomPreview".equals(command.getName())) { //$NON-NLS-1$
             onCustomPreview();
         }
     }

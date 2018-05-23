@@ -1,11 +1,15 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.ExternalNetworkProviderConfiguration;
 import org.ovirt.engine.api.restapi.utils.HexUtils;
 import org.ovirt.engine.core.common.businessentities.Provider;
@@ -14,6 +18,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendHostExternalNetworkProviderConfigurationsResourceTest
         extends AbstractBackendCollectionResourceTest<ExternalNetworkProviderConfiguration, Provider,
         BackendHostExternalNetworkProviderConfigurationsResource> {
@@ -27,20 +32,20 @@ public class BackendHostExternalNetworkProviderConfigurationsResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         setUpEntityQueryExpectations(times, null);
     }
 
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         setUpEntityQueryExpectations(
                 QueryType.GetVdsByVdsId,
                 IdQueryParameters.class,
@@ -98,7 +103,7 @@ public class BackendHostExternalNetworkProviderConfigurationsResourceTest
     }
 
     @Override
-    protected void verifyCollection(List<ExternalNetworkProviderConfiguration> collection) throws Exception {
+    protected void verifyCollection(List<ExternalNetworkProviderConfiguration> collection) {
         assertNotNull(collection);
         assertEquals(1, collection.size());
         verifyModel(collection.get(0), 0);

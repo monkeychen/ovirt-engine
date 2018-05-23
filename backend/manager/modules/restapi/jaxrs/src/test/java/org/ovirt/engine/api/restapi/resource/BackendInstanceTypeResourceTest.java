@@ -1,5 +1,7 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.api.restapi.resource.BackendInstanceTypesResourceTest.getModel;
@@ -13,7 +15,9 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.InstanceType;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.UpdateVmTemplateParameters;
@@ -25,6 +29,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.utils.VmDeviceType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendInstanceTypeResourceTest
     extends AbstractBackendSubResourceTest<InstanceType, org.ovirt.engine.core.common.businessentities.InstanceType, BackendInstanceTypeResource> {
 
@@ -33,30 +38,19 @@ public class BackendInstanceTypeResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendTemplateResource("foo");
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> new BackendTemplateResource("foo")));
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetGraphicsExpectations(1);
         setUpGetEntityExpectations(1);
@@ -65,21 +59,21 @@ public class BackendInstanceTypeResourceTest
         verifyModel(resource.get(), 0);
     }
 
-    protected void setUpGetEntityExpectations(int times) throws Exception {
+    protected void setUpGetEntityExpectations(int times) {
         setUpGetEntityExpectations(times, false);
     }
 
     @Test
-    public void testGetWithConsoleSet() throws Exception {
+    public void testGetWithConsoleSet() {
         testGetConsoleAware(true);
     }
 
     @Test
-    public void testGetWithConsoleNotSet() throws Exception {
+    public void testGetWithConsoleNotSet() {
         testGetConsoleAware(false);
     }
 
-    public void testGetConsoleAware(boolean allContent) throws Exception {
+    public void testGetConsoleAware(boolean allContent) {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1);
         setUpGetBallooningExpectations();
@@ -103,7 +97,7 @@ public class BackendInstanceTypeResourceTest
         assertTrue(populated ? response.isSetConsole() : !response.isSetConsole());
     }
 
-    protected void setUpGetVirtioScsiExpectations(int ... idxs) throws Exception {
+    protected void setUpGetVirtioScsiExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetVirtioScsiControllers,
                     IdQueryParameters.class,
@@ -113,7 +107,7 @@ public class BackendInstanceTypeResourceTest
         }
     }
 
-    protected void setUpGetSoundcardExpectations(int ... idxs) throws Exception {
+    protected void setUpGetSoundcardExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetSoundDevices,
                     IdQueryParameters.class,
@@ -124,19 +118,14 @@ public class BackendInstanceTypeResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
-        try {
-            resource.update(getRestModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getRestModel(0))));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetGraphicsExpectations(1);
         setUpUpdateExpectations();
         setUpGetBallooningExpectations();
@@ -152,16 +141,16 @@ public class BackendInstanceTypeResourceTest
     }
 
     @Test
-    public void testUpdateCantDo() throws Exception {
+    public void testUpdateCantDo() {
         doTestBadUpdate(false, true, CANT_DO);
     }
 
     @Test
-    public void testUpdateFailed() throws Exception {
+    public void testUpdateFailed() {
         doTestBadUpdate(true, false, FAILURE);
     }
 
-    protected void doTestBadUpdate(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadUpdate(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(1);
         setUriInfo(setUpActionExpectations(ActionType.UpdateVmTemplate,
                 UpdateVmTemplateParameters.class,
@@ -170,31 +159,20 @@ public class BackendInstanceTypeResourceTest
                 valid,
                 success));
 
-        try {
-            resource.update(getRestModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> resource.update(getRestModel(0))), detail);
     }
 
     @Test
-    public void testConflictedUpdate() throws Exception {
+    public void testConflictedUpdate() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1);
 
         InstanceType model = getRestModel(1);
         model.setId(GUIDS[1].toString());
-        try {
-            resource.update(model);
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyImmutabilityConstraint(wae);
-        }
+        verifyImmutabilityConstraint(assertThrows(WebApplicationException.class, () -> resource.update(model)));
     }
 
-    protected void setUpUpdateExpectations() throws Exception {
+    protected void setUpUpdateExpectations() {
         setUpGetEntityExpectations(2);
         setUpGetConsoleExpectations(0);
         setUpGetVirtioScsiExpectations(0);
@@ -202,7 +180,7 @@ public class BackendInstanceTypeResourceTest
         setUpGetRngDeviceExpectations(0);
     }
 
-    protected void setUpGetGraphicsExpectations(int times) throws Exception {
+    protected void setUpGetGraphicsExpectations(int times) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetGraphicsDevices,
                     IdQueryParameters.class,
@@ -212,7 +190,7 @@ public class BackendInstanceTypeResourceTest
         }
     }
 
-    protected void setUpGetBallooningExpectations() throws Exception {
+    protected void setUpGetBallooningExpectations() {
         setUpGetEntityExpectations(QueryType.IsBalloonEnabled,
                 IdQueryParameters.class,
                 new String[] { "Id" },
@@ -220,7 +198,7 @@ public class BackendInstanceTypeResourceTest
                 true);
     }
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetGraphicsExpectations(1);
         setUpGetEntityExpectations(1);
         setUpGetBallooningExpectations();
@@ -250,7 +228,7 @@ public class BackendInstanceTypeResourceTest
         verifyModelSpecific(model);
     }
 
-    private void setUpGetEntityExpectations(int times, boolean notFound) throws Exception {
+    private void setUpGetEntityExpectations(int times, boolean notFound) {
         while (times-- > 0) {
             setUpGetEntityExpectations(QueryType.GetInstanceType,
                     GetVmTemplateParameters.class,

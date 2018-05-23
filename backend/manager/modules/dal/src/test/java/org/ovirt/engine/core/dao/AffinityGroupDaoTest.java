@@ -1,35 +1,27 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.scheduling.AffinityGroup;
 import org.ovirt.engine.core.common.scheduling.EntityAffinityRule;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.scheduling.AffinityGroupDao;
 
-public class AffinityGroupDaoTest extends BaseDaoTestCase {
+public class AffinityGroupDaoTest extends BaseDaoTestCase<AffinityGroupDao> {
 
     private static final String AFFINITY_GROUP_NAME = "affinityGroup1";
     private static final int NUM_OF_AFFINITY_GROUPS_IN_CLUSTER = 3;
     private static final int NUM_OF_AFFINITY_GROUPS_FOR_VM = 2;
     private static final int NUM_OF_VMS_IN_EXISTING_AFFINITY_GROUP = 2;
-
-    private AffinityGroupDao dao;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        dao = dbFacade.getAffinityGroupDao();
-    }
 
     @Test
     public void testGetById() {

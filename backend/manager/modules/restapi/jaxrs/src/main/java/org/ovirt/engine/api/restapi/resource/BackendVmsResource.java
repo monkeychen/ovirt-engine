@@ -16,7 +16,6 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -26,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.WebApplicationException;
@@ -40,12 +40,10 @@ import org.ovirt.engine.api.model.DiskAttachments;
 import org.ovirt.engine.api.model.Disks;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.Initialization;
-import org.ovirt.engine.api.model.Nics;
 import org.ovirt.engine.api.model.Payload;
 import org.ovirt.engine.api.model.Snapshot;
 import org.ovirt.engine.api.model.Snapshots;
 import org.ovirt.engine.api.model.Statistics;
-import org.ovirt.engine.api.model.Tags;
 import org.ovirt.engine.api.model.Template;
 import org.ovirt.engine.api.model.Vm;
 import org.ovirt.engine.api.model.VmPlacementPolicy;
@@ -78,6 +76,7 @@ import org.ovirt.engine.core.common.businessentities.VmPayload;
 import org.ovirt.engine.core.common.businessentities.VmRngDevice;
 import org.ovirt.engine.core.common.businessentities.VmStatic;
 import org.ovirt.engine.core.common.businessentities.VmTemplate;
+import org.ovirt.engine.core.common.businessentities.storage.BaseDisk;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
 import org.ovirt.engine.core.common.interfaces.SearchType;
 import org.ovirt.engine.core.common.osinfo.OsRepository;
@@ -91,7 +90,7 @@ import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
-import org.ovirt.engine.core.common.utils.CommonCompatibilityVersionUtils;
+import org.ovirt.engine.core.common.utils.CompatibilityVersionUtils;
 import org.ovirt.engine.core.common.utils.SimpleDependencyInjector;
 import org.ovirt.engine.core.common.utils.VmCommonUtils;
 import org.ovirt.engine.core.compat.Guid;
@@ -292,7 +291,7 @@ public class BackendVmsResource extends
         // The parameters to AddVmFromSnapshot hold an array list of Disks
         // and not List of Disks, as this is a GWT serialization limitation,
         // and this parameter class serves GWT clients as well.
-        HashMap<Guid, DiskImage> diskImagesByImageId = getDiskImagesByIdMap(vmConfiguration.getDiskMap().values());
+        Map<Guid, DiskImage> diskImagesByImageId = getDiskImagesByIdMap(vmConfiguration.getDiskMap().values());
         if (vm.isSetDiskAttachments()) {
             prepareImagesForCloneFromSnapshotParams(vm.getDiskAttachments(), diskImagesByImageId);
         }
@@ -327,6 +326,7 @@ public class BackendVmsResource extends
                         new GetVmFromConfigurationQueryParameters(VmMapper.map(config.getType(), null), config.getData().trim()),
                         "");
 
+        vm.setInitialization(null); // if configuration is provided, the initialization parameters cannot be overridden
         VmMapper.map(vm, vmConfiguration.getStaticData());
 
         Guid clusterId = namedCluster(vm) ? getCluster(vm).getId() : asGuid(vm.getCluster().getId());
@@ -364,12 +364,8 @@ public class BackendVmsResource extends
         }
     }
 
-    private HashMap<Guid, DiskImage> getDiskImagesByIdMap(Collection<org.ovirt.engine.core.common.businessentities.storage.Disk> values) {
-        HashMap<Guid, DiskImage> result = new HashMap<>();
-        for (org.ovirt.engine.core.common.businessentities.storage.Disk diskImage : values) {
-            result.put(diskImage.getId(), (DiskImage) diskImage);
-        }
-        return result;
+    private Map<Guid, DiskImage> getDiskImagesByIdMap(Collection<org.ovirt.engine.core.common.businessentities.storage.Disk> values) {
+        return values.stream().collect(Collectors.toMap(BaseDisk::getId, DiskImage.class::cast));
     }
 
     private String getSnapshotId(Snapshots snapshots) {
@@ -381,7 +377,7 @@ public class BackendVmsResource extends
     private Response cloneVmFromSnapshot(org.ovirt.engine.core.common.businessentities.VM configVm,
             Vm vm,
             String snapshotId,
-            HashMap<Guid, DiskImage> images) {
+            Map<Guid, DiskImage> images) {
         VmStatic staticVm = configVm.getStaticData();
         Guid sourceSnapshotId = asGuid(snapshotId);
         AddVmFromSnapshotParameters params =
@@ -484,7 +480,7 @@ public class BackendVmsResource extends
         if (devices != null && !devices.isEmpty()) {
             final VmRngDevice rngDevice = devices.get(0);
             final Version effectiveVersion =
-                    CommonCompatibilityVersionUtils.getEffective(vmStatic.getCustomCompatibilityVersion(),
+                    CompatibilityVersionUtils.getEffective(vmStatic.getCustomCompatibilityVersion(),
                             cluster.getCompatibilityVersion(),
                             null);
             rngDevice.updateSourceByVersion(effectiveVersion);
@@ -514,11 +510,11 @@ public class BackendVmsResource extends
         return isCompatibleWithCluster;
     }
 
-    private HashMap<Guid, DiskImage> getDisksToClone(DiskAttachments diskAttachments, Guid templateId) {
-        HashMap<Guid, DiskImage> disksMap = new HashMap<>();
+    private Map<Guid, DiskImage> getDisksToClone(DiskAttachments diskAttachments, Guid templateId) {
+        Map<Guid, DiskImage> disksMap = new HashMap<>();
 
         if (diskAttachments != null && diskAttachments.isSetDiskAttachments() && diskAttachments.getDiskAttachments().size() > 0){
-            HashMap<Guid, DiskImage> templatesDisksMap = getTemplateDisks(templateId);
+            Map<Guid, DiskImage> templatesDisksMap = getTemplateDisks(templateId);
             for (DiskAttachment diskAttachment : diskAttachments.getDiskAttachments()) {
                 Disk disk = diskAttachment.getDisk();
                 if (disk != null && disk.isSetId()) {
@@ -546,15 +542,11 @@ public class BackendVmsResource extends
     }
 
     @SuppressWarnings("unchecked")
-    private HashMap<Guid, DiskImage> getTemplateDisks(Guid templateId) {
-        HashMap<Guid, DiskImage> templatesDisksMap = new HashMap<>();
-        for (DiskImage di : (List<DiskImage>) getEntity(List.class,
-                                                      QueryType.GetVmTemplatesDisks,
-                                                      new IdQueryParameters(templateId),
-                                                      "Disks")) {
-            templatesDisksMap.put(di.getId(), di);
-        }
-        return templatesDisksMap;
+    private Map<Guid, DiskImage> getTemplateDisks(Guid templateId) {
+        return ((List<DiskImage>) getEntity
+                (List.class, QueryType.GetVmTemplatesDisks, new IdQueryParameters(templateId), "Disks"))
+                .stream()
+                .collect(Collectors.toMap(BaseDisk::getId, Function.identity()));
     }
 
     private DiskImage map(Disk entity, DiskImage template) {
@@ -597,16 +589,11 @@ public class BackendVmsResource extends
                                new QueryIdResolver<Guid>(QueryType.GetVmByVmId, IdQueryParameters.class));
     }
 
-    public ArrayList<DiskImage> mapDisks(Disks disks) {
-        ArrayList<DiskImage> diskImages = null;
+    public List<DiskImage> mapDisks(Disks disks) {
         if (disks!=null && disks.isSetDisks()) {
-            diskImages = new ArrayList<>();
-            for (Disk disk : disks.getDisks()) {
-                DiskImage diskImage = (DiskImage)DiskMapper.map(disk, null);
-                diskImages.add(diskImage);
-            }
+            return disks.getDisks().stream().map(d -> (DiskImage)DiskMapper.map(d, null)).collect(Collectors.toList());
         }
-        return diskImages;
+        return null;
     }
 
     private void addInlineStatistics(Vm vm) {
@@ -615,26 +602,6 @@ public class BackendVmsResource extends
         BackendStatisticsResource<Vm, org.ovirt.engine.core.common.businessentities.VM> statisticsResource = inject(new BackendStatisticsResource<>(entityType, Guid.createGuidFromStringDefaultEmpty(vm.getId()), query));
         Statistics statistics = statisticsResource.list();
         vm.setStatistics(statistics);
-    }
-
-    private void addInlineTags(Vm vm) {
-        BackendVmTagsResource tagsResource = inject(new BackendVmTagsResource(vm.getId()));
-        Tags tags = tagsResource.list();
-        vm.setTags(tags);
-    }
-
-    private void addInlineNics(Vm vm) {
-        Guid vmId = asGuid(vm.getId());
-        BackendVmNicsResource nicsResource = inject(new BackendVmNicsResource(vmId));
-        Nics nics = nicsResource.list();
-        vm.setNics(nics);
-    }
-
-    private void addInlineDisks(Vm vm) {
-        Guid vmId = asGuid(vm.getId());
-        BackendDiskAttachmentsResource disksAttachmentsResource = inject(new BackendDiskAttachmentsResource(vmId));
-        DiskAttachments diskAttachments = disksAttachmentsResource.list();
-        vm.setDiskAttachments(diskAttachments);
     }
 
     protected Vms mapCollection(List<org.ovirt.engine.core.common.businessentities.VM> entities) {
@@ -676,10 +643,6 @@ public class BackendVmsResource extends
         return collection;
     }
 
-    protected boolean templated(Vm vm) {
-        return vm.isSetTemplate() && (vm.getTemplate().isSetId() || vm.getTemplate().isSetName());
-    }
-
     protected InstanceType lookupInstance(Template template) {
         return getEntity(InstanceType.class,
                 QueryType.GetInstanceType,
@@ -699,10 +662,6 @@ public class BackendVmsResource extends
             return getEntity(VmTemplate.class, QueryType.GetVmTemplate, params, "GetVmTemplate");
         }
         return null; // should never happen.
-    }
-
-    public VmTemplate lookupTemplate(Guid id) {
-        return getEntity(VmTemplate.class, QueryType.GetVmTemplate, new GetVmTemplateParameters(id), "GetVmTemplate");
     }
 
     private Cluster lookupCluster(Guid id) {
@@ -773,14 +732,7 @@ public class BackendVmsResource extends
     }
 
     private boolean isVMDeviceTypeExist(Map<Guid, VmDevice> deviceMap, VmDeviceGeneralType deviceType) {
-        if(deviceMap != null) {
-            for (Map.Entry<Guid, VmDevice> device : deviceMap.entrySet()) {
-                if (device.getValue().getType().equals(deviceType)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return deviceMap != null && deviceMap.values().stream().anyMatch(d -> d.getType().equals(deviceType));
     }
 
     /**

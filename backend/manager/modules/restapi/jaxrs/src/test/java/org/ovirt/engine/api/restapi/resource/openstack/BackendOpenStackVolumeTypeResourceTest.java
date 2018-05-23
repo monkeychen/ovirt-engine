@@ -16,6 +16,8 @@
 
 package org.ovirt.engine.api.restapi.resource.openstack;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,7 +27,9 @@ import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.OpenStackVolumeType;
 import org.ovirt.engine.api.restapi.resource.AbstractBackendSubResourceTest;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
@@ -34,6 +38,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendOpenStackVolumeTypeResourceTest
         extends AbstractBackendSubResourceTest<OpenStackVolumeType, CinderVolumeType, BackendOpenStackVolumeTypeResource> {
     public BackendOpenStackVolumeTypeResourceTest() {
@@ -41,31 +46,20 @@ public class BackendOpenStackVolumeTypeResourceTest
     }
 
     @Test
-    public void testBadId() throws Exception {
-        try {
-            new BackendOpenStackImageProviderResource("foo");
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadId() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendOpenStackImageProviderResource("foo")));
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(true);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(false);
         verifyModel(resource.get(), 1);
@@ -86,7 +80,7 @@ public class BackendOpenStackVolumeTypeResourceTest
         return cinderVolumeType;
     }
 
-    private void setUpGetEntityExpectations(boolean notFound) throws Exception {
+    private void setUpGetEntityExpectations(boolean notFound) {
         setUpEntityQueryExpectations(
             QueryType.GetAllStorageDomains,
             QueryParametersBase.class,

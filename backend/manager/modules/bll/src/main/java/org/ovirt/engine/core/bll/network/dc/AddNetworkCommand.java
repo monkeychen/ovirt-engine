@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
 
@@ -21,18 +22,19 @@ import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.VdcObjectType;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AddNetworkStoragePoolParameters;
+import org.ovirt.engine.core.common.action.AddVnicProfileParameters;
+import org.ovirt.engine.core.common.action.IdParameters;
 import org.ovirt.engine.core.common.action.LockProperties;
 import org.ovirt.engine.core.common.action.LockProperties.Scope;
 import org.ovirt.engine.core.common.action.ManageNetworkClustersParameters;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.businessentities.network.NetworkCluster;
+import org.ovirt.engine.core.common.businessentities.network.VnicProfile;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.locks.LockingGroup;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.common.validation.group.CreateEntity;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.dao.network.NetworkFilterDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
@@ -52,8 +54,6 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
     @Inject
     private ProviderDao providerDao;
     @Inject
-    private VmDao vmDao;
-    @Inject
     private NetworkLocking networkLocking;
 
     public AddNetworkCommand(T parameters, CommandContext cmdContext) {
@@ -62,7 +62,7 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
 
     @Override
     protected LockProperties applyLockProperties(LockProperties lockProperties) {
-        return lockProperties.withScope(Scope.Execution);
+        return lockProperties.withScope(Scope.Execution).withWait(true);
     }
 
     @Override
@@ -73,15 +73,13 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
         TransactionSupport.executeInNewTransaction(() -> {
             networkDao.save(getNetwork());
 
-            if (getNetwork().isVmNetwork() && getParameters().isVnicProfileRequired()) {
-                vnicProfileDao.save(networkHelper.createVnicProfile(getNetwork()));
-            }
-
             networkHelper.addPermissionsOnNetwork(getUserId(), getNetwork().getId());
             return null;
         });
 
-        runClusterAttachment();
+        // Run cluster attachment, AddVnicProfile and  auto-define in separated thread
+        CompletableFuture.runAsync(this::runClusterAttachment, ThreadPoolUtil.getExecutorService())
+                .thenRunAsync(this::runAddVnicProfile).thenRunAsync(this::runAutodefine);
 
         getReturnValue().setActionReturnValue(getNetwork().getId());
         setSucceeded(true);
@@ -99,7 +97,6 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
         AddNetworkValidator validator = getNetworkValidator();
         return validate(hasStoragePoolValidator.storagePoolExists())
                 && validate(validator.stpForVmNetworkOnly())
-                && validate(validator.mtuValid())
                 && validate(validator.networkPrefixValid())
                 && validate(validator.networkNameNotUsed())
                 && validate(validator.networkNameNotUsedAsVdsmName())
@@ -108,7 +105,7 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
     }
 
     protected AddNetworkValidator getNetworkValidator() {
-        return new AddNetworkValidator(vmDao, getNetwork());
+        return new AddNetworkValidator(getNetwork());
     }
 
     private boolean externalNetworkValid(AddNetworkValidator validator) {
@@ -157,11 +154,10 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
         return locks;
     }
 
-    //Run cluster attachment in separated thread
     private void runClusterAttachment() {
         List<NetworkCluster> networkAttachments = getParameters().getNetworkClusterList();
         if (networkAttachments != null) {
-            ThreadPoolUtil.execute(() -> attachToClusters(networkAttachments, getNetwork().getId()));
+            attachToClusters(networkAttachments, getNetwork().getId());
         }
     }
 
@@ -172,20 +168,33 @@ public class AddNetworkCommand<T extends AddNetworkStoragePoolParameters> extend
                 getContext().clone().withoutLock());
     }
 
+    private void runAddVnicProfile() {
+        if (getNetwork().isVmNetwork() && getParameters().isVnicProfileRequired()) {
+            VnicProfile vnicProfile = networkHelper.createVnicProfile(getNetwork());
+
+            AddVnicProfileParameters vnicProfileParameters = new AddVnicProfileParameters(vnicProfile);
+            vnicProfileParameters.setPublicUse(getParameters().isVnicProfilePublicUse());
+            runInternalAction(ActionType.AddVnicProfile, vnicProfileParameters, getContext().clone().withoutLock());
+        }
+    }
+
+    private void runAutodefine() {
+        if (getNetwork().isVmNetwork() && !getNetwork().isExternal()) {
+            runInternalAction(ActionType.AutodefineExternalNetwork,
+                    new IdParameters(getNetwork().getId()),
+                    getContext().clone().withoutLock());
+        }
+    }
+
     protected static class AddNetworkValidator extends NetworkValidator {
 
-        public AddNetworkValidator(VmDao vmDao, Network network) {
-            super(vmDao, network);
+        public AddNetworkValidator(Network network) {
+            super(network);
         }
 
         public ValidationResult externalNetworkVlanValid() {
             return ValidationResult.failWith(EngineMessage.ACTION_TYPE_FAILED_EXTERNAL_NETWORK_WITH_VLAN_MUST_BE_LABELED)
                     .when(network.getVlanId() != null && network.getLabel() == null);
-        }
-
-        @Override
-        protected DbFacade getDbFacade() {
-            return super.getDbFacade();
         }
 
         /**

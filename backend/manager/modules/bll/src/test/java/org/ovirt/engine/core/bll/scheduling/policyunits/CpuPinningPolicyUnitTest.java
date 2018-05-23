@@ -8,52 +8,34 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.ovirt.engine.core.bll.scheduling.SlaValidator;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.scheduling.PerHostMessages;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
-@RunWith(MockitoJUnitRunner.class)
 public class CpuPinningPolicyUnitTest {
-
-    @Spy
-    SlaValidator slaValidator = new SlaValidator();
-
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule(mockConfig(ConfigValues.MaxSchedulerWeight, 1000));
-
     private VDS hostWithCpus;
 
     private VDS hostWithoutCpus;
 
     private VM vm;
 
-    @InjectMocks
     private final CpuPinningPolicyUnit policyUnit = new CpuPinningPolicyUnit(null, null);
 
     private PerHostMessages perHostMessages;
 
     private Cluster cluster;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         hostWithCpus = new VDS();
         hostWithCpus.setId(Guid.newGuid());

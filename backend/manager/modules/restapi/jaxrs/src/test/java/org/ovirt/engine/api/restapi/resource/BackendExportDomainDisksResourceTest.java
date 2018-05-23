@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -9,11 +12,18 @@ import static org.ovirt.engine.api.restapi.resource.BackendTemplatesResourceTest
 import static org.ovirt.engine.api.restapi.test.util.TestHelper.eqParams;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.ws.rs.core.UriInfo;
 
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.core.common.businessentities.StorageDomainType;
 import org.ovirt.engine.core.common.businessentities.VmTemplate;
@@ -31,6 +41,7 @@ import org.ovirt.engine.core.common.queries.QueryReturnValue;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendExportDomainDisksResourceTest
     extends AbstractBackendCollectionResourceTest<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk, BackendExportDomainDisksResource> {
 
@@ -105,18 +116,18 @@ public class BackendExportDomainDisksResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpQueryExpectations(query, null);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpGetStorageDomainExpectations(StorageDomainType.ImportExport, null);
         setUpGetEntityExpectations(StorageDomainType.ImportExport, STORAGE_DOMAIN_ID, failure);
         setUriInfo(setUpBasicUriExpectations());
     }
 
-    protected void setUpGetStorageDomainExpectations(StorageDomainType domainType, Object failure) throws Exception {
+    protected void setUpGetStorageDomainExpectations(StorageDomainType domainType, Object failure) {
         setUpEntityQueryExpectations(QueryType.GetStorageDomainById,
                                      IdQueryParameters.class,
                                      new String[] { "Id" },
@@ -125,11 +136,11 @@ public class BackendExportDomainDisksResourceTest
                                      failure);
     }
 
-    protected void setUpGetEntityExpectations(StorageDomainType domainType, Guid getStoragePoolsByStorageDomainId, Object failure) throws Exception {
+    protected void setUpGetEntityExpectations(StorageDomainType domainType, Guid getStoragePoolsByStorageDomainId, Object failure) {
         setUpGetEntityExpectations(domainType, getStoragePoolsByStorageDomainId, false, failure);
     }
 
-    protected void setUpGetEntityExpectations(StorageDomainType domainType, Guid getStoragePoolsByStorageDomainId, boolean notFound, Object failure) throws Exception {
+    protected void setUpGetEntityExpectations(StorageDomainType domainType, Guid getStoragePoolsByStorageDomainId, boolean notFound, Object failure) {
         switch (domainType) {
         case Data:
             setUpEntityQueryExpectations(QueryType.GetVmTemplate,
@@ -158,14 +169,12 @@ public class BackendExportDomainDisksResourceTest
         }
     }
 
-    private HashMap<Guid, DiskImage> getDiskMap() {
-        HashMap<Guid, DiskImage> map = new HashMap<>();
-        for (int i = 0; i < NAMES.length; i++) {
-            DiskImage disk = (DiskImage) getEntity(i);
-            map.put(disk.getId(), disk);
-        }
-        return map;
+    private Map<Guid, DiskImage> getDiskMap() {
+        return IntStream.range(0, NAMES.length)
+                .mapToObj(i -> (DiskImage) getEntity(i))
+                .collect(Collectors.toMap(DiskImage::getId, Function.identity(), (u, v) -> null, LinkedHashMap::new));
     }
+
     @Override
     protected void setUpEntityQueryExpectations(QueryType query,
             Class<? extends QueryParametersBase> queryClass,
@@ -198,15 +207,13 @@ public class BackendExportDomainDisksResourceTest
         }
     }
 
-    protected HashMap<VmTemplate, List<DiskImage>> setUpTemplates(boolean notFound) {
-        HashMap<VmTemplate, List<DiskImage>> ret = new HashMap<>();
+    protected Map<VmTemplate, List<DiskImage>> setUpTemplates(boolean notFound) {
         if (notFound) {
-            return ret;
+            return Collections.emptyMap();
         }
-        for (int i = 0; i < NAMES.length; i++) {
-            ret.put(getVmTemplateEntity(i), new ArrayList<>());
-        }
-        return ret;
+
+        return IntStream.range(0, NAMES.length)
+                .boxed().collect(Collectors.toMap(this::getVmTemplateEntity, ArrayList::new));
     }
 
     protected VmTemplate getVmTemplateEntity(int index) {

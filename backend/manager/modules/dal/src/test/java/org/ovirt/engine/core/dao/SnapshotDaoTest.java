@@ -1,16 +1,16 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.Snapshot;
 import org.ovirt.engine.core.common.businessentities.Snapshot.SnapshotStatus;
 import org.ovirt.engine.core.common.businessentities.Snapshot.SnapshotType;
@@ -59,17 +59,12 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
     }
 
     @Override
-    protected SnapshotDao prepareDao() {
-        return dbFacade.getSnapshotDao();
-    }
-
-    @Override
     protected Guid getExistingEntityId() {
         return EXISTING_SNAPSHOT_ID;
     }
 
     @Test
-    public void updateStatus() throws Exception {
+    public void updateStatus() {
         Snapshot snapshot = dao.get(getExistingEntityId());
 
         snapshot.setStatus(SnapshotStatus.LOCKED);
@@ -79,7 +74,7 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
     }
 
     @Test
-    public void updateStatusForNonExistingSnapshot() throws Exception {
+    public void updateStatusForNonExistingSnapshot() {
         Guid snapshotId = Guid.Empty;
 
         assertNull(dao.get(snapshotId));
@@ -89,7 +84,7 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
     }
 
     @Test
-    public void updateId() throws Exception {
+    public void updateId() {
         Snapshot snapshot = dao.get(getExistingEntityId());
 
         assertNotNull(snapshot);
@@ -102,7 +97,7 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
     }
 
     @Test
-    public void updateIdForNonExistingSnapshot() throws Exception {
+    public void updateIdForNonExistingSnapshot() {
         Guid snapshotId = Guid.Empty;
         Guid newSnapshotId = Guid.Empty;
 
@@ -139,72 +134,72 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
 
 
     @Test
-    public void getSnaphsotByTypeReturnsIdForExistingByTypeAndStatus() throws Exception {
+    public void getSnaphsotByTypeReturnsIdForExistingByTypeAndStatus() {
         assertNotNull(dao.get(EXISTING_VM_ID, SnapshotType.REGULAR));
     }
 
     @Test
-    public void getSnaphsotByTypeReturnsIdForExistingByStatus() throws Exception {
+    public void getSnaphsotByTypeReturnsIdForExistingByStatus() {
         assertNotNull(dao.get(EXISTING_VM_ID, SnapshotStatus.OK));
     }
 
     @Test
-    public void getSnaphsotByTypeReturnsIdForNotExistingByStatus() throws Exception {
+    public void getSnaphsotByTypeReturnsIdForNotExistingByStatus() {
         assertNull(dao.get(EXISTING_VM_ID, SnapshotStatus.IN_PREVIEW));
     }
 
     @Test
-    public void getSnaphsotByTypeAndStatusForExistingEntity() throws Exception {
+    public void getSnaphsotByTypeAndStatusForExistingEntity() {
         assertEquals(existingEntity, dao.get(EXISTING_VM_ID, SnapshotType.REGULAR, SnapshotStatus.OK));
     }
 
     @Test
-    public void getSnaphsotByTypeAndStatusForNonExistingEntity() throws Exception {
+    public void getSnaphsotByTypeAndStatusForNonExistingEntity() {
         assertNull(dao.get(EXISTING_VM_ID, SnapshotType.REGULAR, SnapshotStatus.LOCKED));
     }
 
     @Test
-    public void getIdByTypeReturnsIdForExistingByTypeAndStatus() throws Exception {
+    public void getIdByTypeReturnsIdForExistingByTypeAndStatus() {
         assertEquals(getExistingEntityId(), dao.getId(EXISTING_VM_ID, SnapshotType.REGULAR));
     }
 
     @Test
-    public void getIdByTypeReturnsNullForNonExistingVm() throws Exception {
+    public void getIdByTypeReturnsNullForNonExistingVm() {
         assertNull(dao.getId(Guid.Empty, SnapshotType.REGULAR));
     }
 
     @Test
-    public void getIdByTypeReturnsNullForNonExistingType() throws Exception {
+    public void getIdByTypeReturnsNullForNonExistingType() {
         assertNull(dao.getId(EXISTING_VM_ID, SnapshotType.PREVIEW));
     }
 
     @Test
-    public void getIdByTypeAndStatusReturnsIdForExistingByTypeAndStatus() throws Exception {
+    public void getIdByTypeAndStatusReturnsIdForExistingByTypeAndStatus() {
         assertEquals(getExistingEntityId(), dao.getId(EXISTING_VM_ID, SnapshotType.REGULAR, SnapshotStatus.OK));
     }
 
     @Test
-    public void getIdByTypeAndStatusReturnsNullForNonExistingVm() throws Exception {
+    public void getIdByTypeAndStatusReturnsNullForNonExistingVm() {
         assertNull(dao.getId(Guid.Empty, SnapshotType.REGULAR, SnapshotStatus.OK));
     }
 
     @Test
-    public void getIdByTypeAndStatusReturnsNullForNonExistingType() throws Exception {
+    public void getIdByTypeAndStatusReturnsNullForNonExistingType() {
         assertNull(dao.getId(EXISTING_VM_ID, SnapshotType.PREVIEW, SnapshotStatus.OK));
     }
 
     @Test
-    public void getIdByTypeAndStatusReturnsNullForNonExistingStatus() throws Exception {
+    public void getIdByTypeAndStatusReturnsNullForNonExistingStatus() {
         assertNull(dao.getId(EXISTING_VM_ID, SnapshotType.REGULAR, SnapshotStatus.IN_PREVIEW));
     }
 
     @Test
     public void getAllByVmWithConfiguration() {
         List<Snapshot> snapshots = dao.getAllWithConfiguration(FixturesTool.VM_RHEL5_POOL_50);
-        assertEquals("VM should have a snapshot", 1, snapshots.size());
+        assertEquals(1, snapshots.size(), "VM should have a snapshot");
         for (Snapshot snapshot : snapshots) {
-            assertEquals("Snapshot should have configuration", "test!", snapshot.getVmConfiguration());
-            assertTrue("Snapshot should have configuration available", snapshot.isVmConfigurationAvailable());
+            assertEquals("test!", snapshot.getVmConfiguration(), "Snapshot should have configuration");
+            assertTrue(snapshot.isVmConfigurationAvailable(), "Snapshot should have configuration available");
         }
     }
 
@@ -225,7 +220,7 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
     public void getAllByVmFilteredWithPermissionsNoPermissions() {
         // test user 2 - hasn't got permissions
         List<Snapshot> snapshots = dao.getAll(FixturesTool.VM_RHEL5_POOL_57, UNPRIVILEGED_USER_ID, true);
-        assertTrue("VM should have no snapshots viewable to the user", snapshots.isEmpty());
+        assertTrue(snapshots.isEmpty(), "VM should have no snapshots viewable to the user");
     }
 
     @Test
@@ -238,7 +233,7 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
     @Test
     public void getAllByStorageDomain() {
         List<Snapshot> snapshots = dao.getAllByStorageDomain(FixturesTool.STORAGE_DOMAIN_SCALE_SD5);
-        assertFalse("Snapshots list shouldn't be empty", snapshots.isEmpty());
+        assertFalse(snapshots.isEmpty(), "Snapshots list shouldn't be empty");
     }
 
     @Test
@@ -268,60 +263,60 @@ public class SnapshotDaoTest extends BaseGenericDaoTestCase<Guid, Snapshot, Snap
      *            The result to check
      */
     private static void assertFullGetAllByVmResult(List<Snapshot> snapshots) {
-        assertEquals("VM should have a snapshot", 1, snapshots.size());
+        assertEquals(1, snapshots.size(), "VM should have a snapshot");
         for (Snapshot snapshot : snapshots) {
-            assertFalse("Snapshot shouldn't have configuration available", snapshot.isVmConfigurationAvailable());
-            assertTrue("Snapshot should have no configuration", StringUtils.isEmpty(snapshot.getVmConfiguration()));
+            assertFalse(snapshot.isVmConfigurationAvailable(), "Snapshot shouldn't have configuration available");
+            assertTrue(StringUtils.isEmpty(snapshot.getVmConfiguration()), "Snapshot should have no configuration");
         }
     }
 
     @Test
-    public void existsReturnsTrueForExistingByVmAndType() throws Exception {
+    public void existsReturnsTrueForExistingByVmAndType() {
         assertTrue(dao.exists(EXISTING_VM_ID, SnapshotType.REGULAR));
     }
 
     @Test
-    public void existsWithTypeReturnsFalseForNonExistingVm() throws Exception {
+    public void existsWithTypeReturnsFalseForNonExistingVm() {
         assertFalse(dao.exists(Guid.Empty, SnapshotType.REGULAR));
     }
 
     @Test
-    public void existsWithTypeReturnsFalseForNonExistingStatus() throws Exception {
+    public void existsWithTypeReturnsFalseForNonExistingStatus() {
         assertFalse(dao.exists(EXISTING_VM_ID, SnapshotType.PREVIEW));
     }
 
     @Test
-    public void existsReturnsTrueForExistingByVmAndStatus() throws Exception {
+    public void existsReturnsTrueForExistingByVmAndStatus() {
         assertTrue(dao.exists(EXISTING_VM_ID, SnapshotStatus.OK));
     }
 
     @Test
-    public void existsWithStatusReturnsFalseForNonExistingVm() throws Exception {
+    public void existsWithStatusReturnsFalseForNonExistingVm() {
         assertFalse(dao.exists(Guid.Empty, SnapshotStatus.OK));
     }
 
     @Test
-    public void existsWithStatusReturnsFalseForNonExistingStatus() throws Exception {
+    public void existsWithStatusReturnsFalseForNonExistingStatus() {
         assertFalse(dao.exists(EXISTING_VM_ID, SnapshotStatus.LOCKED));
     }
 
     @Test
-    public void existsReturnsTrueForExistingByVmAndSansphot() throws Exception {
+    public void existsReturnsTrueForExistingByVmAndSansphot() {
         assertTrue(dao.exists(EXISTING_VM_ID, getExistingEntityId()));
     }
 
     @Test
-    public void existsWithSnapshotReturnsFalseForNonExistingVm() throws Exception {
+    public void existsWithSnapshotReturnsFalseForNonExistingVm() {
         assertFalse(dao.exists(Guid.Empty, getExistingEntityId()));
     }
 
     @Test
-    public void existsWithSnapshotReturnsFalseForNonExistingSnapshot() throws Exception {
+    public void existsWithSnapshotReturnsFalseForNonExistingSnapshot() {
         assertFalse(dao.exists(EXISTING_VM_ID, Guid.Empty));
     }
 
     @Test
-    public void removeMemoryFromActiveSnapshot() throws Exception {
+    public void removeMemoryFromActiveSnapshot() {
         Snapshot snapshot = dao.get(EXISTING_SNAPSHOT_ID2);
         assertEquals(EXISTING_MEMORY_DUMP_DISK_ID, snapshot.getMemoryDiskId());
         assertEquals(EXISTING_MEMORY_CONF_DISK_ID, snapshot.getMetadataDiskId());

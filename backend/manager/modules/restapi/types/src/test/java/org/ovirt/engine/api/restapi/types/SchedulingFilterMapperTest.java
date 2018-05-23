@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.ovirt.engine.api.model.Filter;
 import org.ovirt.engine.api.model.SchedulingPolicyUnit;
 import org.ovirt.engine.core.common.scheduling.ClusterPolicy;

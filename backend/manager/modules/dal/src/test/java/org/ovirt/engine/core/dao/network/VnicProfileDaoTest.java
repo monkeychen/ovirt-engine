@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.VnicProfile;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseGenericDaoTestCase;
@@ -41,11 +41,6 @@ public class VnicProfileDaoTest extends BaseGenericDaoTestCase<Guid, VnicProfile
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.VM_NETWORK_INTERFACE_PROFILE;
-    }
-
-    @Override
-    protected VnicProfileDao prepareDao() {
-        return dbFacade.getVnicProfileDao();
     }
 
     @Override

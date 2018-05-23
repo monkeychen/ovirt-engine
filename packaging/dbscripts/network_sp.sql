@@ -226,6 +226,17 @@ BEGIN
 END;$PROCEDURE$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION GetAllNetworksByProviderPhysicalNetworkId (v_network_id UUID)
+RETURNS SETOF network STABLE AS $PROCEDURE$
+BEGIN
+    RETURN QUERY
+
+    SELECT network.*
+    FROM network
+    WHERE provider_physical_network_id = v_network_id;
+END;$PROCEDURE$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION GetManagementNetworkByCluster (v_cluster_id UUID)
 RETURNS SETOF network STABLE AS $PROCEDURE$
 BEGIN
@@ -2133,13 +2144,7 @@ RETURNS VOID AS $PROCEDURE$
 BEGIN
     DELETE
     FROM dns_resolver_configuration
-    WHERE id = (
-      SELECT
-        dns_resolver_configuration_id
-      FROM
-        vds_dynamic
-      WHERE
-        vds_id = v_id);
+    WHERE id = v_id;
 END;$PROCEDURE$
 LANGUAGE plpgsql;
 
@@ -2500,6 +2505,7 @@ CREATE OR REPLACE FUNCTION UpdateHostProviderBinding (
     )
 RETURNS VOID AS $PROCEDURE$
 BEGIN
+    PERFORM 1 FROM provider_binding_host_id WHERE vds_id = v_vds_id FOR UPDATE;
     DELETE FROM provider_binding_host_id WHERE vds_id = v_vds_id;
     INSERT INTO provider_binding_host_id (
         vds_id,

@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,21 +15,21 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.transaction.TransactionManager;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner.Silent;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.verification.VerificationMode;
 import org.ovirt.engine.core.bll.utils.GlusterAuditLogUtil;
 import org.ovirt.engine.core.bll.utils.GlusterUtil;
@@ -67,10 +66,13 @@ import org.ovirt.engine.core.dao.gluster.GlusterOptionDao;
 import org.ovirt.engine.core.dao.gluster.GlusterServerDao;
 import org.ovirt.engine.core.dao.gluster.GlusterVolumeDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
-import org.ovirt.engine.core.di.InjectorRule;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(Silent.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class, InjectorExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class GlusterSyncJobTest {
 
     private static final String REPL_VOL_NAME = "repl-vol";
@@ -80,13 +82,9 @@ public class GlusterSyncJobTest {
     @Mock
     private GlusterUtil glusterUtil;
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-        mockConfig(ConfigValues.GlusterMetaVolumeName, "gluster_shared_storage")
-    );
-
-    @Rule
-    public InjectorRule injectorRule = new InjectorRule();
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.GlusterMetaVolumeName, "gluster_shared_storage"));
+    }
 
     @Spy
     @InjectMocks
@@ -122,8 +120,9 @@ public class GlusterSyncJobTest {
     private static final Guid NEW_VOL_ID = new Guid("98918f1c-a3d7-4abe-ab25-563bbf0d4fd3");
     private static final String NEW_VOL_NAME = "test-new-vol";
 
+    @InjectedMock
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private TransactionManager transactionManager;
+    public TransactionManager transactionManager;
     @Mock
     private GlusterVolumeDao volumeDao;
     @Mock
@@ -156,11 +155,6 @@ public class GlusterSyncJobTest {
     private final List<Guid> removedBrickIds = new ArrayList<>();
     private final List<Guid> addedBrickIds = new ArrayList<>();
     private final List<GlusterBrickEntity> bricksWithChangedStatus = new ArrayList<>();
-
-    @Before
-    public void before() {
-        injectorRule.bind(TransactionManager.class, transactionManager);
-    }
 
     private void createObjects() {
         existingServer1 = createServer(SERVER_ID_1, SERVER_NAME_1);
@@ -245,7 +239,7 @@ public class GlusterSyncJobTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void setupMocks() throws Exception {
+    private void setupMocks() {
         mockDaos();
 
         doReturn(existingServer1).when(glusterUtil).getUpServer(any());
@@ -349,7 +343,6 @@ public class GlusterSyncJobTest {
         doReturn(Collections.singletonList(existingCluster)).when(clusterDao).getAll();
         doReturn(existingCluster).when(clusterDao).get(any());
         doReturn(existingServers).when(vdsDao).getAllForCluster(CLUSTER_ID);
-        doReturn(existingDistVol).when(volumeDao).getById(EXISTING_VOL_DIST_ID);
         doReturn(existingReplVol).when(volumeDao).getById(EXISTING_VOL_REPL_ID);
         doReturn(existingVolumes).when(volumeDao).getByClusterId(CLUSTER_ID);
     }
@@ -467,7 +460,7 @@ public class GlusterSyncJobTest {
     }
 
     @Test
-    public void testRefreshLightWeight() throws Exception {
+    public void testRefreshLightWeight() {
         createCluster();
         setupMocks();
         doReturn(getGlusterServer()).when(glusterServerDao).getByServerId(any());
@@ -477,7 +470,7 @@ public class GlusterSyncJobTest {
     }
 
     @Test
-    public void testRefreshHeavyWeight() throws Exception {
+    public void testRefreshHeavyWeight() {
         createCluster();
         setupMocks();
         glusterManager.refreshHeavyWeightData();
@@ -506,12 +499,6 @@ public class GlusterSyncJobTest {
                 CLUSTER_ID,
                 existingDistVol.getName());
 
-        // Update capacity info
-        inOrder.verify(volumeDao, mode)
-                .updateVolumeCapacityInfo(getVolumeAdvancedDetails(existingDistVol).getCapacityInfo());
-        // release lock on the cluster
-        inOrder.verify(glusterManager, mode).releaseLock(CLUSTER_ID);
-
         // acquire lock on the cluster for repl volume
         inOrder.verify(glusterManager, mode).acquireLock(CLUSTER_ID);
 
@@ -521,14 +508,17 @@ public class GlusterSyncJobTest {
                 existingReplVol.getName());
 
         // Add Capacity Info
-        inOrder.verify(volumeDao, mode)
-                .addVolumeCapacityInfo(getVolumeAdvancedDetails(existingReplVol).getCapacityInfo());
-
-        // Add Capacity Info
         inOrder.verify(brickDao, mode).addBrickProperties(anyList());
 
         // update brick status
         inOrder.verify(brickDao, mode).updateBrickStatuses(argThat(hasBricksWithChangedStatus()));
+
+        // Add Capacity Info
+        inOrder.verify(volumeDao, mode)
+                .addVolumeCapacityInfo(getVolumeAdvancedDetails(existingReplVol).getCapacityInfo());
+
+        // release lock on the cluster
+        inOrder.verify(glusterManager, mode).releaseLock(CLUSTER_ID);
 
         // release lock on the cluster
         inOrder.verify(glusterManager, mode).releaseLock(CLUSTER_ID);

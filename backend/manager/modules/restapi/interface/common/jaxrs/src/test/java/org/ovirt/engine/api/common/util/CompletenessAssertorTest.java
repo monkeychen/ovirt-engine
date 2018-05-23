@@ -16,12 +16,15 @@
 
 package org.ovirt.engine.api.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.Arrays;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Bonding;
 import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.Host;
@@ -35,10 +38,10 @@ import org.ovirt.engine.api.model.User;
 import org.ovirt.engine.api.model.Vm;
 import org.ovirt.engine.api.model.VmStatus;
 
-public class CompletenessAssertorTest extends Assert {
+public class CompletenessAssertorTest {
 
     @Test
-    public void testMissingParameter() throws Exception {
+    public void testMissingParameter() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         try {
@@ -50,7 +53,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingParameterSpecificReason() throws Exception {
+    public void testMissingParameterSpecificReason() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         try {
@@ -62,7 +65,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testOffsetMissingParameter() throws Exception {
+    public void testOffsetMissingParameter() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         try {
@@ -73,12 +76,12 @@ public class CompletenessAssertorTest extends Assert {
         }
     }
 
-    private void offsetValidateParameters(Vm vm) throws Exception {
+    private void offsetValidateParameters(Vm vm) {
         CompletenessAssertor.validateParameters(vm, 2, "status");
     }
 
     @Test
-    public void testMissingParameters() throws Exception {
+    public void testMissingParameters() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         try {
@@ -90,7 +93,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingParameterAlteratives() throws Exception {
+    public void testMissingParameterAlteratives() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         try {
@@ -102,7 +105,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteParameters() throws Exception {
+    public void testCompleteParameters() {
         Vm vm = new Vm();
         vm.setName("foo");
         vm.setStatus(VmStatus.UP);
@@ -111,7 +114,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteParametersAlternativesFirst() throws Exception {
+    public void testCompleteParametersAlternativesFirst() {
         Vm vm = new Vm();
         vm.setName("foo");
         vm.setHost(new Host());
@@ -119,7 +122,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteParametersAlternativesSecond() throws Exception {
+    public void testCompleteParametersAlternativesSecond() {
         Vm vm = new Vm();
         vm.setName("foo");
         vm.setStatus(VmStatus.UP);
@@ -127,7 +130,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingSuperField() throws Exception {
+    public void testMissingSuperField() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         try {
@@ -139,7 +142,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingSubField() throws Exception {
+    public void testMissingSubField() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         vm.setHost(new Host());
@@ -152,7 +155,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingSubFieldAlternatives() throws Exception {
+    public void testMissingSubFieldAlternatives() {
         Vm vm = new Vm();
         vm.setDescription("incomplete");
         vm.setHost(new Host());
@@ -165,7 +168,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingSuperFieldAlternatives() throws Exception {
+    public void testMissingSuperFieldAlternatives() {
         Permission permission = new Permission();
         permission.setVm(new Vm());
         try {
@@ -177,7 +180,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingBothAlternatives() throws Exception {
+    public void testMissingBothAlternatives() {
         Permission permission = new Permission();
         permission.setVm(new Vm());
         try {
@@ -189,7 +192,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteSubField() throws Exception {
+    public void testCompleteSubField() {
         Vm vm = new Vm();
         vm.setHost(new Host());
         vm.getHost().setId("0");
@@ -197,7 +200,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteSubFieldAlternatives() throws Exception {
+    public void testCompleteSubFieldAlternatives() {
         Vm vm = new Vm();
         vm.setHost(new Host());
         vm.getHost().setName("zog");
@@ -205,7 +208,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteSuperFieldAlternatives() throws Exception {
+    public void testCompleteSuperFieldAlternatives() {
         Permission permission = new Permission();
         permission.setUser(new User());
         permission.getUser().setName("joe");
@@ -213,7 +216,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteBothAlternatives() throws Exception {
+    public void testCompleteBothAlternatives() {
         Permission permission = new Permission();
         permission.setUser(new User());
         permission.getUser().setName("joe");
@@ -221,7 +224,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteListSubField() throws Exception {
+    public void testCompleteListSubField() {
         User user = new User();
         user.setRoles(new Roles());
         user.getRoles().getRoles().add(new Role());
@@ -232,7 +235,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteListSubFields() throws Exception {
+    public void testCompleteListSubFields() {
         HostNic bond = new HostNic();
         bond.setName("joe");
         bond.setNetwork(new Network());
@@ -253,7 +256,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testCompleteListSubFieldAlternatives() throws Exception {
+    public void testCompleteListSubFieldAlternatives() {
         User user = new User();
         user.setRoles(new Roles());
         user.getRoles().getRoles().add(new Role());
@@ -264,7 +267,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingListSubField() throws Exception {
+    public void testMissingListSubField() {
         User user = new User();
         user.setRoles(new Roles());
         user.getRoles().getRoles().add(new Role());
@@ -280,7 +283,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingListSubFields() throws Exception {
+    public void testMissingListSubFields() {
         HostNic bond = new HostNic();
 
         try {
@@ -292,7 +295,7 @@ public class CompletenessAssertorTest extends Assert {
     }
 
     @Test
-    public void testMissingListSubFieldAlternatives() throws Exception {
+    public void testMissingListSubFieldAlternatives() {
         User user = new User();
         user.setRoles(new Roles());
         user.getRoles().getRoles().add(new Role());

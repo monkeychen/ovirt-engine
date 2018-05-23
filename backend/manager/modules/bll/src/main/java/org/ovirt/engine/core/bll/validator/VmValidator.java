@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.VmCommand;
 import org.ovirt.engine.core.bll.hostdev.HostDeviceManager;
@@ -41,9 +42,11 @@ import org.ovirt.engine.core.common.osinfo.OsRepository;
 import org.ovirt.engine.core.common.utils.customprop.VmPropertiesUtils;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.DiskDao;
 import org.ovirt.engine.core.dao.DiskVmElementDao;
+import org.ovirt.engine.core.dao.SnapshotDao;
+import org.ovirt.engine.core.dao.network.VmNetworkInterfaceDao;
+import org.ovirt.engine.core.dao.network.VnicProfileDao;
 import org.ovirt.engine.core.di.Injector;
 import org.ovirt.engine.core.utils.ReplacementUtils;
 
@@ -53,6 +56,10 @@ public class VmValidator {
 
     public VmValidator(VM vm) {
         this.vm = vm;
+    }
+
+    protected VmPropertiesUtils getVmPropertiesUtils() {
+        return VmPropertiesUtils.getInstance();
     }
 
     /** @return Validation result that indicates if the VM is during migration or not. */
@@ -130,7 +137,7 @@ public class VmValidator {
     }
 
     public ValidationResult vmNotRunningStateless() {
-        if (DbFacade.getInstance().getSnapshotDao().exists(vm.getId(), SnapshotType.STATELESS)) {
+        if (Injector.get(SnapshotDao.class).exists(vm.getId(), SnapshotType.STATELESS)) {
             EngineMessage message = vm.isRunning() ? EngineMessage.ACTION_TYPE_FAILED_VM_RUNNING_STATELESS :
                     EngineMessage.ACTION_TYPE_FAILED_VM_HAS_STATELESS_SNAPSHOT_LEFTOVER;
             return new ValidationResult(message);
@@ -143,7 +150,7 @@ public class VmValidator {
      * @return ValidationResult indicating whether snapshots of disks are attached to other vms.
      */
     public ValidationResult vmNotHavingDeviceSnapshotsAttachedToOtherVms(boolean onlyPlugged) {
-        List<Disk> vmDisks = getDbFacade().getDiskDao().getAllForVm(vm.getId());
+        List<Disk> vmDisks = getDiskDao().getAllForVm(vm.getId());
         ValidationResult result =
                 new DiskImagesValidator(DisksFilter.filterImageDisks(vmDisks, ONLY_NOT_SHAREABLE, ONLY_ACTIVE))
                         .diskImagesSnapshotsNotAttachedToOtherVms(onlyPlugged);
@@ -182,19 +189,14 @@ public class VmValidator {
     }
 
     public DiskDao getDiskDao() {
-        return getDbFacade().getDiskDao();
-    }
-
-    public DbFacade getDbFacade() {
-        return DbFacade.getInstance();
+        return Injector.get(DiskDao.class);
     }
 
     /**
      * @return ValidationResult indicating whether a vm contains non-migratable, plugged, passthrough vnics
      */
     public ValidationResult allPassthroughVnicsMigratable() {
-        List<VmNetworkInterface> vnics =
-                getDbFacade().getVmNetworkInterfaceDao().getAllForVm(vm.getId());
+        List<VmNetworkInterface> vnics = Injector.get(VmNetworkInterfaceDao.class).getAllForVm(vm.getId());
 
         List<String> nonMigratablePassthroughVnicNames = vnics.stream()
                 .filter(isVnicMigratable(vm).negate())
@@ -219,7 +221,7 @@ public class VmValidator {
     }
 
     private VnicProfile getVnicProfile(VmNic vnic) {
-        VnicProfile profile = getDbFacade().getVnicProfileDao().get(vnic.getVnicProfileId());
+        VnicProfile profile = Injector.get(VnicProfileDao.class).get(vnic.getVnicProfileId());
         return profile;
     }
 
@@ -228,7 +230,7 @@ public class VmValidator {
      * @return If scsi lun with scsi reservation is plugged to VM
      */
     public ValidationResult isVmPluggedDiskNotUsingScsiReservation() {
-        List<DiskVmElement> dves = getDbFacade().getDiskVmElementDao().getAllPluggedToVm(vm.getId());
+        List<DiskVmElement> dves = getDiskVmElementDao().getAllPluggedToVm(vm.getId());
         if (dves.stream().anyMatch(dve -> dve.isUsingScsiReservation())) {
             return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_VM_USES_SCSI_RESERVATION,
                     String.format("$VmName %s", vm.getName()));
@@ -240,6 +242,18 @@ public class VmValidator {
         if (getHostDeviceManager().checkVmNeedsPciDevices(vm.getId())) {
             return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_VM_HAS_ATTACHED_PCI_HOST_DEVICES);
         }
+        return ValidationResult.VALID;
+    }
+
+    public ValidationResult vmNotUsingMdevTypeHook() {
+        Map<String, String> properties = getVmPropertiesUtils().getVMProperties(
+                vm.getCompatibilityVersion(),
+                vm.getStaticData());
+        String mdevType = properties.get("mdev_type");
+        if (!StringUtils.isEmpty(mdevType)) {
+            return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_VM_USES_MDEV_TYPE_HOOK);
+        }
+
         return ValidationResult.VALID;
     }
 
@@ -319,15 +333,12 @@ public class VmValidator {
         ArrayList<EngineMessage> messages = new ArrayList<>();
         if (pciInUse > maxPciSlots) {
             messages.add(EngineMessage.ACTION_TYPE_FAILED_EXCEEDED_MAX_PCI_SLOTS);
-        }
-        else if (VmCommand.MAX_IDE_SLOTS < diskVmElements.stream().filter(a -> a.getDiskInterface() == DiskInterface.IDE).count()) {
+        } else if (VmCommand.MAX_IDE_SLOTS < diskVmElements.stream().filter(a -> a.getDiskInterface() == DiskInterface.IDE).count()) {
             messages.add(EngineMessage.ACTION_TYPE_FAILED_EXCEEDED_MAX_IDE_SLOTS);
-        }
-        else if (VmCommand.MAX_VIRTIO_SCSI_DISKS <
+        } else if (VmCommand.MAX_VIRTIO_SCSI_DISKS <
                 diskVmElements.stream().filter(a -> a.getDiskInterface() == DiskInterface.VirtIO_SCSI).count()) {
             messages.add(EngineMessage.ACTION_TYPE_FAILED_EXCEEDED_MAX_VIRTIO_SCSI_DISKS);
-        }
-        else if (VmCommand.MAX_SPAPR_SCSI_DISKS <
+        } else if (VmCommand.MAX_SPAPR_SCSI_DISKS <
                 diskVmElements.stream().filter(a -> a.getDiskInterface() == DiskInterface.SPAPR_VSCSI).count()) {
             messages.add(EngineMessage.ACTION_TYPE_FAILED_EXCEEDED_MAX_SPAPR_VSCSI_DISKS);
         }
@@ -371,7 +382,7 @@ public class VmValidator {
     }
 
     public DiskVmElementDao getDiskVmElementDao() {
-        return DbFacade.getInstance().getDiskVmElementDao();
+        return Injector.get(DiskVmElementDao.class);
     }
 
 }

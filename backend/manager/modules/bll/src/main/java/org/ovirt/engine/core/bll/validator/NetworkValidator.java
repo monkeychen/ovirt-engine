@@ -1,6 +1,7 @@
 package org.ovirt.engine.core.bll.validator;
 
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -18,8 +19,11 @@ import org.ovirt.engine.core.common.businessentities.VmTemplate;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
+import org.ovirt.engine.core.dao.IscsiBondDao;
+import org.ovirt.engine.core.dao.VdsDao;
 import org.ovirt.engine.core.dao.VmDao;
+import org.ovirt.engine.core.dao.VmTemplateDao;
+import org.ovirt.engine.core.dao.network.HostNetworkQosDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
 import org.ovirt.engine.core.di.Injector;
 import org.ovirt.engine.core.utils.NetworkUtils;
@@ -32,20 +36,16 @@ import org.ovirt.engine.core.utils.ReplacementUtils;
  */
 public class NetworkValidator {
 
-    private final VmDao vmDao;
+    public static final String NETWORK_LIST_REPLACEMENT = "NETWORK_LIST";
+
     protected final Network network;
 
     private List<Network> networks;
     private List<VM> vms;
     private List<VmTemplate> templates;
 
-    public NetworkValidator(VmDao vmDao, Network network) {
+    public NetworkValidator(Network network) {
         this.network = network;
-        this.vmDao = vmDao;
-    }
-
-    protected DbFacade getDbFacade() {
-        return DbFacade.getInstance();
     }
 
     /**
@@ -53,7 +53,7 @@ public class NetworkValidator {
      */
     protected List<Network> getNetworks() {
         if (networks == null) {
-            networks = getDbFacade().getNetworkDao().getAllForDataCenter(network.getDataCenterId());
+            networks = getNetworkDao().getAllForDataCenter(network.getDataCenterId());
         }
         return networks;
     }
@@ -64,13 +64,6 @@ public class NetworkValidator {
     public ValidationResult stpForVmNetworkOnly() {
         return ValidationResult.failWith(EngineMessage.NON_VM_NETWORK_CANNOT_SUPPORT_STP)
                 .unless(network.isVmNetwork() || !network.getStp());
-    }
-
-    /**
-     * @return {@link ValidationResult#VALID}, This method exists only so it could be overridden.
-     */
-    public ValidationResult mtuValid() {
-        return ValidationResult.VALID;
     }
 
     /**
@@ -162,7 +155,7 @@ public class NetworkValidator {
     }
 
     public ValidationResult notIscsiBondNetwork() {
-        List<IscsiBond> iscsiBonds = getDbFacade().getIscsiBondDao().getIscsiBondsByNetworkId(network.getId());
+        List<IscsiBond> iscsiBonds = Injector.get(IscsiBondDao.class).getIscsiBondsByNetworkId(network.getId());
         if (!iscsiBonds.isEmpty()) {
             Collection<String> replaceNameables = ReplacementUtils.replaceWithNameable("IscsiBonds", iscsiBonds);
             replaceNameables.add(getNetworkNameReplacement());
@@ -203,7 +196,7 @@ public class NetworkValidator {
      * @return An error iff the network is in use by any hosts.
      */
     public ValidationResult networkNotUsedByHosts() {
-        List<VDS> allForNetwork = getDbFacade().getVdsDao().getAllForNetwork(network.getId());
+        List<VDS> allForNetwork = Injector.get(VdsDao.class).getAllForNetwork(network.getId());
         return new PluralMessages(EngineMessage.VAR__ENTITIES__HOST, EngineMessage.VAR__ENTITIES__HOSTS)
             .getNetworkInUse(getEntitiesNames(allForNetwork));
     }
@@ -222,7 +215,7 @@ public class NetworkValidator {
      */
     public ValidationResult qosExistsInDc() {
         HostNetworkQosValidator qosValidator =
-                new HostNetworkQosValidator(getDbFacade().getHostNetworkQosDao().get(network.getQosId()));
+                new HostNetworkQosValidator(Injector.get(HostNetworkQosDao.class).get(network.getQosId()));
         ValidationResult res = qosValidator.qosExists();
         return (res == ValidationResult.VALID) ? qosValidator.consistentDataCenter() : res;
     }
@@ -237,6 +230,18 @@ public class NetworkValidator {
                 .when(network.isExternal());
     }
 
+    public ValidationResult notLinkedToExternalNetwork() {
+        List<Network> linkedExternalNetworks =
+                getNetworkDao().getAllExternalNetworksLinkedToPhysicalNetwork(network.getId());
+        String linkedExternalNetworkNames = linkedExternalNetworks.stream()
+                .map(Network::getName)
+                .collect(joining(", "));
+
+        return ValidationResult.failWith(EngineMessage.ACTION_TYPE_FAILED_CANNOT_REMOVE_PHYSICAL_NETWORK_LINKED_TO_EXTERNAL_NETWORK,
+                ReplacementUtils.createSetVariableString(NETWORK_LIST_REPLACEMENT, linkedExternalNetworkNames))
+                .when(!linkedExternalNetworks.isEmpty());
+    }
+
     protected List<VM> getVms() {
         if (vms == null) {
             vms = getVmDao().getAllForNetwork(network.getId());
@@ -246,19 +251,20 @@ public class NetworkValidator {
     }
 
     protected VmDao getVmDao() {
-        return vmDao;
+        return Injector.get(VmDao.class);
     }
 
     protected List<VmTemplate> getTemplates() {
         if (templates == null) {
-            templates = getDbFacade().getVmTemplateDao().getAllForNetwork(network.getId());
+            templates = Injector.get(VmTemplateDao.class).getAllForNetwork(network.getId());
         }
 
         return templates;
     }
 
-    public boolean canNetworkCompatibilityBeDecreased() {
-        return mtuValid().isValid();
+    public ValidationResult isVmNetwork() {
+        return ValidationResult.failWith(EngineMessage.ACTION_TYPE_FAILED_NOT_A_VM_NETWORK)
+                .when(!network.isVmNetwork());
     }
 
     protected static class PluralMessages {

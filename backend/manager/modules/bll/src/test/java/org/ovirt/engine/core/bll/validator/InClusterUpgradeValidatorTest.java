@@ -7,16 +7,15 @@ import static org.ovirt.engine.core.bll.utils.NumaTestUtils.createVdsNumaNode;
 import static org.ovirt.engine.core.bll.utils.NumaTestUtils.createVmNumaNode;
 import static org.ovirt.engine.core.common.businessentities.MigrationSupport.PINNED_TO_HOST;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.hostdev.HostDeviceManager;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -25,7 +24,7 @@ import org.ovirt.engine.core.common.businessentities.VMStatus;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class InClusterUpgradeValidatorTest {
 
     @Mock
@@ -44,8 +43,8 @@ public class InClusterUpgradeValidatorTest {
     @InjectMocks
     InClusterUpgradeValidator validator = new InClusterUpgradeValidator();
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         invalidVM = newVM();
         validVM = newVM();
         oldHost = newHost("RHEV Hypervisor - 6.1 - 1.el6");
@@ -130,7 +129,7 @@ public class InClusterUpgradeValidatorTest {
     }
 
     @Test
-    public void shouldCreateNiceValidationResult() throws IOException {
+    public void shouldCreateNiceValidationResult() {
         invalidVM.setCpuPinning("i am pinned");
         invalidVM.setDedicatedVmForVdsList(Guid.newGuid());
         invalidVM.setMigrationSupport(PINNED_TO_HOST);

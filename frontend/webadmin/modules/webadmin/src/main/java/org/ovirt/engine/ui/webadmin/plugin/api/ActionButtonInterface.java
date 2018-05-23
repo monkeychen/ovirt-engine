@@ -37,4 +37,28 @@ public final class ActionButtonInterface extends JsInterfaceObject {
     public JsFunction isAccessible() {
         return getFunction("isAccessible"); //$NON-NLS-1$
     }
+
+    /**
+     * Returns the index of the action button, denoting its relative position within
+     * the action panel.
+     * <p>
+     * Action buttons have their index starting at 0 (left-most button) and incremented
+     * by 1 for each next button.
+     * <p>
+     * Default return value: {@code Integer.MAX_VALUE}
+     */
+    public Integer getIndex() {
+        return Math.max(0, getValueAsInteger("index", Integer.MAX_VALUE)); //$NON-NLS-1$
+    }
+
+    /**
+     * Determines if the action button will be a menu item in the 'more items' menu of
+     * the action panel.
+     * <p>
+     * Default return value: {@code false}
+     */
+    public Boolean isInMoreMenu() {
+        return getValueAsBoolean("moreMenu", false); //$NON-NLS-1$
+    }
+
 }

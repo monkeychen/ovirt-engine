@@ -1,17 +1,16 @@
 package org.ovirt.engine.core.bll.scheduling;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.bll.scheduling.policyunits.CpuLevelFilterPolicyUnit;
 import org.ovirt.engine.core.bll.scheduling.policyunits.EvenDistributionBalancePolicyUnit;
 import org.ovirt.engine.core.bll.scheduling.policyunits.HaReservationWeightPolicyUnit;
@@ -22,7 +21,6 @@ import org.ovirt.engine.core.common.scheduling.ClusterPolicy;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
 
-@RunWith(MockitoJUnitRunner.class)
 public class InternalClusterPoliciesTest {
     @Test
     public void testConfiguredPolicyCreation() {
@@ -36,25 +34,27 @@ public class InternalClusterPoliciesTest {
         long defaultPolicies = InternalClusterPolicies.getClusterPolicies().values().stream()
                 .filter(ClusterPolicy::isDefaultPolicy)
                 .count();
-        assertEquals( "There can be only one default InternalClusterPolicy", 1, defaultPolicies);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testFailureToAddUnitBadType() {
-        InternalClusterPolicies.createBuilder(UUID.randomUUID().toString())
-                .addFunction(1, InternalPolicyUnitsTest.DummyUnit.class)
-                .getPolicy();
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testFailureToAddUnitNotEnabled() {
-        InternalClusterPolicies.createBuilder(UUID.randomUUID().toString())
-                .addFilters(InternalPolicyUnitsTest.NotEnabledDummyUnit.class)
-                .getPolicy();
+        assertEquals(1, defaultPolicies, "There can be only one default InternalClusterPolicy");
     }
 
     @Test
-    public void testPolicyCreation() throws Exception {
+    public void testFailureToAddUnitBadType() {
+        assertThrows(IllegalArgumentException.class, () ->
+                InternalClusterPolicies.createBuilder(UUID.randomUUID().toString())
+                        .addFunction(1, InternalPolicyUnitsTest.DummyUnit.class)
+                        .getPolicy());
+    }
+
+    @Test
+    public void testFailureToAddUnitNotEnabled() {
+        assertThrows(IllegalArgumentException.class, () ->
+                InternalClusterPolicies.createBuilder(UUID.randomUUID().toString())
+                        .addFilters(InternalPolicyUnitsTest.NotEnabledDummyUnit.class)
+                        .getPolicy());
+    }
+
+    @Test
+    public void testPolicyCreation() {
         Guid uuid = Guid.newGuid();
         ClusterPolicy policy = InternalClusterPolicies.createBuilder(uuid.toString())
                 .name("test-policy")

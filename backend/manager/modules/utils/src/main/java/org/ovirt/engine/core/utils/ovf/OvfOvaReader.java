@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.ovirt.engine.core.common.businessentities.ArchitectureType;
-import org.ovirt.engine.core.common.businessentities.VM;
+import org.ovirt.engine.core.common.businessentities.VmBase;
 import org.ovirt.engine.core.common.businessentities.network.VmNetworkInterface;
 import org.ovirt.engine.core.common.businessentities.storage.CinderDisk;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
@@ -22,22 +22,22 @@ import org.ovirt.engine.core.utils.ovf.xml.XmlNodeList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OvfOvaReader extends OvfReader {
+public abstract class OvfOvaReader extends OvfReader {
     private static final Logger log = LoggerFactory.getLogger(OvfReader.class);
 
-    private VM vm;
+    private VmBase vm;
     /** Maps ovf:id to the other attributes of File reference */
     private Map<String, XmlAttributeCollection> fileIdToFileAttributes;
 
     public OvfOvaReader(XmlDocument document,
             FullEntityOvfData fullEntityOvfData,
-            VM vm,
+            VmBase vm,
             OsRepository osRepository) {
         super(document,
                 fullEntityOvfData.getDiskImages(),
-                Collections.EMPTY_LIST,
+                Collections.emptyList(),
                 fullEntityOvfData.getInterfaces(),
-                vm.getStaticData(),
+                vm,
                 osRepository);
         this.vm = vm;
         fileIdToFileAttributes = new HashMap<>();
@@ -64,18 +64,6 @@ public class OvfOvaReader extends OvfReader {
     }
 
     @Override
-    protected void readCpuItem(XmlNode node) {
-        XmlNode virtualQuantity = selectSingleNode(node, "rasd:VirtualQuantity", _xmlNS);
-        if (virtualQuantity != null) {
-            vm.setNumOfSockets(Integer.parseInt(virtualQuantity.innerText));
-            vm.setCpuPerSocket(1);
-            vm.setThreadsPerCpu(1);
-        } else {
-            super.readCpuItem(node);
-        }
-    }
-
-    @Override
     protected String getDefaultDisplayTypeStringRepresentation() {
         return VM_DEFAULT_DISPLAY_TYPE;
     }
@@ -85,7 +73,7 @@ public class OvfOvaReader extends OvfReader {
         int osId = ovirtOsId != null ?
                 Integer.parseInt(ovirtOsId.getValue())
                 : mapOsId(section.attributes.get("ovf:id").getValue());
-        vm.setVmOs(osId);
+        vm.setOsId(osId);
         setClusterArch(osRepository.getArchitectureFromOS(osId));
     }
 
@@ -155,9 +143,7 @@ public class OvfOvaReader extends OvfReader {
         }
     }
 
-    protected void setClusterArch(ArchitectureType arch) {
-        vm.setClusterArch(arch);
-    }
+    protected abstract void setClusterArch(ArchitectureType arch);
 
     protected void buildFileReference() {
         // TODO: read information needed for extracting the disks
@@ -267,6 +253,6 @@ public class OvfOvaReader extends OvfReader {
     protected void updateSingleNic(XmlNode node, VmNetworkInterface iface, int nicIdx) {
         super.updateSingleNic(node, iface, nicIdx);
         XmlNode macNode = selectSingleNode(node, "rasd:MACAddress", _xmlNS);
-        iface.setMacAddress(macNode != null ? macNode.innerText : "");
+        iface.setMacAddress(macNode != null ? macNode.innerText : null);
     }
 }

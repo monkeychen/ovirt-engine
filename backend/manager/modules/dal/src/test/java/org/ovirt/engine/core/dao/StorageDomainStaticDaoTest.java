@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.StorageDomainStatic;
 import org.ovirt.engine.core.common.businessentities.StorageDomainStatus;
 import org.ovirt.engine.core.common.businessentities.StorageFormatType;
@@ -27,6 +27,7 @@ public class StorageDomainStaticDaoTest
         newStaticDomain.setDiscardAfterDelete(false);
         newStaticDomain.setWarningLowSpaceIndicator(3);
         newStaticDomain.setCriticalSpaceActionBlocker(9);
+        newStaticDomain.setWarningLowConfirmedSpaceIndicator(6);
         newStaticDomain.setFirstMetadataDevice(FixturesTool.LUN_ID2);
         newStaticDomain.setVgMetadataDevice(FixturesTool.LUN_ID2);
         newStaticDomain.setBackup(false);
@@ -39,6 +40,7 @@ public class StorageDomainStaticDaoTest
         existingEntity.setWipeAfterDelete(true);
         existingEntity.setWarningLowSpaceIndicator(4);
         existingEntity.setCriticalSpaceActionBlocker(8);
+        existingEntity.setWarningLowConfirmedSpaceIndicator(5);
         existingEntity.setFirstMetadataDevice(FixturesTool.LUN_ID1);
         existingEntity.setVgMetadataDevice(FixturesTool.LUN_ID1);
         existingEntity.setBackup(true);
@@ -47,11 +49,6 @@ public class StorageDomainStaticDaoTest
     @Override
     protected Guid getExistingEntityId() {
         return new Guid("bee623f3-9174-4ffd-aa30-4fb0dc0aa2f6");
-    }
-
-    @Override
-    protected StorageDomainStaticDao prepareDao() {
-        return dbFacade.getStorageDomainStaticDao();
     }
 
     @Override
@@ -108,7 +105,7 @@ public class StorageDomainStaticDaoTest
     }
 
     @Test
-    public void testGetAllIdsForNonExistingStoragePoolId() throws Exception {
+    public void testGetAllIdsForNonExistingStoragePoolId() {
         List<Guid> result = dao.getAllIds(Guid.newGuid(), StorageDomainStatus.Active);
 
         assertNotNull(result);
@@ -116,7 +113,7 @@ public class StorageDomainStaticDaoTest
     }
 
     @Test
-    public void testGetAllIdsForNonExistingStatus() throws Exception {
+    public void testGetAllIdsForNonExistingStatus() {
         List<Guid> result = dao.getAllIds(FixturesTool.DATA_CENTER, StorageDomainStatus.Unknown);
 
         assertNotNull(result);
@@ -124,7 +121,7 @@ public class StorageDomainStaticDaoTest
     }
 
     @Test
-    public void testGetAllIds() throws Exception {
+    public void testGetAllIds() {
         List<Guid> result = dao.getAllIds(FixturesTool.DATA_CENTER, StorageDomainStatus.Active);
 
         assertNotNull(result);

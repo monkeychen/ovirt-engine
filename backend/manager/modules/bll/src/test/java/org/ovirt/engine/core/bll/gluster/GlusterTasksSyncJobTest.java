@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,15 +12,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.gluster.tasks.GlusterTaskUtils;
 import org.ovirt.engine.core.bll.gluster.tasks.GlusterTasksService;
 import org.ovirt.engine.core.common.asynctasks.gluster.GlusterAsyncTask;
@@ -37,9 +38,12 @@ import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.ClusterDao;
 import org.ovirt.engine.core.dao.StepDao;
 import org.ovirt.engine.core.dao.gluster.GlusterVolumeDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.ExecutorServiceExtension;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class, ExecutorServiceExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class GlusterTasksSyncJobTest {
 
     private static final Guid[] CLUSTER_GUIDS = {new Guid("CC111111-1111-1111-1111-111111111111"),
@@ -73,12 +77,11 @@ public class GlusterTasksSyncJobTest {
     @Spy
     private GlusterTasksSyncJob tasksSyncJob;
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-        mockConfig(ConfigValues.GlusterTaskMinWaitForCleanupInMins, 10)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(MockConfigDescriptor.of(ConfigValues.GlusterTaskMinWaitForCleanupInMins, 10));
+    }
 
-    @Before
+    @BeforeEach
     public void init() {
         doReturn(getClusters()).when(clusterDao).getAll();
     }

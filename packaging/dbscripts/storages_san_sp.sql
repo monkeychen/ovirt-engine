@@ -4,7 +4,7 @@
 -- [LUNs] Table
 --
 CREATE OR REPLACE FUNCTION InsertLUNs (
-    v_LUN_id VARCHAR(50),
+    v_LUN_id VARCHAR(255),
     v_physical_volume_id VARCHAR(50),
     v_volume_group_id VARCHAR(50),
     v_serial VARCHAR(4000),
@@ -42,7 +42,7 @@ END;$PROCEDURE$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION UpdateLUNs (
-    v_LUN_id VARCHAR(50),
+    v_LUN_id VARCHAR(255),
     v_physical_volume_id VARCHAR(50),
     v_volume_group_id VARCHAR(50),
     v_serial VARCHAR(4000),
@@ -68,19 +68,9 @@ BEGIN
 END;$PROCEDURE$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION DeleteLUN (v_LUN_id VARCHAR(50))
+CREATE OR REPLACE FUNCTION DeleteLUN (v_LUN_id VARCHAR(255))
 RETURNS VOID AS $PROCEDURE$
-DECLARE v_val VARCHAR(50);
-
 BEGIN
-    -- Get (and keep) a shared lock with "right to upgrade to exclusive"
-    -- in order to force locking parent before children
-    SELECT LUN_id
-    INTO v_val
-    FROM LUNs
-    WHERE LUN_id = v_LUN_id
-    FOR UPDATE;
-
     DELETE
     FROM LUNs
     WHERE LUN_id = v_LUN_id;
@@ -121,7 +111,7 @@ BEGIN
 END;$PROCEDURE$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION GetLUNByLUNId (v_LUN_id VARCHAR(50))
+CREATE OR REPLACE FUNCTION GetLUNByLUNId (v_LUN_id VARCHAR(255))
 RETURNS SETOF luns_view STABLE AS $PROCEDURE$
 BEGIN
     RETURN QUERY
@@ -169,6 +159,21 @@ BEGIN
     UPDATE storage_domain_dynamic
     SET available_disk_size = v_available_disk_size,
         used_disk_size = v_used_disk_size,
+        _update_date = LOCALTIMESTAMP
+    WHERE id = v_id;
+END;$PROCEDURE$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION UpdateStorageDomainConfirmedSize (
+    v_confirmed_available_disk_size INT,
+    v_id UUID
+    )
+RETURNS VOID
+    --The [storage_domain_dynamic] table doesn't have a timestamp column. Optimistic concurrency logic cannot be generated
+    AS $PROCEDURE$
+BEGIN
+    UPDATE storage_domain_dynamic
+    SET confirmed_available_disk_size = v_confirmed_available_disk_size,
         _update_date = LOCALTIMESTAMP
     WHERE id = v_id;
 END;$PROCEDURE$
@@ -645,7 +650,7 @@ LANGUAGE plpgsql;
 -- [LUN_storage_server_connection_map] Table
 --
 CREATE OR REPLACE FUNCTION InsertLUN_storage_server_connection_map (
-    v_LUN_id VARCHAR(50),
+    v_LUN_id VARCHAR(255),
     v_storage_server_connection VARCHAR(50)
     )
 RETURNS VOID AS $PROCEDURE$
@@ -662,7 +667,7 @@ END;$PROCEDURE$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION UpdateLUN_storage_server_connection_map (
-    v_LUN_id VARCHAR(50),
+    v_LUN_id VARCHAR(255),
     v_storage_server_connection VARCHAR(50)
     )
 RETURNS VOID
@@ -673,7 +678,7 @@ END;$PROCEDURE$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION DeleteLUN_storage_server_connection_map (
-    v_LUN_id VARCHAR(50),
+    v_LUN_id VARCHAR(255),
     v_storage_server_connection VARCHAR(50)
     )
 RETURNS VOID AS $PROCEDURE$
@@ -696,7 +701,7 @@ END;$PROCEDURE$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION GetLUN_storage_server_connection_mapByLUN (
-    v_LUN_id VARCHAR(50)
+    v_LUN_id VARCHAR(255)
     )
 RETURNS SETOF LUN_storage_server_connection_map STABLE AS $PROCEDURE$
 BEGIN
@@ -710,7 +715,7 @@ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION GetLUN_storage_server_connection_mapByLUNBystorage_server_conn (
-    v_LUN_id VARCHAR(50),
+    v_LUN_id VARCHAR(255),
     v_storage_server_connection VARCHAR(50)
     )
 RETURNS SETOF LUN_storage_server_connection_map STABLE AS $PROCEDURE$

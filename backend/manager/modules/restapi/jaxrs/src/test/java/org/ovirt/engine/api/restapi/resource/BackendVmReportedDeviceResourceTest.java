@@ -1,18 +1,22 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.ReportedDevice;
 import org.ovirt.engine.core.common.businessentities.VmGuestAgentInterface;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmReportedDeviceResourceTest
         extends AbstractBackendSubResourceTest<ReportedDevice, VmGuestAgentInterface, BackendVmReportedDeviceResource> {
 
@@ -45,7 +49,7 @@ public class BackendVmReportedDeviceResourceTest
         return mock;
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(QueryType.GetVmGuestAgentInterfacesByVmId,
                     IdQueryParameters.class,
@@ -64,7 +68,7 @@ public class BackendVmReportedDeviceResourceTest
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         resource.getParent().setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(1);
 

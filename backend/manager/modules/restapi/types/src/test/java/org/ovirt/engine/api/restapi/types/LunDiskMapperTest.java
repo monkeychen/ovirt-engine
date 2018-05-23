@@ -1,8 +1,10 @@
 package org.ovirt.engine.api.restapi.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.ovirt.engine.api.restapi.types.MappingTestHelper.populate;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.DiskFormat;
 import org.ovirt.engine.api.model.DiskStatus;
@@ -27,16 +29,14 @@ public class LunDiskMapperTest extends AbstractInvertibleMappingTest<Disk, LunDi
     protected void verify(Disk model, Disk transform) {
         assertNotNull(transform);
         assertEquals(model.getId(), transform.getId());
-        assertEquals("unexpected propagate errors", model.isPropagateErrors(), transform.isPropagateErrors());
-        assertEquals("unexpected wipe after delete", model.isWipeAfterDelete(), transform.isWipeAfterDelete());
-        assertEquals("unexpected shareable", model.isShareable(), transform.isShareable());
+        assertEquals(model.isPropagateErrors(), transform.isPropagateErrors(), "unexpected propagate errors");
+        assertEquals(model.isWipeAfterDelete(), transform.isWipeAfterDelete(), "unexpected wipe after delete");
+        assertEquals(model.isShareable(), transform.isShareable(), "unexpected shareable");
     }
 
     @Test
     @Override
     public void testRoundtrip() throws Exception {
-        setUpConfigExpectations();
-
         Disk model = Disk.class.cast(populate(Disk.class));
         model = postPopulate(model);
         Mapper<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk> out =

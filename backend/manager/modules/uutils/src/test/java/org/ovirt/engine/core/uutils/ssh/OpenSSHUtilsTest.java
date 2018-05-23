@@ -1,15 +1,15 @@
 package org.ovirt.engine.core.uutils.ssh;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class OpenSSHUtilsTest {
 
@@ -58,28 +58,28 @@ public class OpenSSHUtilsTest {
     }
 
     @Test
-    public void testGoodKeyIsPublicKeyValid() throws Exception {
+    public void testGoodKeyIsPublicKeyValid() {
         for (String[] key : KEYS) {
             assertTrue(OpenSSHUtils.isPublicKeyValid(key[3]));
         }
     }
 
     @Test
-    public void testBadKeyNotIsPublicKeyValid() throws Exception {
+    public void testBadKeyNotIsPublicKeyValid() {
         for (String key : BAD_SSH_KEYS) {
             assertFalse(OpenSSHUtils.isPublicKeyValid(key));
         }
     }
 
     @Test
-    public void testNotRsaKeyIsPublicKeyValid() throws Exception {
+    public void testNotRsaKeyIsPublicKeyValid() {
         for (String key : EXTRA_SSH_KEYS) {
             assertTrue(OpenSSHUtils.isPublicKeyValid(key));
         }
     }
 
     @Test
-    public void testMutliKeys() throws Exception {
+    public void testMutliKeys() {
         assertTrue(OpenSSHUtils.arePublicKeysValid(EXTRA_SSH_KEYS[0] + "\n" + EXTRA_SSH_KEYS[1] + "\n"));
         assertTrue(OpenSSHUtils.arePublicKeysValid(EXTRA_SSH_KEYS[0] + "\n" + EXTRA_SSH_KEYS[1]));
         assertTrue(OpenSSHUtils.arePublicKeysValid(EXTRA_SSH_KEYS[0] + "\n"));

@@ -19,6 +19,8 @@ public class GetVmFromConfigurationQuery<P extends GetVmFromConfigurationQueryPa
     protected void executeQueryCommand() {
         if (getParameters().getConfigurationType() == null) {
             log.error("received invalid configuration type: null");
+            getQueryReturnValue().setSucceeded(false);
+            getQueryReturnValue().setExceptionString("received invalid configuration type: null");
             return;
         }
 
@@ -26,9 +28,9 @@ public class GetVmFromConfigurationQuery<P extends GetVmFromConfigurationQueryPa
         case OVF:
             try {
                 getQueryReturnValue().setReturnValue(ovfHelper.readVmFromOvf(getParameters().getVmConfiguration()).getVm());
-                getQueryReturnValue().setSucceeded(true);
             } catch (OvfReaderException e) {
-                log.debug("failed to parse a given ovf configuration: \n" + getParameters().getVmConfiguration(), e);
+                log.warn("failed to parse a given ovf configuration: \n" + getParameters().getVmConfiguration(), e);
+                getQueryReturnValue().setSucceeded(false);
                 getQueryReturnValue().setExceptionString("failed to parse a given ovf configuration " + e.getMessage());
             }
             break;
@@ -36,9 +38,9 @@ public class GetVmFromConfigurationQuery<P extends GetVmFromConfigurationQueryPa
         case OVA:
             try {
                 getQueryReturnValue().setReturnValue(ovfHelper.readVmFromOva(getParameters().getVmConfiguration()));
-                getQueryReturnValue().setSucceeded(true);
             } catch (OvfReaderException e) {
-                log.debug("failed to parse a given ovf configuration: \n" + getParameters().getVmConfiguration(), e);
+                log.warn("failed to parse a given ovf configuration: \n" + getParameters().getVmConfiguration(), e);
+                getQueryReturnValue().setSucceeded(false);
                 getQueryReturnValue().setExceptionString("failed to parse a given ovf configuration " + e.getMessage());
             }
             break;

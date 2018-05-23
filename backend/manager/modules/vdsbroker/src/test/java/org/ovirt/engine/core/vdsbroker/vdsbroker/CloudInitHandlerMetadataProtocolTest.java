@@ -1,19 +1,18 @@
 package org.ovirt.engine.core.vdsbroker.vdsbroker;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.ovirt.engine.core.vdsbroker.vdsbroker.CloudInitHandler.NetConfigSourceProtocol;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.ovirt.engine.core.common.businessentities.VmInit;
 import org.ovirt.engine.core.common.businessentities.VmInitNetwork;
 import org.ovirt.engine.core.common.businessentities.network.Ipv4BootProtocol;
@@ -26,7 +25,6 @@ import org.ovirt.engine.core.utils.JsonHelper;
  * The tests verify the network configuration output of the {@link CloudInitHandler} for a
  * given network configuration input.
  */
-@RunWith(Parameterized.class)
 public class CloudInitHandlerMetadataProtocolTest {
 
     private static final String IFACE_NAME = "iface name";
@@ -37,21 +35,7 @@ public class CloudInitHandlerMetadataProtocolTest {
     private static final String IPV6_GATEWAY = "ipv6 gateway";
     private static final int IPV6_PREFIX = 666;
 
-    private VmInit vmInit;
-    private Object expected;
-
-    public CloudInitHandlerMetadataProtocolTest(VmInit vmInit, Object expected) {
-        this.vmInit = vmInit;
-        this.expected = expected;
-    }
-
-    @Before
-    public void before() {
-
-    }
-
-    @Parameterized.Parameters(name="{index}: {1}")
-    public static Collection<Object[]> params() {
+    public static Stream<Arguments> params() {
 
         Pair noneAndNone = noneAndNone();
         Pair staticIPv4 = staticIPv4();
@@ -60,32 +44,33 @@ public class CloudInitHandlerMetadataProtocolTest {
         Pair staticIPv4AndIPv6 = staticIPv4AndIPv6();
         Pair dhcpIPv4 = dhcpIPv4();
         Pair dhcpIPv6 = dhcpIPv6();
+        Pair staticIPv4WithDns = staticIPv4WithDns();
         Pair dnsServersOnly = dnsServersOnly();
         Pair startOnBootFalse = startOnBootFalse();
 
-        return Arrays.asList(new Object[][]{
-                {noneAndNone.getFirst(), noneAndNone.getSecond()},
-                {staticIPv4.getFirst(), staticIPv4.getSecond()},
-                {staticIPv6.getFirst(), staticIPv6.getSecond()},
-                {staticIPv6AddressOnly.getFirst(), staticIPv6AddressOnly.getSecond()},
-                {staticIPv4AndIPv6.getFirst(), staticIPv4AndIPv6.getSecond()},
-                {dhcpIPv4.getFirst(), dhcpIPv4.getSecond()},
-                {dhcpIPv6.getFirst(), dhcpIPv6.getSecond()},
-                {dnsServersOnly.getFirst(), dnsServersOnly.getSecond()},
-                {startOnBootFalse.getFirst(), startOnBootFalse.getSecond()},
-
-        });
+        return Stream.of(
+                Arguments.of(noneAndNone.getFirst(), noneAndNone.getSecond()),
+                Arguments.of(staticIPv4.getFirst(), staticIPv4.getSecond()),
+                Arguments.of(staticIPv6.getFirst(), staticIPv6.getSecond()),
+                Arguments.of(staticIPv6AddressOnly.getFirst(), staticIPv6AddressOnly.getSecond()),
+                Arguments.of(staticIPv4AndIPv6.getFirst(), staticIPv4AndIPv6.getSecond()),
+                Arguments.of(dhcpIPv4.getFirst(), dhcpIPv4.getSecond()),
+                Arguments.of(dhcpIPv6.getFirst(), dhcpIPv6.getSecond()),
+                Arguments.of(staticIPv4WithDns.getFirst(), staticIPv4WithDns.getSecond()),
+                Arguments.of(dnsServersOnly.getFirst(), dnsServersOnly.getSecond()),
+                Arguments.of(startOnBootFalse.getFirst(), startOnBootFalse.getSecond())
+        );
     }
 
-    @Test
-    public void test() throws IOException {
+    @ParameterizedTest
+    @MethodSource("params")
+    public void test(VmInit vmInit, Object expected) {
         CloudInitHandler underTest = new CloudInitHandler(vmInit, NetConfigSourceProtocol.OPENSTACK_METADATA);
         try {
             Map<String, byte[]> actual = underTest.getFileData();
             if (actual.get("openstack/latest/network_data.json") == null) {
                 assertNull(expected);
-            }
-            else {
+            } else {
                 Map<String, Object> actualNetworkData = parseResult(actual);
                 Map<String, Object> expectedNetworkData = JsonHelper.jsonToMap((String) expected);
                 assertEquals(expectedNetworkData, actualNetworkData);
@@ -123,7 +108,7 @@ public class CloudInitHandlerMetadataProtocolTest {
      * ----------------------------------------------------------
      *
      */
-    private static Pair staticIPv4() {
+    private static Pair<VmInit, String> staticIPv4() {
         final VmInitNetwork underTest = new VmInitNetwork();
         underTest.setName(IFACE_NAME);
         underTest.setBootProtocol(Ipv4BootProtocol.STATIC_IP);
@@ -132,7 +117,7 @@ public class CloudInitHandlerMetadataProtocolTest {
         underTest.setGateway(IPV4_GATEWAY);
         underTest.setStartOnBoot(true);
         VmInit vmInit = new VmInit();
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
 
         String expectedOutput = "{\n"
                 + "  \"links\": [\n"
@@ -154,7 +139,7 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
     /**
@@ -175,14 +160,14 @@ public class CloudInitHandlerMetadataProtocolTest {
      *
      *
      */
-    private static Pair staticIPv6AddressOnly() {
+    private static Pair<VmInit, String> staticIPv6AddressOnly() {
         final VmInitNetwork underTest = new VmInitNetwork();
         underTest.setName(IFACE_NAME);
         underTest.setIpv6BootProtocol(Ipv6BootProtocol.STATIC_IP);
         underTest.setIpv6Address(IPV6_ADDRESS);
         underTest.setStartOnBoot(true);
         VmInit vmInit = new VmInit();
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
 
         String expectedOutput = "{\n"
                 + "  \"links\": [\n"
@@ -202,10 +187,10 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
-    private static Pair staticIPv6() {
+    private static Pair<VmInit, String> staticIPv6() {
         final VmInitNetwork underTest = new VmInitNetwork();
         underTest.setName(IFACE_NAME);
         underTest.setIpv6BootProtocol(Ipv6BootProtocol.STATIC_IP);
@@ -214,7 +199,7 @@ public class CloudInitHandlerMetadataProtocolTest {
         underTest.setIpv6Gateway(IPV6_GATEWAY);
         underTest.setStartOnBoot(true);
         VmInit vmInit = new VmInit();
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
 
         String expectedOutput = "{\n"
                 + "  \"links\": [\n"
@@ -236,10 +221,10 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
-    private static Pair staticIPv4AndIPv6() {
+    private static Pair<VmInit, String> staticIPv4AndIPv6() {
         final VmInitNetwork underTest = new VmInitNetwork();
         underTest.setName(IFACE_NAME);
         underTest.setBootProtocol(Ipv4BootProtocol.STATIC_IP);
@@ -252,7 +237,7 @@ public class CloudInitHandlerMetadataProtocolTest {
         underTest.setIpv6Gateway(IPV6_GATEWAY);
         underTest.setStartOnBoot(true);
         VmInit vmInit = new VmInit();
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
 
         String expectedOutput = "{\n"
                 + "  \"links\": [\n"
@@ -282,14 +267,68 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
-    private static Pair dnsServersOnly() {
+    private static Pair<VmInit, String> staticIPv4WithDns() {
+        final VmInitNetwork underTest = new VmInitNetwork();
+        underTest.setName(IFACE_NAME);
+        underTest.setBootProtocol(Ipv4BootProtocol.STATIC_IP);
+        underTest.setIp(IPV4_ADDRESS);
+        underTest.setNetmask(IPV4_NETMASK);
+        underTest.setGateway(IPV4_GATEWAY);
+        underTest.setStartOnBoot(true);
+        VmInit vmInit = new VmInit();
+        vmInit.setNetworks(Collections.singletonList(underTest));
+        vmInit.setDnsSearch("search1 search2");
+        vmInit.setDnsServers("nameserver1 nameserver2");
+
+        String expectedOutput = "{\n"
+                + "  \"links\": [\n"
+                + "    {\n"
+                + "      \"name\": \"iface name\",\n"
+                + "      \"id\": \"iface name\",\n"
+                + "      \"type\": \"vif\"\n"
+                + "    }\n"
+                + "  ],\n"
+                + "  \"services\": [\n"
+                + "    {\n"
+                + "      \"address\": \"nameserver1\",\n"
+                + "      \"type\": \"dns\"\n"
+                + "    },\n"
+                + "    {\n"
+                + "      \"address\": \"nameserver2\",\n"
+                + "      \"type\": \"dns\"\n"
+                + "    }\n"
+                + "  ],\n"
+                + "  \"networks\": [\n"
+                + "    {\n"
+                + "      \"netmask\": \"ipv4 netmask\",\n"
+                + "      \"dns_search\": [\n"
+                + "        \"search1\",\n"
+                + "        \"search2\"\n"
+                + "      ],\n"
+                + "      \"link\": \"iface name\",\n"
+                + "      \"id\": \"iface name\",\n"
+                + "      \"ip_address\": \"ipv4 address\",\n"
+                + "      \"type\": \"ipv4\",\n"
+                + "      \"gateway\": \"ipv4 gateway\",\n"
+                + "      \"dns_nameservers\": [\n"
+                + "        \"nameserver1\",\n"
+                + "        \"nameserver2\"\n"
+                + "      ]\n"
+                + "    }\n"
+                + "  ]\n"
+                + "}";
+
+        return new Pair<>(vmInit, expectedOutput);
+    }
+
+    private static Pair<VmInit, String> dnsServersOnly() {
         VmInit vmInit = new VmInit();
         VmInitNetwork underTest = new VmInitNetwork();
         underTest.setStartOnBoot(true);
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
         vmInit.setDnsSearch("search1 search2");
         vmInit.setDnsServers("nameserver1 nameserver2 nameserver3");
 
@@ -297,28 +336,20 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  \"services\": [\n"
                 + "    {\n"
                 + "      \"address\": \"nameserver1\",\n"
-                + "      \"type\": \"dns-nameserver\"\n"
+                + "      \"type\": \"dns\"\n"
                 + "    },\n"
                 + "    {\n"
                 + "      \"address\": \"nameserver2\",\n"
-                + "      \"type\": \"dns-nameserver\"\n"
+                + "      \"type\": \"dns\"\n"
                 + "    },\n"
                 + "    {\n"
                 + "      \"address\": \"nameserver3\",\n"
-                + "      \"type\": \"dns-nameserver\"\n"
-                + "    },\n"
-                + "    {\n"
-                + "      \"address\": \"search1\",\n"
-                + "      \"type\": \"dns-search\"\n"
-                + "    },\n"
-                + "    {\n"
-                + "      \"address\": \"search2\",\n"
-                + "      \"type\": \"dns-search\"\n"
+                + "      \"type\": \"dns\"\n"
                 + "    }\n"
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
     /**
@@ -361,13 +392,13 @@ public class CloudInitHandlerMetadataProtocolTest {
      * same as after first boot + HWADDR
      *
      */
-    private static Pair dhcpIPv4() {
+    private static Pair<VmInit, String> dhcpIPv4() {
         final VmInitNetwork underTest = new VmInitNetwork();
         underTest.setName(IFACE_NAME);
         underTest.setBootProtocol(Ipv4BootProtocol.DHCP);
         underTest.setStartOnBoot(true);
         VmInit vmInit = new VmInit();
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
 
         String expectedOutput = "{\n"
                 + "  \"links\": [\n"
@@ -386,7 +417,7 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
     /**
@@ -407,13 +438,13 @@ public class CloudInitHandlerMetadataProtocolTest {
      * same as after first boot + HWADDR
      *
      */
-    private static Pair dhcpIPv6() {
+    private static Pair<VmInit, String> dhcpIPv6() {
         final VmInitNetwork underTest = new VmInitNetwork();
         underTest.setName(IFACE_NAME);
         underTest.setIpv6BootProtocol(Ipv6BootProtocol.DHCP);
         underTest.setStartOnBoot(true);
         VmInit vmInit = new VmInit();
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
 
         String expectedOutput = "{\n"
                 + "  \"links\": [\n"
@@ -432,7 +463,7 @@ public class CloudInitHandlerMetadataProtocolTest {
                 + "  ]\n"
                 + "}";
 
-        return new Pair(vmInit, expectedOutput);
+        return new Pair<>(vmInit, expectedOutput);
     }
 
     /**
@@ -484,20 +515,20 @@ public class CloudInitHandlerMetadataProtocolTest {
      * USERCTL=no
      *
      */
-    private static Pair noneAndNone() {
+    private static Pair<VmInit, String> noneAndNone() {
         VmInit vmInit = new VmInit();
         VmInitNetwork underTest = new VmInitNetwork();
         underTest.setStartOnBoot(true);
-        vmInit.setNetworks(Arrays.asList(underTest));
-        String expectedOutput = null;
-        return new Pair(vmInit, expectedOutput);
+        vmInit.setNetworks(Collections.singletonList(underTest));
+        return new Pair<>(vmInit, null);
     }
 
+    @SuppressWarnings("unchecked")
     private static Pair startOnBootFalse() {
         VmInit vmInit = new VmInit();
         VmInitNetwork underTest = new VmInitNetwork();
         underTest.setStartOnBoot(false);
-        vmInit.setNetworks(Arrays.asList(underTest));
+        vmInit.setNetworks(Collections.singletonList(underTest));
         return new Pair(vmInit, new IllegalArgumentException("Malformed input", new IllegalArgumentException("'Start on boot' must be true")));
     }
 }

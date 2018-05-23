@@ -1,28 +1,27 @@
 package org.ovirt.engine.core.bll.scheduling.policyunits;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.scheduling.PolicyUnitParameter;
-import org.ovirt.engine.core.bll.scheduling.SlaValidator;
 import org.ovirt.engine.core.bll.scheduling.external.BalanceResult;
 import org.ovirt.engine.core.common.businessentities.BusinessEntity;
 import org.ovirt.engine.core.common.businessentities.VDS;
@@ -30,33 +29,33 @@ import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.VdsDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PowerSavingBalancePolicyUnitTest extends CpuAndMemoryBalancingPolicyUnitTest {
-    static final Guid DESTINATION_HOST = new Guid("087fc691-de02-11e4-8830-0800200c9a66");
+    private static final Guid HOST_A = new Guid("087fc690-de02-11e4-8830-0800200c9a66");
+    private static final Guid HOST_B = new Guid("087fc691-de02-11e4-8830-0800200c9a66");
+    private static final Guid HOST_C = new Guid("087fc692-de02-11e4-8830-0800200c9a66");
 
     @Mock
     private VdsDao vdsDao;
 
     @Spy
-    SlaValidator slaValidator = new SlaValidator();
-
-    @Spy
     @InjectMocks
     PowerSavingBalancePolicyUnit policyUnit = new PowerSavingBalancePolicyUnit(null, null);
 
-    @ClassRule
-    public static MockConfigRule configRule =
-            new MockConfigRule(
-                    MockConfigRule.mockConfig(ConfigValues.MaxSchedulerWeight, Integer.MAX_VALUE),
-                    MockConfigRule.mockConfig(ConfigValues.HighUtilizationForPowerSave, 80),
-                    MockConfigRule.mockConfig(ConfigValues.LowUtilizationForPowerSave, 20),
-                    MockConfigRule.mockConfig(ConfigValues.CpuOverCommitDurationMinutes, 5),
-                    MockConfigRule.mockConfig(ConfigValues.VcpuConsumptionPercentage, 20),
-                    MockConfigRule.mockConfig(ConfigValues.UtilizationThresholdInPercent, 80)
-                    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.HighUtilizationForPowerSave, 80),
+                MockConfigDescriptor.of(ConfigValues.LowUtilizationForPowerSave, 20),
+                MockConfigDescriptor.of(ConfigValues.CpuOverCommitDurationMinutes, 5),
+                MockConfigDescriptor.of(ConfigValues.VcpuConsumptionPercentage, 20),
+                MockConfigDescriptor.of(ConfigValues.UtilizationThresholdInPercent, 80)
+        );
+    }
 
     @Test
     public void testBalanceMemoryLoad() throws Exception {
@@ -77,9 +76,7 @@ public class PowerSavingBalancePolicyUnitTest extends CpuAndMemoryBalancingPolic
         assertTrue(result.isPresent());
         assertTrue(result.get().isValid());
 
-        List<Guid> validMigrationTargets = validMigrationTargets(result);
-        assertEquals(1, validMigrationTargets.size());
-        assertEquals(DESTINATION_HOST, validMigrationTargets.get(0));
+        assertThat(validMigrationTargets(result)).containsOnly(HOST_B);
     }
 
     @Test
@@ -100,9 +97,8 @@ public class PowerSavingBalancePolicyUnitTest extends CpuAndMemoryBalancingPolic
         assertTrue(result.isPresent());
         assertTrue(result.get().isValid());
         assertNotNull(result.get().getVmToMigrate());
-        List<Guid> validMigrationTargets = validMigrationTargets(result);
-        assertEquals(1, validMigrationTargets.size());
-        assertEquals(DESTINATION_HOST, validMigrationTargets.get(0));
+
+        assertThat(validMigrationTargets(result)).containsOnly(HOST_B, HOST_C);
     }
 
     @Test
@@ -112,7 +108,7 @@ public class PowerSavingBalancePolicyUnitTest extends CpuAndMemoryBalancingPolic
         final Map<Guid, VM> vms = loadVMs("basic_power_saving_vms.csv", cache);
 
         Map<String, String> parameters = new HashMap<>();
-        parameters.put(PolicyUnitParameter.HIGH_MEMORY_LIMIT_FOR_UNDER_UTILIZED.getDbName(), "600");
+        parameters.put(PolicyUnitParameter.HIGH_MEMORY_LIMIT_FOR_UNDER_UTILIZED.getDbName(), "900");
 
         ArrayList<String> messages = new ArrayList<>();
 
@@ -123,9 +119,8 @@ public class PowerSavingBalancePolicyUnitTest extends CpuAndMemoryBalancingPolic
         assertTrue(result.isPresent());
         assertTrue(result.get().isValid());
         assertNotNull(result.get().getVmToMigrate());
-        List<Guid> validMigrationTargets = validMigrationTargets(result);
-        assertEquals(1, validMigrationTargets.size());
-        assertNotEquals(DESTINATION_HOST, validMigrationTargets.get(0));
+
+        assertThat(validMigrationTargets(result)).containsOnly(HOST_A, HOST_B);
     }
 
     @Test
@@ -146,9 +141,8 @@ public class PowerSavingBalancePolicyUnitTest extends CpuAndMemoryBalancingPolic
         assertNotNull(result);
         assertTrue(result.isPresent());
         assertTrue(result.get().isValid());
-        List<Guid> validMigrationTargets = validMigrationTargets(result);
-        assertEquals(1, validMigrationTargets.size());
-        assertEquals(DESTINATION_HOST, validMigrationTargets.get(0));
+
+        assertThat(validMigrationTargets(result)).containsOnly(HOST_B);
     }
 
     @Test

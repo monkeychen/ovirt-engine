@@ -1,6 +1,7 @@
 package org.ovirt.engine.core.common.action;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.ovirt.engine.core.common.businessentities.ActionGroup;
 
@@ -18,7 +19,6 @@ public enum ActionType {
     StopVm(7, ActionGroup.STOP_VM, QuotaDependency.BOTH),
     ShutdownVm(8, ActionGroup.SHUT_DOWN_VM, QuotaDependency.CLUSTER),
     ChangeDisk(9, ActionGroup.CHANGE_VM_CD, QuotaDependency.NONE),
-    PauseVm(10, QuotaDependency.NONE),
     HibernateVm(11, ActionGroup.HIBERNATE_VM, QuotaDependency.NONE),
     RunVm(12, ActionGroup.RUN_VM, QuotaDependency.CLUSTER),
     RunVmOnce(13, ActionGroup.RUN_VM, QuotaDependency.BOTH),
@@ -30,7 +30,7 @@ public enum ActionType {
     ExportVm(23, ActionGroup.IMPORT_EXPORT_VM, QuotaDependency.NONE),
     ExportVmTemplate(24, ActionGroup.IMPORT_EXPORT_VM, QuotaDependency.NONE),
     RestoreStatelessVm(25, QuotaDependency.NONE),
-    ExportOva(26, ActionGroup.IMPORT_EXPORT_VM, QuotaDependency.NONE),
+    ExportVmToOva(26, ActionGroup.IMPORT_EXPORT_VM, QuotaDependency.NONE),
     CreateOva(27, QuotaDependency.NONE),
     AddVmInterface(28, ActionGroup.CONFIGURE_VM_NETWORK, false, QuotaDependency.NONE),
     RemoveVmInterface(29, ActionGroup.CONFIGURE_VM_NETWORK, false, QuotaDependency.NONE),
@@ -39,6 +39,7 @@ public enum ActionType {
     RegisterDisk(32, ActionGroup.CONFIGURE_VM_STORAGE, QuotaDependency.STORAGE),
     ExtractOva(33, QuotaDependency.NONE),
     UpdateVmDisk(34, ActionGroup.CONFIGURE_VM_STORAGE, false, QuotaDependency.STORAGE),
+    ExportVmTemplateToOva(35, ActionGroup.IMPORT_EXPORT_VM, QuotaDependency.NONE),
     AttachDiskToVm(180, ActionGroup.CONFIGURE_VM_STORAGE, false, QuotaDependency.NONE),
     DetachDiskFromVm(181, ActionGroup.CONFIGURE_VM_STORAGE, false, QuotaDependency.NONE),
     HotPlugDiskToVm(182, ActionGroup.CONFIGURE_VM_STORAGE, false, QuotaDependency.NONE),
@@ -158,7 +159,7 @@ public enum ActionType {
     // ImagesCommands
     TryBackToSnapshot(204, QuotaDependency.NONE),
     RestoreFromSnapshot(205, QuotaDependency.STORAGE),
-    CreateAllSnapshotsFromVm(206, ActionGroup.MANIPULATE_VM_SNAPSHOTS, QuotaDependency.STORAGE),
+    CreateSnapshotForVm(206, ActionGroup.MANIPULATE_VM_SNAPSHOTS, QuotaDependency.STORAGE),
     CreateSnapshot(207, QuotaDependency.STORAGE),
     CreateSnapshotFromTemplate(208, QuotaDependency.STORAGE),
     CreateImageTemplate(209, QuotaDependency.STORAGE),
@@ -176,7 +177,6 @@ public enum ActionType {
     CreateCloneOfTemplate(229, QuotaDependency.STORAGE),
     RemoveDisk(230, QuotaDependency.STORAGE),
     MoveImageGroup(231, QuotaDependency.STORAGE),
-    GetDiskAlignment(232, QuotaDependency.NONE),
     AmendVolume(233, ActionGroup.EDIT_DISK_PROPERTIES, QuotaDependency.NONE),
     RemoveMemoryVolumes(234, QuotaDependency.NONE),
     RemoveDiskSnapshots(235, ActionGroup.MANIPULATE_VM_SNAPSHOTS, QuotaDependency.NONE),
@@ -196,6 +196,7 @@ public enum ActionType {
     UpdateVolume(253, QuotaDependency.NONE),
     UpdateAllTemplateDisks(254, QuotaDependency.NONE),
     CreateAllOvaDisks(255, QuotaDependency.NONE),
+    CreateSnapshotDisk(256, ActionGroup.MANIPULATE_VM_SNAPSHOTS, QuotaDependency.NONE),
 
     // VmPoolCommands
     AddVmPool(304, ActionGroup.CREATE_VM_POOL, QuotaDependency.BOTH),
@@ -343,7 +344,7 @@ public enum ActionType {
     GlusterStorageGeoRepSyncInternal(1037, QuotaDependency.NONE),
     ScheduleGlusterStorageSync(1038, ActionGroup.MANIPULATE_GLUSTER_VOLUME, QuotaDependency.NONE),
     FenceVolumeJob(1039, QuotaDependency.STORAGE),
-    ReduceImage(1046, QuotaDependency.STORAGE),
+    ReduceImage(1046, ActionGroup.REDUCE_DISK, QuotaDependency.NONE),
 
     // Leases
     AddVmLease(1040, QuotaDependency.NONE),
@@ -438,6 +439,7 @@ public enum ActionType {
     AddSubnetToProvider(1606, false, QuotaDependency.NONE),
     RemoveSubnetFromProvider(1607, false, QuotaDependency.NONE),
     SyncNetworkProvider(1609, false, QuotaDependency.NONE),
+    AutodefineExternalNetwork(1610, false, QuotaDependency.NONE),
 
     AddWatchdog(1700, ActionGroup.EDIT_VM_PROPERTIES, QuotaDependency.NONE),
     UpdateWatchdog(1701, ActionGroup.EDIT_VM_PROPERTIES, QuotaDependency.NONE),
@@ -585,7 +587,7 @@ public enum ActionType {
     private int intValue;
     private ActionGroup actionGroup;
     private boolean isActionMonitored;
-    private static final HashMap<Integer, ActionType> mappings = new HashMap<>();
+    private static final Map<Integer, ActionType> mappings = new HashMap<>();
     private QuotaDependency quotaDependency;
     private boolean quotaDependentAsInternalCommand = false;
 

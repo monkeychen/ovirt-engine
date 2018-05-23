@@ -16,12 +16,16 @@
 
 package org.ovirt.engine.api.restapi.resource.openstack;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.OpenStackVolumeProvider;
 import org.ovirt.engine.api.model.OpenstackVolumeAuthenticationKey;
 import org.ovirt.engine.api.model.OpenstackVolumeAuthenticationKeyUsageType;
@@ -34,6 +38,7 @@ import org.ovirt.engine.core.common.businessentities.storage.LibvirtSecretUsageT
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendOpenStackVolumeAuthenticationKeyResourceTest
         extends AbstractBackendSubResourceTest<OpenstackVolumeAuthenticationKey, LibvirtSecret, BackendOpenStackVolumeAuthenticationKeyResource> {
     public BackendOpenStackVolumeAuthenticationKeyResourceTest() {
@@ -41,29 +46,20 @@ public class BackendOpenStackVolumeAuthenticationKeyResourceTest
     }
 
     @Test
-    public void testBadId() throws Exception {
-        try {
-            new BackendOpenStackImageProviderResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadId() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> new BackendOpenStackImageProviderResource("foo")));
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(true);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(false);
         verifyModel(resource.get(), 1);
@@ -90,7 +86,7 @@ public class BackendOpenStackVolumeAuthenticationKeyResourceTest
         return model;
     }
 
-    private void setUpGetEntityExpectations(boolean notFound) throws Exception {
+    private void setUpGetEntityExpectations(boolean notFound) {
         setUpEntityQueryExpectations(
                 QueryType.GetLibvirtSecretById,
                 IdQueryParameters.class,
@@ -107,19 +103,14 @@ public class BackendOpenStackVolumeAuthenticationKeyResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
-        try {
-            resource.update(getModel(1));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getModel(1))));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(2, false);
         setUriInfo(setUpActionExpectations(
                 ActionType.UpdateLibvirtSecret,
@@ -131,7 +122,7 @@ public class BackendOpenStackVolumeAuthenticationKeyResourceTest
         verifyModel(resource.update(getModel(1)), 1);
     }
 
-    protected void setUpGetEntityExpectations(int times, boolean notFound) throws Exception {
+    protected void setUpGetEntityExpectations(int times, boolean notFound) {
         while (times-- > 0) {
             setUpGetEntityExpectations(
                     QueryType.GetLibvirtSecretById,

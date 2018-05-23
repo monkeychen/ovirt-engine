@@ -1,8 +1,8 @@
 package org.ovirt.engine.core.bll.validator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -11,15 +11,17 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.interfaces.BackendInternal;
 import org.ovirt.engine.core.bll.pm.FenceProxyLocator;
 import org.ovirt.engine.core.common.businessentities.Cluster;
@@ -29,13 +31,20 @@ import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.compat.DateTime;
 import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.FenceAgentDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FenceValidatorTest {
 
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule();
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.DisableFenceAtStartupInSec, 5),
+                MockConfigDescriptor.of(ConfigValues.VdsFenceType, Version.getLast(), "apc"),
+                MockConfigDescriptor.of(ConfigValues.CustomVdsFenceType, "apc")
+        );
+    }
 
     @InjectMocks
     @Spy
@@ -50,7 +59,7 @@ public class FenceValidatorTest {
     @Mock
     private FenceAgentDao fenceAgentDao;
 
-    @Before
+    @BeforeEach
     public void setup() {
         doReturn(proxyLocator).when(validator).getProxyLocator(any());
     }
@@ -94,7 +103,6 @@ public class FenceValidatorTest {
     @Test
     public void failWhenStartupTimeoutHasNotPassed() {
         List<String> messages = new LinkedList<>();
-        mcr.mockConfigValue(ConfigValues.DisableFenceAtStartupInSec, 5);
         when(backend.getStartedAt()).thenReturn(new DateTime(new Date()));
         boolean result = validator.isStartupTimeoutPassed(messages);
         assertEquals(1, messages.size());
@@ -105,7 +113,6 @@ public class FenceValidatorTest {
     @Test
     public void succeedWhenStartupTimeoutHasPassed() {
         List<String> messages = new LinkedList<>();
-        mcr.mockConfigValue(ConfigValues.DisableFenceAtStartupInSec, 5);
         when(backend.getStartedAt()).thenReturn(new DateTime(new Date().getTime() - 20000));
         boolean result = validator.isStartupTimeoutPassed(messages);
         assertTrue(result);
@@ -160,8 +167,6 @@ public class FenceValidatorTest {
         agent.setType("apc");
         when(fenceAgentDao.getFenceAgentsForHost(vds.getId())).thenReturn(Collections.singletonList(agent));
         List<String> messages = new LinkedList<>();
-        mcr.mockConfigValue(ConfigValues.VdsFenceType, Version.getLast(), "apc");
-        mcr.mockConfigValue(ConfigValues.CustomVdsFenceType, "apc");
         boolean result = validator.isPowerManagementEnabledAndLegal(vds, cluster, messages);
         assertTrue(result);
     }

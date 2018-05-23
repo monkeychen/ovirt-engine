@@ -1,13 +1,18 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Icon;
 import org.ovirt.engine.core.common.businessentities.VmIcon;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendIconResourceTest extends AbstractBackendSubResourceTest<Icon, VmIcon, BackendIconResource> {
 
     public BackendIconResourceTest() {
@@ -26,7 +31,7 @@ public class BackendIconResourceTest extends AbstractBackendSubResourceTest<Icon
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUpGetEntityExpectations(0, false);
         setUriInfo(setUpBasicUriExpectations());
 
@@ -35,30 +40,19 @@ public class BackendIconResourceTest extends AbstractBackendSubResourceTest<Icon
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(0, true);
 
-
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-     public void testBadGuid() throws Exception {
-        try {
-            new BackendIconResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+     public void testBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> new BackendIconResource("foo")));
     }
 
-    protected void setUpGetEntityExpectations(int index, boolean notFound) throws Exception {
+    protected void setUpGetEntityExpectations(int index, boolean notFound) {
         setUpGetEntityExpectations(QueryType.GetVmIcon,
                 IdQueryParameters.class,
                 new String[] {"Id"},

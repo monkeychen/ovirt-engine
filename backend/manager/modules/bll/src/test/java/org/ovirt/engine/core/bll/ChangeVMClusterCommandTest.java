@@ -2,20 +2,20 @@ package org.ovirt.engine.core.bll;
 
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.ovirt.engine.core.bll.network.macpool.MacPoolPerCluster;
-import org.ovirt.engine.core.bll.network.macpool.ReadMacPool;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.action.ChangeVMClusterParameters;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.OriginType;
@@ -26,7 +26,8 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.ClusterDao;
 import org.ovirt.engine.core.dao.network.VmNicDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ChangeVMClusterCommandTest {
 
     @Mock
@@ -38,15 +39,6 @@ public class ChangeVMClusterCommandTest {
     @Mock
     private VmNicDao vmNicDao;
 
-    @Mock
-    private MacPoolPerCluster macPoolPerCluster;
-
-    @Mock
-    private ReadMacPool sourceMacPool;
-
-    @Mock
-    private ReadMacPool targetMacPool;
-
     private final ChangeVMClusterParameters parameters = new ChangeVMClusterParameters();
     private final VM existingVm = createVm();
 
@@ -55,7 +47,7 @@ public class ChangeVMClusterCommandTest {
             new ChangeVMClusterCommand<>(parameters, null);
 
     @Test
-    public void canRunForHostedEngine() throws Exception {
+    public void canRunForHostedEngine() {
         // given hosted engine VM
         VM hostedEngine = new VM();
         hostedEngine.setOrigin(OriginType.MANAGED_HOSTED_ENGINE);
@@ -67,7 +59,7 @@ public class ChangeVMClusterCommandTest {
     }
 
     @Test
-    public void testNoChangeWhenClustersDidNotChange() throws Exception {
+    public void testNoChangeWhenClustersDidNotChange() {
         Cluster cluster = createCluster();
         initWithSameCluster(cluster);
 
@@ -77,7 +69,7 @@ public class ChangeVMClusterCommandTest {
     }
 
     @Test
-    public void testNoChangeWhenMacPoolsDidNotChange() throws Exception {
+    public void testNoChangeWhenMacPoolsDidNotChange() {
         Cluster newCluster = createCluster();
         Cluster oldCluster = createCluster();
 
@@ -89,7 +81,7 @@ public class ChangeVMClusterCommandTest {
     }
 
     @Test
-    public void testDoChangeWhenMacPoolsChanged() throws Exception {
+    public void testDoChangeWhenMacPoolsChanged() {
         String macToMigrate = "mac";
         Cluster oldCluster = createCluster();
         Cluster newCluster = createCluster();

@@ -1,12 +1,14 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.action.EndExternalStepParameters;
 import org.ovirt.engine.core.common.job.Job;
 import org.ovirt.engine.core.common.job.Step;
@@ -14,6 +16,7 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.JobDao;
 import org.ovirt.engine.core.dao.StepDao;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EndExternalStepCommandTest extends BaseCommandTest {
 
     private static final Guid jobId = Guid.newGuid();
@@ -69,8 +72,8 @@ public class EndExternalStepCommandTest extends BaseCommandTest {
         return step;
     }
 
-    @Before
-    public void setupMock() throws Exception {
+    @BeforeEach
+    public void setupMock() {
         when(jobDaoMock.get(jobId)).thenReturn(makeExternalTestJob(jobId));
         when(jobDaoMock.get(nonExternalJobId)).thenReturn(makeNonExternalTestJob(nonExternalJobId));
         when(stepDaoMock.get(stepId)).thenReturn(makeExternalTestStep(jobId, stepId));
@@ -80,35 +83,35 @@ public class EndExternalStepCommandTest extends BaseCommandTest {
     }
 
     @Test
-    public void validateOkSucceeds() throws Exception {
+    public void validateOkSucceeds() {
         parameters.setId(stepId);
         parameters.setJobId(jobId);
         assertTrue(command.validate());
     }
 
     @Test
-    public void validateNonExistingJobFails() throws Exception {
+    public void validateNonExistingJobFails() {
         parameters.setId(nonExistingStepId);
         parameters.setJobId(jobId);
         assertTrue(! command.validate());
     }
 
     @Test
-    public void validateNonExternalJobFails() throws Exception {
+    public void validateNonExternalJobFails() {
         parameters.setId(nonExternalStepId);
         parameters.setJobId(jobId);
         assertTrue(! command.validate());
     }
 
     @Test
-    public void validateNonExistingStepFails() throws Exception {
+    public void validateNonExistingStepFails() {
         parameters.setId(nonExistingStepId);
         parameters.setJobId(jobId);
         assertTrue(! command.validate());
     }
 
     @Test
-    public void validateNonExternalStepFails() throws Exception {
+    public void validateNonExternalStepFails() {
         parameters.setJobId(jobId);
         parameters.setId(nonExternalStepId);
         assertTrue(! command.validate());

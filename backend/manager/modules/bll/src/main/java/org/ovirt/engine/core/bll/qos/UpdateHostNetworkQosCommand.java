@@ -22,7 +22,7 @@ public class UpdateHostNetworkQosCommand extends UpdateQosCommandBase<HostNetwor
 
     @Override
     protected HostNetworkQosDao getQosDao() {
-        return dbFacade.getHostNetworkQosDao();
+        return hostNetworkQosDao;
     }
 
     @Override

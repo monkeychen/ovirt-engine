@@ -1,6 +1,7 @@
 package org.ovirt.engine.core.bll.storage.disk.image;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -12,14 +13,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.AbstractQueryTest;
 import org.ovirt.engine.core.bll.interfaces.BackendInternal;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
+import org.ovirt.engine.core.common.businessentities.StorageDomainType;
 import org.ovirt.engine.core.common.businessentities.storage.Disk;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
 import org.ovirt.engine.core.common.interfaces.VDSBrokerFrontend;
@@ -33,7 +35,7 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.DiskImageDao;
 import org.ovirt.engine.core.dao.StorageDomainDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class GetUnregisteredDisksQueryTest
         extends
         AbstractQueryTest<GetUnregisteredDisksQueryParameters, GetUnregisteredDisksQuery<GetUnregisteredDisksQueryParameters>> {
@@ -58,7 +60,7 @@ public class GetUnregisteredDisksQueryTest
     private List<Guid> importDiskIds;
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
 
@@ -85,6 +87,34 @@ public class GetUnregisteredDisksQueryTest
         List<Disk> newDisks = getQuery().getQueryReturnValue().getReturnValue();
         assertEquals(1, newDisks.size());
         assertEquals(importDiskId, newDisks.get(0).getId());
+    }
+
+    @Test
+    public void testGetUnregisteredDisksFromExport() {
+        StorageDomain storageDomain = new StorageDomain();
+        storageDomain.setStorageDomainType(StorageDomainType.ImportExport);
+        when(storageDomainDaoMock.get(storageDomainId)).thenReturn(storageDomain);
+
+        // Execute query
+        getQuery().executeQueryCommand();
+
+        // Assert the query's results
+        QueryReturnValue ret = getQuery().getQueryReturnValue();
+        assertFalse(ret.getSucceeded(), "No fetching of unregistered disks allowed for export storage domain");
+    }
+
+    @Test
+    public void testGetUnregisteredDisksFromIso() {
+        StorageDomain storageDomain = new StorageDomain();
+        storageDomain.setStorageDomainType(StorageDomainType.ISO);
+        when(storageDomainDaoMock.get(storageDomainId)).thenReturn(storageDomain);
+
+        // Execute query
+        getQuery().executeQueryCommand();
+
+        // Assert the query's results
+        QueryReturnValue ret = getQuery().getQueryReturnValue();
+        assertFalse(ret.getSucceeded(), "No fetching of unregistered disks allowed for export ISO domain");
     }
 
     /**

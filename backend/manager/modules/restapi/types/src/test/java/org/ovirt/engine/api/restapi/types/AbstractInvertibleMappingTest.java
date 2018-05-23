@@ -2,11 +2,11 @@ package org.ovirt.engine.api.restapi.types;
 
 import static org.ovirt.engine.api.restapi.types.MappingTestHelper.populate;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.ovirt.engine.core.utils.MockConfigExtension;
+import org.ovirt.engine.core.utils.RandomUtilsSeedingExtension;
 
 /**
  * Test invertible mappings, by mapping the outward followed by the inverse
@@ -20,11 +20,8 @@ import org.ovirt.engine.core.utils.MockConfigRule;
  * @param <I>
  *            inverse type (may be identical to T)
  */
-public abstract class AbstractInvertibleMappingTest<F, T, I> extends Assert {
-
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule();
-
+@ExtendWith({MockConfigExtension.class, RandomUtilsSeedingExtension.class})
+public abstract class AbstractInvertibleMappingTest<F, T, I> {
     private MappingLocator mappingLocator;
     private Class<F> fromClass;
     private Class<T> toClass;
@@ -36,7 +33,7 @@ public abstract class AbstractInvertibleMappingTest<F, T, I> extends Assert {
         this.inverseClass = inverseClass;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mappingLocator = new MappingLocator();
         mappingLocator.populate();
@@ -44,8 +41,6 @@ public abstract class AbstractInvertibleMappingTest<F, T, I> extends Assert {
 
     @Test
     public void testRoundtrip() throws Exception {
-        setUpConfigExpectations();
-
         F model = fromClass.cast(populate(fromClass));
         model = postPopulate(model);
         Mapper<F, T> out = mappingLocator.getMapper(fromClass, toClass);
@@ -58,9 +53,6 @@ public abstract class AbstractInvertibleMappingTest<F, T, I> extends Assert {
 
     protected F getModel(F model) {
         return model;
-    }
-
-    protected void setUpConfigExpectations() {
     }
 
     protected F postPopulate(F model) {

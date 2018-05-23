@@ -16,12 +16,19 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cdrom;
 import org.ovirt.engine.api.model.File;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -32,6 +39,7 @@ import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmCdromsResourceTest
         extends AbstractBackendCollectionResourceTest<Cdrom, VM, BackendVmCdromsResource> {
 
@@ -48,19 +56,19 @@ public class BackendVmCdromsResourceTest
         return collection.list().getCdroms();
     }
 
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 
-    private void setUpEntityQueryExpectations(int times) throws Exception {
+    private void setUpEntityQueryExpectations(int times) {
         setUpEntityQueryExpectations(times, null);
     }
 
-    private void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    private void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetVmByVmId,
@@ -89,7 +97,7 @@ public class BackendVmCdromsResourceTest
     }
 
     @Test
-    public void testAddCdRom() throws Exception {
+    public void testAddCdRom() {
         setUriInfo(setUpBasicUriExpectations());
         setUpEntityQueryExpectations(
             QueryType.GetVmByVmId,
@@ -121,16 +129,16 @@ public class BackendVmCdromsResourceTest
     }
 
     @Test
-    public void testAddCdRomCantDo() throws Exception {
+    public void testAddCdRomCantDo() {
         doTestBadAddCdRom(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddCdRomFailure() throws Exception {
+    public void testAddCdRomFailure() {
         doTestBadAddCdRom(true, false, FAILURE);
     }
 
-    private void doTestBadAddCdRom(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddCdRom(boolean valid, boolean success, String detail) {
         setUpEntityQueryExpectations(
             QueryType.GetVmByVmId,
             IdQueryParameters.class,
@@ -150,40 +158,23 @@ public class BackendVmCdromsResourceTest
             )
         );
         Cdrom cdrom = getCdrom();
-        try {
-            collection.add(cdrom);
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(cdrom)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         Cdrom model = new Cdrom();
         model.setName(NAMES[0]);
         model.setFile(new File());
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        }
-        catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Cdrom", "add", "file.id");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)), "Cdrom", "add", "file.id");
     }
 
 
     @Test
-    public void testSubResourceLocatorBadGuid() throws Exception {
-        try {
-            collection.getCdromResource("foo");
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testSubResourceLocatorBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> collection.getCdromResource("foo")));
     }
 
     private void setUpEntityQueryExpectations(
@@ -199,7 +190,7 @@ public class BackendVmCdromsResourceTest
     }
 
     @Override
-    protected void verifyCollection(List<Cdrom> cdroms) throws Exception {
+    protected void verifyCollection(List<Cdrom> cdroms) {
         assertNotNull(cdroms);
         assertEquals(1, cdroms.size());
         verifyModel(cdroms.get(0));

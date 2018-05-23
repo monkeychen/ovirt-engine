@@ -1,14 +1,14 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImageDynamic;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
@@ -35,11 +35,6 @@ public class DiskImageDynamicDaoTest extends BaseGenericDaoTestCase<Guid, DiskIm
     }
 
     @Override
-    protected DiskImageDynamicDao prepareDao() {
-        return dbFacade.getDiskImageDynamicDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
@@ -61,7 +56,7 @@ public class DiskImageDynamicDaoTest extends BaseGenericDaoTestCase<Guid, DiskIm
     }
 
     @Test
-    public void testUpdateAll() throws Exception {
+    public void testUpdateAll() {
         DiskImageDynamic existingEntity2 = dao.get(new Guid("42058975-3d5e-484a-80c1-01c31207f579"));
         existingEntity.setActualSize(100);
         existingEntity2.setReadRate(120);
@@ -75,12 +70,12 @@ public class DiskImageDynamicDaoTest extends BaseGenericDaoTestCase<Guid, DiskIm
     }
 
     @Test
-    public void updateAllDiskImageDynamicWithDiskIdByVmId() throws Exception {
+    public void updateAllDiskImageDynamicWithDiskIdByVmId() {
         Guid imageId = FixturesTool.IMAGE_ID_2;
         Guid imageGroupId = FixturesTool.IMAGE_GROUP_ID_2;
 
         DiskImageDynamic existingEntity2 = dao.get(imageId);
-        assertFalse(existingEntity2.getReadRate().equals(120));
+        assertNotEquals(120, (int) existingEntity2.getReadRate());
 
         existingEntity2.setId(imageGroupId);
         Integer readRate = 120;
@@ -100,7 +95,7 @@ public class DiskImageDynamicDaoTest extends BaseGenericDaoTestCase<Guid, DiskIm
     }
 
     @Test
-    public void sortDiskImageDynamicForUpdate() throws Exception {
+    public void sortDiskImageDynamicForUpdate() {
         Guid firstGuid = Guid.Empty;
         Guid secondGuid = Guid.createGuidFromString("11111111-1111-1111-1111-111111111111");
         Guid thirdGuid = Guid.createGuidFromString("22222222-2222-2222-2222-222222222222");

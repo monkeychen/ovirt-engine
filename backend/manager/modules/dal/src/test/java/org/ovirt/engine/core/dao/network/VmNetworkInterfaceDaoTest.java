@@ -1,16 +1,17 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VmDevice;
 import org.ovirt.engine.core.common.businessentities.VmDeviceGeneralType;
 import org.ovirt.engine.core.common.businessentities.network.VmNetworkInterface;
@@ -19,25 +20,23 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class VmNetworkInterfaceDaoTest extends BaseDaoTestCase {
+public class VmNetworkInterfaceDaoTest extends BaseDaoTestCase<VmNetworkInterfaceDao> {
     private static final Guid TEMPLATE_ID = FixturesTool.VM_TEMPLATE_RHEL5;
     private static final Guid VM_ID = FixturesTool.VM_RHEL5_POOL_57;
 
     protected static final Guid PRIVILEGED_USER_ID   = new Guid("9bf7c640-b620-456f-a550-0348f366544b");
     protected static final Guid UNPRIVILEGED_USER_ID = new Guid("9bf7c640-b620-456f-a550-0348f366544a");
 
-    private VmNetworkInterfaceDao dao;
-
     private VmNetworkInterface existingVmInterface;
     private VmNetworkInterface existingTemplateInterface;
     private VmNetworkInterface newVmInterface;
     private VmDevice newVmDevice = new VmDevice();
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        dao = dbFacade.getVmNetworkInterfaceDao();
         existingVmInterface = dao.get(FixturesTool.VM_NETWORK_INTERFACE);
         existingTemplateInterface = dao.get(FixturesTool.TEMPLATE_NETWORK_INTERFACE);
 
@@ -201,20 +200,20 @@ public class VmNetworkInterfaceDaoTest extends BaseDaoTestCase {
     }
 
     @Test
-    public void testGetAll() throws Exception {
+    public void testGetAll() {
         List<VmNetworkInterface> interfaces = dao.getAll();
         assertNotNull(interfaces);
         assertEquals(FixturesTool.NUMBER_OF_VM_INTERFACE_VIEWS, interfaces.size());
     }
 
     @Test
-    public void testGetAllForTemplatesByNetwork() throws Exception {
+    public void testGetAllForTemplatesByNetwork() {
         List<VmNetworkInterface> result = dao.getAllForTemplatesByNetwork(FixturesTool.NETWORK_ENGINE);
         assertEquals(existingTemplateInterface, result.get(0));
     }
 
     @Test
-    public void testGetAllForNetwork() throws Exception {
+    public void testGetAllForNetwork() {
         List<VmNetworkInterface> result = dao.getAllForNetwork(FixturesTool.NETWORK_ENGINE);
         assertEquals(existingVmInterface, result.get(0));
     }

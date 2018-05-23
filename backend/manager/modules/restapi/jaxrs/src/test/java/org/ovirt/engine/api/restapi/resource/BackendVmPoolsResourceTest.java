@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +12,9 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Cluster;
 import org.ovirt.engine.api.model.Template;
 import org.ovirt.engine.api.model.VmPool;
@@ -27,6 +32,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmPoolsResourceTest extends
         AbstractBackendCollectionResourceTest<VmPool, org.ovirt.engine.core.common.businessentities.VmPool, BackendVmPoolsResource> {
 
@@ -92,7 +98,7 @@ public class BackendVmPoolsResourceTest extends
 
 
     @Test
-    public void add() throws Exception {
+    public void add() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetClusterById,
@@ -144,7 +150,7 @@ public class BackendVmPoolsResourceTest extends
     }
 
     @Test
-    public void addWithName() throws Exception {
+    public void addWithName() {
         setUriInfo(setUpBasicUriExpectations());
 
         setUpEntityQueryExpectations(QueryType.GetClusterById,
@@ -229,7 +235,7 @@ public class BackendVmPoolsResourceTest extends
         assertEquals(GUIDS[2].toString(), model.getCluster().getId());
     }
 
-    private void addCommonAddExpectations() throws Exception {
+    private void addCommonAddExpectations() {
         setUpGetEntityExpectations(QueryType.GetVmDataByPoolName,
                 NameQueryParameters.class,
                 new String[] { "Name" },

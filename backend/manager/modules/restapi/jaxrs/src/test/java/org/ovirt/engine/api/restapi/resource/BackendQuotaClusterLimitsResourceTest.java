@@ -1,9 +1,14 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.QuotaClusterLimit;
 import org.ovirt.engine.api.model.QuotaClusterLimits;
 import org.ovirt.engine.core.common.businessentities.Quota;
@@ -12,6 +17,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendQuotaClusterLimitsResourceTest extends AbstractBackendBaseTest {
 
     private static final int CPU_NUMBER = 40;
@@ -24,7 +30,7 @@ public class BackendQuotaClusterLimitsResourceTest extends AbstractBackendBaseTe
     protected BackendQuotaClusterLimitsResource collection;
 
     @Test
-    public void testListGlobalLimit() throws Exception {
+    public void testListGlobalLimit() {
         Quota quota = getQuota();
         quota.setGlobalQuotaCluster(getClusterGlobalCpuLimit());
         setUpGetEntityExpectations(quota);
@@ -35,7 +41,7 @@ public class BackendQuotaClusterLimitsResourceTest extends AbstractBackendBaseTe
     }
 
     @Test
-    public void testListNonGlobalLimit() throws Exception {
+    public void testListNonGlobalLimit() {
         Quota quota = getQuota();
         List<QuotaCluster> clusterLimits = new LinkedList<>();
         QuotaCluster clusterLimit1 = new QuotaCluster();
@@ -55,7 +61,7 @@ public class BackendQuotaClusterLimitsResourceTest extends AbstractBackendBaseTe
                 assertEquals(CPU_NUMBER, clusterLimit.getVcpuLimit().longValue());
             }
             if (clusterLimit.getCluster().getId().equals(CLUSTER_ID_2.toString())) {
-                assertTrue(clusterLimit.getVcpuUsage() == VIRTUAL_CPU_USAGE);
+                assertEquals(VIRTUAL_CPU_USAGE, (int) clusterLimit.getVcpuUsage());
             }
         }
 
@@ -83,7 +89,7 @@ public class BackendQuotaClusterLimitsResourceTest extends AbstractBackendBaseTe
         return quota;
     }
 
-    private void setUpGetEntityExpectations(Quota quota) throws Exception {
+    private void setUpGetEntityExpectations(Quota quota) {
         setUpGetEntityExpectations(QueryType.GetQuotaByQuotaId,
                 IdQueryParameters.class,
                 new String[] { "Id" },

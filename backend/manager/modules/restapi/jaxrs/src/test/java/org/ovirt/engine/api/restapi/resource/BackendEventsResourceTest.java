@@ -1,5 +1,7 @@
 package org.ovirt.engine.api.restapi.resource;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +11,9 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.Event;
 import org.ovirt.engine.api.model.LogSeverity;
@@ -23,6 +27,7 @@ import org.ovirt.engine.core.common.interfaces.SearchType;
 import org.ovirt.engine.core.common.queries.GetAuditLogByIdParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendEventsResourceTest extends AbstractBackendCollectionResourceTest<Event, AuditLog, BackendEventsResource> {
 
     private static final long[] LOG_IDS = { 1, 2, 3 };
@@ -46,7 +51,7 @@ public class BackendEventsResourceTest extends AbstractBackendCollectionResource
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(ActionType.AddExternalEvent,
                                   AddExternalEventParameters.class,
@@ -99,7 +104,7 @@ public class BackendEventsResourceTest extends AbstractBackendCollectionResource
     }
 
     @Test
-    public void testUndelete() throws Exception {
+    public void testUndelete() {
 
         setUriInfo(setUpActionExpectations(ActionType.DisplayAllAuditLogAlerts,
                 ActionParametersBase.class,

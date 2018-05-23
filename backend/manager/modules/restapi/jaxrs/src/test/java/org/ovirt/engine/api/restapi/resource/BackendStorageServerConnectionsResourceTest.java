@@ -1,5 +1,9 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,8 +13,10 @@ import java.util.List;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.StorageConnection;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -21,6 +27,7 @@ import org.ovirt.engine.core.common.queries.QueryParametersBase;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.StorageServerConnectionQueryParametersBase;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageServerConnectionsResourceTest extends AbstractBackendCollectionResourceTest<StorageConnection, StorageServerConnections, BackendStorageServerConnectionsResource> {
 
     protected static final org.ovirt.engine.api.model.StorageType[] STORAGE_TYPES = {
@@ -40,9 +47,9 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
     }
 
     @Test
-    @Ignore
+    @Disabled
     @Override
-    public void testQuery() throws Exception {
+    public void testQuery() {
     }
 
     @Override
@@ -82,7 +89,7 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         assertEquals("", query);
 
         setUpEntityQueryExpectations(QueryType.GetAllStorageServerConnections,
@@ -94,7 +101,7 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
     }
 
     @Override
-    protected void verifyCollection(List<StorageConnection> collection) throws Exception {
+    protected void verifyCollection(List<StorageConnection> collection) {
         assertNotNull(collection);
         assertEquals(GUIDS.length, collection.size());
     }
@@ -108,7 +115,7 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAdd() {
         setUriInfo(setUpBasicUriExpectations());
         Host host = new Host();
         host.setId(GUIDS[1].toString());
@@ -135,7 +142,7 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
     }
 
     @Test
-    public void testAddLocal() throws Exception {
+    public void testAddLocal() {
         setUriInfo(setUpBasicUriExpectations());
         Host host = new Host();
         host.setId(GUIDS[1].toString());
@@ -162,7 +169,7 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
     }
 
     @Test
-    public void testAddFailure() throws Exception {
+    public void testAddFailure() {
         setUriInfo(setUpBasicUriExpectations());
         Host host = new Host();
         host.setId(GUIDS[1].toString());
@@ -182,13 +189,7 @@ public class BackendStorageServerConnectionsResourceTest extends AbstractBackend
                 new Object[] { GUIDS[0].toString() },
                 getEntity(0));
 
-        Response response = null;
-        try {
-            response = collection.add(getModel(0));
-        } catch (WebApplicationException e) {
-            assertNotNull(e.getResponse());
-            assertEquals(400, e.getResponse().getStatus());
-        }
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> collection.add(getModel(0))));
     }
 
     protected void verifyModel(StorageConnection model, int index) {

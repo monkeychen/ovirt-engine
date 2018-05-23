@@ -1,8 +1,13 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Role;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.RolesOperationsParameters;
@@ -10,6 +15,7 @@ import org.ovirt.engine.core.common.action.RolesParameterBase;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendRoleResourceTest extends AbstractBackendRoleResourceTest {
 
     public BackendRoleResourceTest() {
@@ -23,7 +29,7 @@ public class BackendRoleResourceTest extends AbstractBackendRoleResourceTest {
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(2);
         setUriInfo(setUpActionExpectations(ActionType.UpdateRole,
                                            RolesOperationsParameters.class,
@@ -36,7 +42,7 @@ public class BackendRoleResourceTest extends AbstractBackendRoleResourceTest {
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations();
         setUriInfo(setUpActionExpectations(ActionType.RemoveRole,
                                            RolesParameterBase.class,
@@ -48,32 +54,26 @@ public class BackendRoleResourceTest extends AbstractBackendRoleResourceTest {
     }
 
     @Test
-    public void testRemoveNonExistant() throws Exception{
+    public void testRemoveNonExistant() {
         setUpGetEntityExpectations(QueryType.GetRoleById,
                 IdQueryParameters.class,
                 new String[] { "Id" },
                 new Object[] { GUIDS[0] },
                 null);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations();
         setUriInfo(setUpActionExpectations(ActionType.RemoveRole,
                                            RolesParameterBase.class,
@@ -81,12 +81,8 @@ public class BackendRoleResourceTest extends AbstractBackendRoleResourceTest {
                                            new Object[] { GUIDS[0] },
                                            valid,
                                            success));
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
 
@@ -96,7 +92,7 @@ public class BackendRoleResourceTest extends AbstractBackendRoleResourceTest {
         return role;
     }
 
-    protected void setUpGetEntityExpectations(int times) throws Exception {
+    protected void setUpGetEntityExpectations(int times) {
         for (int i=0; i<times; i++) {
             setUpGetEntityExpectations(QueryType.GetRoleById,
                                        IdQueryParameters.class,

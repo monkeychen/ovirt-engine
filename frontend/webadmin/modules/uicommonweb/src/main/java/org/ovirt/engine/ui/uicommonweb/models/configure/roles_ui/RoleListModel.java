@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.ovirt.engine.core.common.action.ActionGroupsToRoleParameter;
 import org.ovirt.engine.core.common.action.ActionReturnValue;
@@ -398,7 +399,7 @@ public class RoleListModel extends ListWithSimpleDetailsModel<Void, Role> {
         role.setDescription(model.getDescription().getEntity());
 
         ArrayList<ActionGroup> actions = new ArrayList<>();
-        HashMap<ActionGroup, ActionGroup> actionDistinctSet = new HashMap<>();
+        Map<ActionGroup, ActionGroup> actionDistinctSet = new HashMap<>();
         for (SelectionTreeNodeModel sm : model.getPermissionGroupModels()) {
             for (SelectionTreeNodeModel smChild : sm.getChildren()) {
                 if (smChild.getIsSelectedNullable() == null || smChild.getIsSelectedNullable()) {
@@ -432,8 +433,7 @@ public class RoleListModel extends ListWithSimpleDetailsModel<Void, Role> {
                         localModel.postOnSaveNew(result.getReturnValue());
 
                     }, this);
-        }
-        else {
+        } else {
 
             detachActionGroup = new ArrayList<>(publicAttachedActions);
             detachActionGroup.removeAll(actions);
@@ -461,8 +461,7 @@ public class RoleListModel extends ListWithSimpleDetailsModel<Void, Role> {
                             }
                             roleListModel.getWindow().stopProgress();
                             roleListModel.cancel();
-                        }
-                        else {
+                        } else {
                             roleListModel.getWindow().stopProgress();
                         }
 
@@ -522,35 +521,25 @@ public class RoleListModel extends ListWithSimpleDetailsModel<Void, Role> {
 
         if (command == getNewCommand()) {
             newEntity();
-        }
-        else if (command == getEditCommand()) {
+        } else if (command == getEditCommand()) {
             edit();
-        }
-        else if (command == getRemoveCommand()) {
+        } else if (command == getRemoveCommand()) {
             remove();
-        }
-        else if (command == getSearchAllRolesCommand()) {
+        } else if (command == getSearchAllRolesCommand()) {
             searchAllRoles();
-        }
-        else if (command == getSearchAdminRolesCommand()) {
+        } else if (command == getSearchAdminRolesCommand()) {
             searchAdminRoles();
-        }
-        else if (command == getSearchUserRolesCommand()) {
+        } else if (command == getSearchUserRolesCommand()) {
             searchUserRoles();
-        }
-        else if ("OnSave".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnSave".equals(command.getName())) { //$NON-NLS-1$
             onSave();
-        }
-        else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
             cancel();
-        }
-        else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
             onRemove();
-        }
-        else if ("OnReset".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnReset".equals(command.getName())) { //$NON-NLS-1$
             onReset();
-        }
-        else if ("Clone".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("Clone".equals(command.getName())) { //$NON-NLS-1$
             cloneRole();
         }
     }

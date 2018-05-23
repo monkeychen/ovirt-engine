@@ -2,22 +2,23 @@ package org.ovirt.engine.core.vdsbroker;
 
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.businessentities.network.VdsNetworkInterface;
-import org.ovirt.engine.core.common.config.ConfigValues;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NetworkImplementationDetailsUtilsUsingBaseNicTest extends BaseNetworkImplementationDetailsUtilsTest {
 
     @Override
-    @Before
+    @BeforeEach
     public void setUpBefore() throws Exception {
         super.setUpBefore();
-        mcr.mockConfigValue(ConfigValues.DefaultMTU, 1500);
         VdsNetworkInterface baseIface = createBaseInterface(qosA, networkName);
         baseIface.setMtu(100);
 
@@ -27,7 +28,7 @@ public class NetworkImplementationDetailsUtilsUsingBaseNicTest extends BaseNetwo
     }
 
     @Test
-    public void calculateNetworkImplementationDetailsNetworkVlanOutOfSyncNetworkAndNicHasNoVlanId() throws Exception {
+    public void calculateNetworkImplementationDetailsNetworkVlanOutOfSyncNetworkAndNicHasNoVlanId() {
         Network network = createNetwork(getTestIface().isBridged(), getTestIface().getMtu(), getTestIface().getVlanId());
 
         calculateNetworkImplementationDetailsAndAssertSync(getTestIface(), true, qosA, network);

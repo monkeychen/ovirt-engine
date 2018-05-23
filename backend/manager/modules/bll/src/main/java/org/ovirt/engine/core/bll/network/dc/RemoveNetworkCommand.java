@@ -24,7 +24,6 @@ import org.ovirt.engine.core.common.businessentities.network.ProviderNetwork;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.network.InterfaceDao;
 import org.ovirt.engine.core.dao.network.NetworkClusterDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
@@ -44,8 +43,6 @@ public class RemoveNetworkCommand<T extends RemoveNetworkParameters> extends Net
     private ProviderDao providerDao;
     @Inject
     private NetworkClusterDao networkClusterDao;
-    @Inject
-    private VmDao vmDao;
     @Inject
     private ProviderProxyFactory providerProxyFactory;
     @Inject
@@ -141,14 +138,15 @@ public class RemoveNetworkCommand<T extends RemoveNetworkParameters> extends Net
 
     @Override
     protected boolean validate() {
-        NetworkValidator validator = new NetworkValidator(vmDao, getNetwork());
+        NetworkValidator validator = new NetworkValidator(getNetwork());
 
         return validate(validator.networkIsSet(getNetworkId()))
                 && validate(validator.notRemovingManagementNetwork())
                 && validate(validator.notIscsiBondNetwork())
                 && validate(validator.networkNotUsedByVms())
                 && validate(validator.networkNotUsedByTemplates())
-                && validate(getRemoveExternalNetworkValidationResult());
+                && validate(getRemoveExternalNetworkValidationResult())
+                && validate(validator.notLinkedToExternalNetwork());
     }
 
     private ValidationResult getRemoveExternalNetworkValidationResult() {
@@ -167,7 +165,7 @@ public class RemoveNetworkCommand<T extends RemoveNetworkParameters> extends Net
 
     @Override
     protected LockProperties applyLockProperties(LockProperties lockProperties) {
-        return lockProperties.withScope(LockProperties.Scope.Execution);
+        return lockProperties.withScope(LockProperties.Scope.Execution).withWait(true);
     }
 
     @Override

@@ -16,6 +16,9 @@
 
 package org.ovirt.engine.api.restapi.types.openstack;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.HashSet;
 import java.util.Set;
 

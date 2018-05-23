@@ -1,11 +1,11 @@
 package org.ovirt.engine.core.vdsbroker.builder.vminfo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 import static org.ovirt.engine.core.vdsbroker.vdsbroker.IoTuneUtils.MB_TO_BYTES;
 
 import java.util.ArrayList;
@@ -14,14 +14,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.businessentities.AdditionalFeature;
 import org.ovirt.engine.core.common.businessentities.ArchitectureType;
 import org.ovirt.engine.core.common.businessentities.SupportedAdditionalClusterFeature;
@@ -61,12 +63,13 @@ import org.ovirt.engine.core.dao.network.NetworkQoSDao;
 import org.ovirt.engine.core.dao.network.VmNicFilterParameterDao;
 import org.ovirt.engine.core.dao.network.VnicProfileDao;
 import org.ovirt.engine.core.dao.qos.StorageQosDao;
-import org.ovirt.engine.core.di.InjectorRule;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.vdsbroker.monitoring.VmDevicesMonitoring;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.VdsProperties;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class VmInfoBuildUtilsTest {
 
     private static final Guid VNIC_PROFILE_ID = Guid.newGuid();
@@ -84,8 +87,6 @@ public class VmInfoBuildUtilsTest {
     private static final Guid LUN_DISK_ID = Guid.newGuid();
     private static final Guid CLUSTER_ID = Guid.newGuid();
 
-    @ClassRule
-    public static InjectorRule injectorRule = new InjectorRule();
     @Mock
     private NetworkDao networkDao;
     @Mock
@@ -132,15 +133,16 @@ public class VmInfoBuildUtilsTest {
 
     private DiskImage diskImage = new DiskImage();
 
-    @ClassRule
-    public static MockConfigRule mcr = new MockConfigRule(
-            mockConfig(ConfigValues.LibgfApiSupported, Version.v4_1, false),
-            mockConfig(ConfigValues.LibgfApiSupported, Version.v4_2, true)
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.LibgfApiSupported, Version.v4_1, false),
+                MockConfigDescriptor.of(ConfigValues.LibgfApiSupported, Version.v4_2, true),
+                MockConfigDescriptor.of(ConfigValues.VirtIOScsiIOThread, Version.v4_1, true)
+        );
+    }
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        injectorRule.bind(AuditLogDirector.class, auditLogDirector);
         diskImage.setDiskProfileId(Guid.newGuid());
 
         qos = new StorageQos();
@@ -229,7 +231,7 @@ public class VmInfoBuildUtilsTest {
                 (List<Map<String, Object>>) struct.get(VdsProperties.NETWORK_FILTER_PARAMETERS);
 
         assertNotNull(struct.get(VdsProperties.NW_FILTER));
-        assertEquals(struct.get(VdsProperties.NW_FILTER), NETWORK_FILTER_NAME);
+        assertEquals(NETWORK_FILTER_NAME, struct.get(VdsProperties.NW_FILTER));
         assertNotNull(parametersList);
 
         assertEquals(2, parametersList.size());
@@ -299,14 +301,12 @@ public class VmInfoBuildUtilsTest {
         vm.setClusterArch(ArchitectureType.x86_64);
         vm.setClusterCompatibilityVersion(Version.v4_1);
 
-        mcr.mockConfigValue(ConfigValues.VirtIOScsiIOThread, Version.v4_1, true);
-
         Map<Integer, Map<VmDevice, Integer>> vmDeviceUnitMap =
                 underTest.getVmDeviceUnitMapForScsiDisks(vm, DiskInterface.VirtIO_SCSI, false, false);
 
         // Ensures that the boot disk unit is lower
-        assertEquals(vmDeviceUnitMap.get(0).get(lunDiskVmDevice), (Integer) 1);
-        assertEquals(vmDeviceUnitMap.get(0).get(diskImageVmDevice), (Integer) 0);
+        assertEquals((Integer) 1, vmDeviceUnitMap.get(0).get(lunDiskVmDevice));
+        assertEquals((Integer) 0, vmDeviceUnitMap.get(0).get(diskImageVmDevice));
     }
 
     @Test
@@ -344,7 +344,7 @@ public class VmInfoBuildUtilsTest {
         vm.setClusterCompatibilityVersion(Version.v4_1);
         vm.setClusterId(CLUSTER_ID);
         doReturn(getSupportedAdditionalClusterFeatures(false)).when(clusterFeatureDao).getSupportedFeaturesByClusterId(CLUSTER_ID);
-        assertEquals(false, underTest.getNetworkDiskType(vm, StorageType.GLUSTERFS).isPresent());
+        assertFalse(underTest.getNetworkDiskType(vm, StorageType.GLUSTERFS).isPresent());
     }
 
     @Test

@@ -3,6 +3,7 @@ package org.ovirt.engine.core.vdsbroker.monitoring;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static org.ovirt.engine.core.utils.CollectionUtils.nullToEmptyList;
 import static org.ovirt.engine.core.utils.ObjectIdentityChecker.getChangedFields;
 
 import java.lang.reflect.Field;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.businessentities.OriginType;
@@ -37,6 +39,7 @@ import org.ovirt.engine.core.common.businessentities.storage.LUNs;
 import org.ovirt.engine.core.common.config.Config;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.utils.Pair;
+import org.ovirt.engine.core.common.utils.ValidationUtils;
 import org.ovirt.engine.core.common.vdscommands.DestroyVmVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.VDSParametersBase;
@@ -48,6 +51,7 @@ import org.ovirt.engine.core.dal.dbbroker.auditloghandling.AuditLogableBase;
 import org.ovirt.engine.core.dao.VdsDynamicDao;
 import org.ovirt.engine.core.dao.network.VmNetworkInterfaceDao;
 import org.ovirt.engine.core.di.Injector;
+import org.ovirt.engine.core.utils.NetworkUtils;
 import org.ovirt.engine.core.vdsbroker.NetworkStatisticsBuilder;
 import org.ovirt.engine.core.vdsbroker.ResourceManager;
 import org.ovirt.engine.core.vdsbroker.VdsManager;
@@ -187,7 +191,11 @@ public class VmAnalyzer {
         if (vdsManager.getVdsId().equals(dbVm.getRunOnVds())) {
             return true;
         }
-        logVmDetectedOnUnexpectedHost();
+        boolean migratingToThisVds = vdsmVm.getVmDynamic().getStatus() == VMStatus.MigratingTo
+                && vdsManager.getVdsId().equals(dbVm.getMigratingToVds());
+        if (!migratingToThisVds) {
+            logVmDetectedOnUnexpectedHost();
+        }
         return false;
     }
 
@@ -355,8 +363,9 @@ public class VmAnalyzer {
     }
 
     private void destroyVm() {
-        runVdsCommand(VDSCommandType.Destroy,
-                new DestroyVmVDSCommandParameters(vdsManager.getVdsId(), getVmId(), null, false, 0, true));
+        DestroyVmVDSCommandParameters parameters = new DestroyVmVDSCommandParameters(vdsManager.getVdsId(), getVmId());
+        parameters.setIgnoreNoVm(true);
+        runVdsCommand(VDSCommandType.Destroy, parameters);
     }
 
     private void saveDynamic(VmDynamic vmDynamic) {
@@ -451,15 +460,15 @@ public class VmAnalyzer {
     }
 
     private void auditVmMigrationAbort(String exitMessage) {
-        AuditLogableBase logable =Injector.injectMembers( new AuditLogableBase(vdsManager.getVdsId(), dbVm.getId()));
+        AuditLogableBase logable =Injector.injectMembers(new AuditLogableBase(vdsManager.getVdsId(), dbVm.getId()));
         logable.addCustomValue("MigrationError", exitMessage);
         auditLog(logable, AuditLogType.VM_MIGRATION_ABORT);
     }
 
     private void destroyVmOnDestinationHost() {
-        VDSReturnValue destoryReturnValue = runVdsCommand(
-                VDSCommandType.DestroyVm,
-                new DestroyVmVDSCommandParameters(dbVm.getMigratingToVds(), dbVm.getId(), false, 0));
+        DestroyVmVDSCommandParameters params = new DestroyVmVDSCommandParameters(dbVm.getMigratingToVds(), getVmId());
+        params.setIgnoreNoVm(true);
+        VDSReturnValue destoryReturnValue = runVdsCommand(VDSCommandType.DestroyVm, params);
         if (destoryReturnValue.getSucceeded()) {
             log.info("Stopped migrating VM: '{}'({}) on VDS: '{}'",
                     dbVm.getId(), getVmManager().getName(), dbVm.getMigratingToVds());
@@ -637,7 +646,6 @@ public class VmAnalyzer {
 
         updateVmDynamicData();
         updateStatistics();
-        prepareGuestAgentNetworkDevicesForUpdate();
 
         if (!vdsManager.isInitialized()) {
             resourceManager.removeVmFromDownVms(vdsManager.getVdsId(), vdsmVm.getVmDynamic().getId());
@@ -689,6 +697,11 @@ public class VmAnalyzer {
     }
 
     private void updateVmDynamicData() {
+        if (vdsmVm.getVmDynamic().getGuestAgentNicsHash() != dbVm.getGuestAgentNicsHash()) {
+            vmGuestAgentNics = filterGuestAgentInterfaces(nullToEmptyList(vdsmVm.getVmGuestAgentInterfaces()));
+            dbVm.setIp(extractVmIps(vmGuestAgentNics));
+        }
+
         // check if dynamic data changed - update cache and DB
         List<String> changedFields = getChangedFields(dbVm, vdsmVm.getVmDynamic());
         // remove all fields that should not be checked:
@@ -971,57 +984,44 @@ public class VmAnalyzer {
         statistics.addNetworkUsageHistory(statistics.getUsageNetworkPercent(), usageHistoryLimit);
     }
 
-    /**
-     * Prepare the VM Guest Agent network devices for update. <br>
-     * The evaluation of the network devices for update is done by comparing the calculated hash of the network devices
-     * from VDSM to the latest hash kept on engine side.
-     */
-    private void prepareGuestAgentNetworkDevicesForUpdate() {
-        List<VmGuestAgentInterface> vmGuestAgentInterfaces = vdsmVm.getVmGuestAgentInterfaces();
-        int guestAgentNicHash = Objects.hashCode(vmGuestAgentInterfaces);
-        if (guestAgentNicHash != dbVm.getGuestAgentNicsHash()) {
-            if (vmDynamicToSave == null) {
-                saveDynamic(dbVm);
-            }
-            updateGuestAgentInterfacesChanges(
-                    vmDynamicToSave,
-                    vmGuestAgentInterfaces,
-                    guestAgentNicHash);
-        }
-    }
-
     private void updateVmJobs() {
         vmJobs = vdsmVm.getVmJobs();
     }
 
     /**** Helpers and sub-methods ****/
 
-    private void updateGuestAgentInterfacesChanges(
-            VmDynamic vmDynamic,
-            List<VmGuestAgentInterface> vmGuestAgentInterfaces,
-            int guestAgentNicHash) {
-        vmDynamic.setGuestAgentNicsHash(guestAgentNicHash);
-        vmDynamic.setIp(extractVmIpsFromGuestAgentInterfaces(vmGuestAgentInterfaces));
-        vmGuestAgentNics = vmGuestAgentInterfaces;
+    private List<VmGuestAgentInterface> filterGuestAgentInterfaces(List<VmGuestAgentInterface> nics) {
+        if (!nics.isEmpty()) {
+            nics = nics.stream().filter(this::isNotBlacklisted).collect(Collectors.toList());
+            nics.forEach(this::filterIpv4Addresses);
+            nics.forEach(this::filterIpv6Addresses);
+        }
+        return nics;
     }
 
-    private String extractVmIpsFromGuestAgentInterfaces(List<VmGuestAgentInterface> nics) {
-        if (nics == null || nics.isEmpty()) {
-            return null;
-        }
+    private boolean isNotBlacklisted(VmGuestAgentInterface nic) {
+        List<String> blacklist = Config.getValue(ConfigValues.GuestNicNamesBlacklist);
+        return nic.getInterfaceName() == null || blacklist.stream().noneMatch(nic.getInterfaceName()::matches);
+    }
 
-        List<String> ips = new ArrayList<>();
-        List<String> ips_v6 = new ArrayList<>();
-        for (VmGuestAgentInterface nic : nics) {
-            if (nic.getIpv4Addresses() != null) {
-                ips.addAll(nic.getIpv4Addresses());
-            }
-            if (nic.getIpv6Addresses() != null) {
-                ips_v6.addAll(nic.getIpv6Addresses());
-            }
-        }
-        ips.addAll(ips_v6);
-        return ips.isEmpty() ? null : String.join(" ", ips);
+    private void filterIpv4Addresses(VmGuestAgentInterface nic) {
+        nic.setIpv4Addresses(nic.getIpv4Addresses().stream()
+                .filter(ValidationUtils::isValidIpv4)
+                .collect(Collectors.toList()));
+    }
+
+    private void filterIpv6Addresses(VmGuestAgentInterface nic) {
+        nic.setIpv6Addresses(nic.getIpv6Addresses().stream()
+                .map(NetworkUtils::stripIpv6ZoneIndex)
+                .filter(ValidationUtils::isValidIpv6)
+                .collect(Collectors.toList()));
+    }
+
+    private String extractVmIps(List<VmGuestAgentInterface> nics) {
+        Stream<String> ipsV4 = nics.stream().map(VmGuestAgentInterface::getIpv4Addresses).flatMap(List::stream);
+        Stream<String> ipsV6 = nics.stream().map(VmGuestAgentInterface::getIpv6Addresses).flatMap(List::stream);
+        String ips = Stream.of(ipsV4, ipsV6).flatMap(stream -> stream).collect(Collectors.joining(" "));
+        return ips.isEmpty() ? null : ips;
     }
 
     protected boolean isBalloonWorking(VmBalloonInfo balloonInfo) {
@@ -1094,7 +1094,7 @@ public class VmAnalyzer {
     }
 
     public List<VmGuestAgentInterface> getVmGuestAgentNics() {
-        return vmGuestAgentNics != null ? vmGuestAgentNics : Collections.emptyList();
+        return vmGuestAgentNics;
     }
 
     protected <P extends VDSParametersBase> VDSReturnValue runVdsCommand(VDSCommandType commandType, P parameters) {

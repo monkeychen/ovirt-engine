@@ -129,6 +129,8 @@ public final class VdsProperties {
     public static final String MAC_ADDR = "macAddr";
     public static final String NETWORK_CUSTOM_PROPERTIES = "custom";
     public static final String BOND_XMIT_POLICY = "xmit_hash_policy";
+    public static final String NETMASK = "netmask";
+    public static final String ADDR = "addr";
 
     // LLDP related properties
     public static final String LLDP_ENABLED = "enabled";
@@ -245,7 +247,6 @@ public final class VdsProperties {
     public static final String VmLeaseOffset = "offset";
     // vm configuration (i.e. VmDynamic)
     public static final String guest_cur_user_name = "username";
-    public static final String VM_IP = "guestIPs";
     public static final String VM_FQDN = "guestFQDN";
     public static final String vm_guest_mem_buffered = "mem_buffers";
     public static final String vm_guest_mem_cached = "mem_cached";
@@ -525,4 +526,7 @@ public final class VdsProperties {
     public static final String vmJobImageUUID = "imgUUID";
 
     public static final String SWITCH_KEY = "switch";
+
+    // Network provider agent id
+    public static final String OPENSTACK_BINDING_HOST_IDS = "openstack_binding_host_ids";
 }

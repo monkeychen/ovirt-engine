@@ -1,9 +1,9 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -13,15 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.HostNicVfsConfig;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 
-public class HostNicVfsConfigDaoTest extends BaseDaoTestCase {
-    private HostNicVfsConfigDao dao;
+public class HostNicVfsConfigDaoTest extends BaseDaoTestCase<HostNicVfsConfigDao> {
 
     // Map the vfsConfig id to the number of networks and labels it has
     private static final Map<Guid, Pair<Integer, Integer>> EXPECTED_GUIDS;
@@ -31,13 +30,6 @@ public class HostNicVfsConfigDaoTest extends BaseDaoTestCase {
         tmpMap.put(FixturesTool.HOST_NIC_VFS_CONFIG_NOT_ALL_NETWORKS_ALLOWED_1, new Pair<>(2, 2));
         tmpMap.put(FixturesTool.HOST_NIC_VFS_CONFIG_NOT_ALL_NETWORKS_ALLOWED_2, new Pair<>(1, 3));
         EXPECTED_GUIDS = Collections.unmodifiableMap(tmpMap);
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
-        dao = dbFacade.getHostNicVfsConfigDao();
     }
 
     /**
@@ -266,7 +258,7 @@ public class HostNicVfsConfigDaoTest extends BaseDaoTestCase {
     }
 
     private void checkNetworks(Set<Guid> networks, int numOfNetworks) {
-        assertEquals("num of networks", numOfNetworks, getListSize(networks));
+        assertEquals(numOfNetworks, getListSize(networks), "num of networks");
     }
 
     private void checkLabels(HostNicVfsConfig vfsConfig, int numOfLabels) {
@@ -274,7 +266,7 @@ public class HostNicVfsConfigDaoTest extends BaseDaoTestCase {
     }
 
     private void checkLabels(Set<String> labels, int numOfLabels) {
-        assertEquals("num of labels", numOfLabels, getListSize(labels));
+        assertEquals(numOfLabels, getListSize(labels), "num of labels");
     }
 
     private int getListSize(Collection<?> collection) {
@@ -287,11 +279,11 @@ public class HostNicVfsConfigDaoTest extends BaseDaoTestCase {
     }
 
     private void assertHostNicVfsConfigEquals(HostNicVfsConfig config1, HostNicVfsConfig config2) {
-        assertEquals("id", config1.getId(), config2.getId());
-        assertEquals("nic_id", config1.getNicId(), config2.getNicId());
-        assertEquals("all_networks_allowed", config1.isAllNetworksAllowed(), config2.isAllNetworksAllowed());
-        assertEquals("networks", config1.getNetworks(), config2.getNetworks());
-        assertEquals("labels", config1.getNetworkLabels(), config2.getNetworkLabels());
+        assertEquals(config1.getId(), config2.getId(), "id");
+        assertEquals(config1.getNicId(), config2.getNicId(), "nic_id");
+        assertEquals(config1.isAllNetworksAllowed(), config2.isAllNetworksAllowed(), "all_networks_allowed");
+        assertEquals(config1.getNetworks(), config2.getNetworks(), "networks");
+        assertEquals(config1.getNetworkLabels(), config2.getNetworkLabels(), "labels");
     }
 
     @Test

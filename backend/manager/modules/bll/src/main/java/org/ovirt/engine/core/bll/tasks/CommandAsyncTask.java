@@ -7,7 +7,6 @@ import java.util.Map;
 import org.ovirt.engine.core.bll.CommandBase;
 import org.ovirt.engine.core.bll.CommandMultiAsyncTasks;
 import org.ovirt.engine.core.bll.CommandsFactory;
-import org.ovirt.engine.core.bll.job.ExecutionContext;
 import org.ovirt.engine.core.bll.tasks.interfaces.CommandCoordinator;
 import org.ovirt.engine.core.common.action.ActionParametersBase;
 import org.ovirt.engine.core.common.action.ActionReturnValue;
@@ -33,8 +32,6 @@ public class CommandAsyncTask extends SPMAsyncTask {
 
     private static final Map<Guid, CommandMultiAsyncTasks> _multiTasksByCommandIds = new HashMap<>();
 
-    private AsyncTaskManager asyncTaskManager;
-
     public CommandMultiAsyncTasks getCommandMultiAsyncTasks() {
         CommandMultiAsyncTasks entityInfo = null;
         synchronized (_lockObject) {
@@ -43,12 +40,8 @@ public class CommandAsyncTask extends SPMAsyncTask {
         return entityInfo;
     }
 
-    public CommandAsyncTask(AsyncTaskManager asyncTaskManager,
-        CommandCoordinator coco,
-        AsyncTaskParameters parameters,
-        boolean duringInit) {
+    public CommandAsyncTask(CommandCoordinator coco, AsyncTaskParameters parameters, boolean duringInit) {
         super(coco, parameters);
-        this.asyncTaskManager = asyncTaskManager;
         boolean isNewCommandAdded = false;
         synchronized (_lockObject) {
             if (!_multiTasksByCommandIds.containsKey(getCommandId())) {
@@ -97,9 +90,7 @@ public class CommandAsyncTask extends SPMAsyncTask {
                     getVdsmTaskId());
 
             clearAsyncTask();
-        }
-
-        else if (entityInfo.shouldEndAction() && !hasRunningChildCommands()) {
+        } else if (entityInfo.shouldEndAction() && !hasRunningChildCommands()) {
             log.info(
                     "CommandAsyncTask::endActionIfNecessary: All tasks of command '{}' has ended -> executing 'endAction'",
                     getCommandId());
@@ -134,7 +125,6 @@ public class CommandAsyncTask extends SPMAsyncTask {
     private void endCommandAction() {
         CommandMultiAsyncTasks entityInfo = getCommandMultiAsyncTasks();
         ActionReturnValue actionReturnValue = null;
-        ExecutionContext context = null;
         boolean endActionRuntimeException = false;
 
         AsyncTask dbAsyncTask = getParameters().getDbAsyncTask();
@@ -165,22 +155,17 @@ public class CommandAsyncTask extends SPMAsyncTask {
                 log.error(getErrorMessage(), ex);
                 endActionRuntimeException = true;
             }
-        }
-
-        catch (RuntimeException Ex2) {
+        } catch (RuntimeException Ex2) {
             log.error("CommandAsyncTask::endCommandAction [within thread]: An exception has been thrown (not"
                             + " related to 'endAction' itself)",
                     Ex2);
             endActionRuntimeException = true;
-        }
-
-        finally {
+        } finally {
             // if a RuntimeExcpetion occurs we clear the task from db and perform no other action
             if (endActionRuntimeException) {
                 handleEndActionRuntimeException(entityInfo, dbAsyncTask);
             } else {
-                boolean isTaskGroupSuccess = dbAsyncTask.getActionParameters().getTaskGroupSuccess();
-                handleEndActionResult(entityInfo, actionReturnValue, context, isTaskGroupSuccess);
+                handleEndActionResult(entityInfo, actionReturnValue);
             }
         }
     }
@@ -206,16 +191,12 @@ public class CommandAsyncTask extends SPMAsyncTask {
                     _multiTasksByCommandIds.remove(commandInfo.getCommandId());
                 }
             }
-        }
-
-        catch (RuntimeException ex) {
+        } catch (RuntimeException ex) {
             log.error("CommandAsyncTask::HandleEndActionResult [within thread]: an exception has been thrown", ex);
         }
     }
 
-    private void handleEndActionResult(CommandMultiAsyncTasks commandInfo, ActionReturnValue actionReturnValue,
-            ExecutionContext context,
-            boolean isTaskGroupSuccess) {
+    private void handleEndActionResult(CommandMultiAsyncTasks commandInfo, ActionReturnValue actionReturnValue) {
         try {
             ActionType actionType = getParameters().getDbAsyncTask().getActionType();
             log.info("CommandAsyncTask::HandleEndActionResult [within thread]: endAction for action type '{}'"
@@ -228,9 +209,7 @@ public class CommandAsyncTask extends SPMAsyncTask {
                         actionType);
 
                     commandInfo.repoll();
-                }
-
-                else {
+                } else {
                     log.info("CommandAsyncTask::HandleEndActionResult [within thread]: endAction for action type"
                                     + " '{}' {}succeeded, clearing tasks.",
                         actionType,
@@ -247,9 +226,7 @@ public class CommandAsyncTask extends SPMAsyncTask {
                         }
                     }
                 }
-        }
-
-        catch (RuntimeException ex) {
+        } catch (RuntimeException ex) {
             log.error("CommandAsyncTask::HandleEndActionResult [within thread]: an exception has been thrown", ex);
         }
     }

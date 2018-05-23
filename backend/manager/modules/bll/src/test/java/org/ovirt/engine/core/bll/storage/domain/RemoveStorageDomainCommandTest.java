@@ -9,11 +9,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.BaseCommandTest;
 import org.ovirt.engine.core.bll.CommandAssertUtils;
 import org.ovirt.engine.core.bll.ValidateTestUtils;
@@ -28,6 +30,7 @@ import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VDSStatus;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.common.errors.EngineMessage;
+import org.ovirt.engine.core.common.interfaces.VDSBrokerFrontend;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
@@ -36,6 +39,7 @@ import org.ovirt.engine.core.dao.StorageDomainDao;
 import org.ovirt.engine.core.dao.VdsDao;
 
 /** A test case for the {@link RemoveStorageDomainCommand} */
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RemoveStorageDomainCommandTest extends BaseCommandTest {
 
     @Spy
@@ -49,9 +53,12 @@ public class RemoveStorageDomainCommandTest extends BaseCommandTest {
     @Mock
     private VdsDao vdsDaoMock;
 
+    @Mock
+    private VDSBrokerFrontend vdsBrokerFrontend;
+
     private StorageDomain storageDomain;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Guid storageDomainID = command.getStorageDomainId();
         storageDomain = new StorageDomain();
@@ -171,7 +178,7 @@ public class RemoveStorageDomainCommandTest extends BaseCommandTest {
     protected void setUpFormatDomain(boolean shouldFail) {
         VDSReturnValue ret = new VDSReturnValue();
         ret.setSucceeded(!shouldFail);
-        doReturn(ret).when(command).runVdsCommand(eq(VDSCommandType.FormatStorageDomain), any());
+        when(vdsBrokerFrontend.runVdsCommand(eq(VDSCommandType.FormatStorageDomain), any())).thenReturn(ret);
     }
 
     private void setVdsStatus(VDSStatus status) {

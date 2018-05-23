@@ -1,16 +1,14 @@
 package org.ovirt.engine.core.dao;
 
-import org.junit.Rule;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.common.businessentities.storage.StorageServerConnectionExtension;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.utils.RandomUtils;
-import org.ovirt.engine.core.utils.RandomUtilsSeedingRule;
+import org.ovirt.engine.core.utils.RandomUtilsSeedingExtension;
 
+@ExtendWith(RandomUtilsSeedingExtension.class)
 public class StorageServerConnectionExtensionDaoTest
         extends BaseGenericDaoTestCase<Guid, StorageServerConnectionExtension, StorageServerConnectionExtensionDao> {
-
-    @Rule
-    public final RandomUtilsSeedingRule rusr = new RandomUtilsSeedingRule();
 
     @Override
     protected StorageServerConnectionExtension generateNewEntity() {
@@ -32,11 +30,6 @@ public class StorageServerConnectionExtensionDaoTest
     }
 
     @Override
-    protected StorageServerConnectionExtensionDao prepareDao() {
-        return dbFacade.getStorageServerConnectionExtensionDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
@@ -44,11 +37,6 @@ public class StorageServerConnectionExtensionDaoTest
     @Override
     protected int getEntitiesTotalCount() {
         return 2;
-    }
-
-    @Override public void setUp() throws Exception {
-        super.setUp();
-        dao = dbFacade.getStorageServerConnectionExtensionDao();
     }
 
     private void fillWithRandomData(StorageServerConnectionExtension ssce) {

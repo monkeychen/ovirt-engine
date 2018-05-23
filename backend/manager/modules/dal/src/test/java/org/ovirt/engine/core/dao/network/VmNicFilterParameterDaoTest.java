@@ -1,14 +1,12 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.VmNicFilterParameter;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseGenericDaoTestCase;
@@ -17,9 +15,6 @@ import org.ovirt.engine.core.dao.FixturesTool;
 
 public class VmNicFilterParameterDaoTest
         extends BaseGenericDaoTestCase<Guid, VmNicFilterParameter, VmNicFilterParameterDao> {
-
-    @Inject
-    private VmNicFilterParameterDao dao;
 
     @Override
     protected VmNicFilterParameter generateNewEntity() {
@@ -42,11 +37,6 @@ public class VmNicFilterParameterDaoTest
     @Override
     protected Guid getExistingEntityId() {
         return FixturesTool.VM_NETWORK_FILTER_PARAMETER;
-    }
-
-    @Override
-    protected VmNicFilterParameterDao prepareDao() {
-        return dao;
     }
 
     @Override

@@ -1,9 +1,10 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -16,17 +17,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.storage.disk.DiskHandler;
 import org.ovirt.engine.core.bll.storage.disk.image.ImagesHandler;
 import org.ovirt.engine.core.bll.utils.PermissionSubject;
 import org.ovirt.engine.core.bll.utils.VmDeviceUtils;
 import org.ovirt.engine.core.bll.validator.ValidationResultMatchers;
-import org.ovirt.engine.core.bll.validator.storage.DiskImagesValidator;
 import org.ovirt.engine.core.bll.validator.storage.MultipleDiskVmElementValidator;
 import org.ovirt.engine.core.bll.validator.storage.MultipleStorageDomainsValidator;
 import org.ovirt.engine.core.common.VdcObjectType;
@@ -45,14 +47,13 @@ import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.Version;
 import org.ovirt.engine.core.dao.ClusterDao;
-import org.ovirt.engine.core.dao.DiskVmElementDao;
 import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VmDao;
-import org.ovirt.engine.core.dao.VmDeviceDao;
 
 /**
  * A test case for {@link AddVmTemplateCommand}
  */
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AddVmTemplateCommandTest extends BaseCommandTest {
     private VM vm = createVM();
 
@@ -70,19 +71,11 @@ public class AddVmTemplateCommandTest extends BaseCommandTest {
     @Mock
     private MultipleStorageDomainsValidator multipleSdValidator;
     @Mock
-    private DiskImagesValidator diskImagesValidator;
-    @Mock
-    private VmDeviceDao deviceDao;
-    @Mock
-    private DiskVmElementDao diskVmElementDao;
-    @Mock
     private DiskHandler diskHandler;
     @Mock
     private ImagesHandler imagesHandler;
-
     @Mock
     private VmHandler vmHandler;
-
     @Mock
     private VmDeviceUtils vmDeviceUtils;
 
@@ -100,7 +93,7 @@ public class AddVmTemplateCommandTest extends BaseCommandTest {
         return vm;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(vmDao.get(vm.getId())).thenReturn(vm);
 
@@ -193,7 +186,7 @@ public class AddVmTemplateCommandTest extends BaseCommandTest {
     @Test
     public void testPatternBasedNameFails() {
         cmd.getParameters().setName("aa-??bb");
-        assertFalse("Pattern-based name should not be supported for Template", cmd.validateInputs());
+        assertFalse(cmd.validateInputs(), "Pattern-based name should not be supported for Template");
     }
 
 
@@ -247,7 +240,7 @@ public class AddVmTemplateCommandTest extends BaseCommandTest {
 
         List<PermissionSubject> permissionCheckSubjects = cmd.getPermissionCheckSubjects();
         for(PermissionSubject permissionSubject : permissionCheckSubjects){
-            assertFalse(ActionGroup.EDIT_ADMIN_TEMPLATE_PROPERTIES.equals(permissionSubject.getActionGroup()));
+            assertNotEquals(ActionGroup.EDIT_ADMIN_TEMPLATE_PROPERTIES, permissionSubject.getActionGroup());
         }
     }
 

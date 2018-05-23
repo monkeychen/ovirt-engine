@@ -1,20 +1,15 @@
 package org.ovirt.engine.core.bll.hostdeploy;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.CommandAssertUtils.checkSucceeded;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.ovirt.engine.core.bll.AbstractQueryTest;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VDSType;
@@ -23,9 +18,9 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.compat.RpmVersion;
 import org.ovirt.engine.core.dao.VdsDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockedConfig;
 
-@RunWith(MockitoJUnitRunner.class)
 public class GetoVirtISOsTest extends AbstractQueryTest<IdQueryParameters, GetoVirtISOsQuery<IdQueryParameters>> {
 
     private static final String AVAILABLE_OVIRT_ISO_VERSION = "RHEV Hypervisor - 6.2 - 20111010.0.el6";
@@ -34,14 +29,13 @@ public class GetoVirtISOsTest extends AbstractQueryTest<IdQueryParameters, GetoV
     @Mock
     private VdsDao vdsDao;
 
-    @Override
-    protected Set<MockConfigRule.MockConfigDescriptor<Object>> getExtraConfigDescriptors() {
-        return new HashSet<>(Arrays.asList(
-            mockConfig(ConfigValues.OvirtInitialSupportedIsoVersion, "2.5.5:5.8"),
-            mockConfig(ConfigValues.OvirtIsoPrefix, "^ovirt-node-iso-([0-9].*)\\.iso$:^rhevh-([0-9].*)\\.iso$"),
-            mockConfig(ConfigValues.OvirtNodeOS, "^ovirt.*$:^rhev.*$"),
-            mockConfig(ConfigValues.DataDir, "/usr/share/engine"),
-            mockConfig(ConfigValues.oVirtISOsRepositoryPath, "/usr/share/ovirt-node-iso:/usr/share/rhev-hypervisor"))
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.concat(AbstractQueryTest.mockConfiguration(), Stream.of(
+            MockConfigDescriptor.of(ConfigValues.OvirtInitialSupportedIsoVersion, "2.5.5:5.8"),
+            MockConfigDescriptor.of(ConfigValues.OvirtIsoPrefix, "^ovirt-node-iso-([0-9].*)\\.iso$:^rhevh-([0-9].*)\\.iso$"),
+            MockConfigDescriptor.of(ConfigValues.OvirtNodeOS, "^ovirt.*$:^rhev.*$"),
+            MockConfigDescriptor.of(ConfigValues.DataDir, "/usr/share/engine"),
+            MockConfigDescriptor.of(ConfigValues.oVirtISOsRepositoryPath, "/usr/share/ovirt-node-iso:/usr/share/rhev-hypervisor"))
         );
     }
 
@@ -101,8 +95,8 @@ public class GetoVirtISOsTest extends AbstractQueryTest<IdQueryParameters, GetoV
     }
 
     @Test
+    @MockedConfig("mockedConfigForMultiplePaths")
     public void testQueryMultiplePaths() {
-        mcr.mockConfigValue(ConfigValues.oVirtISOsRepositoryPath, "src/test/resources/ovirt-isos:src/test/resources/rhev-isos");
         getQuery().setInternalExecution(true);
         getQuery().executeCommand();
 
@@ -110,15 +104,26 @@ public class GetoVirtISOsTest extends AbstractQueryTest<IdQueryParameters, GetoV
         checkReturnValueEmpty(getQuery());
     }
 
+    public static Stream<MockConfigDescriptor<?>> mockedConfigForMultiplePaths() {
+        return Stream.concat(mockConfiguration(),
+                Stream.of(MockConfigDescriptor.of(
+                        ConfigValues.oVirtISOsRepositoryPath, "src/test/resources/ovirt-isos:src/test/resources/rhev-isos")));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
+    @MockedConfig("mockedConfigForPrefixChange")
     public void testPrefixChange() {
-        mcr.mockConfigValue(ConfigValues.OvirtIsoPrefix, "a different prefix");
         getQuery().setInternalExecution(true);
         getQuery().executeCommand();
 
         checkSucceeded(getQuery(), true);
         checkReturnValueEmpty(getQuery());
+    }
+
+    public static Stream<MockConfigDescriptor<?>> mockedConfigForPrefixChange() {
+        return Stream.concat(mockConfiguration(),
+                Stream.of(MockConfigDescriptor.of(ConfigValues.OvirtIsoPrefix, "a different prefix")));
     }
 
     @SuppressWarnings("unchecked")

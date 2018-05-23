@@ -1,25 +1,24 @@
 package org.ovirt.engine.core.bll.validator;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner.Strict;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.bll.hostedengine.HostedEngineHelper;
 import org.ovirt.engine.core.common.action.VdsOperationActionParameters.AuthenticationMethod;
 import org.ovirt.engine.core.common.businessentities.BusinessEntitiesDefinitions;
@@ -36,10 +35,11 @@ import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VdsDao;
 import org.ovirt.engine.core.dao.VdsStaticDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
 
-@RunWith(Strict.class)
+@ExtendWith({MockitoExtension.class, MockConfigExtension.class})
 public class HostValidatorTest {
 
     private static final int HOST_NAME_SIZE = 20;
@@ -53,8 +53,13 @@ public class HostValidatorTest {
     @Mock
     private StoragePoolDao storagePoolDao;
 
-    @Rule
-    public MockConfigRule mockConfigRule = new MockConfigRule(mockConfig(ConfigValues.EncryptHostCommunication, true));
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.EncryptHostCommunication, true),
+                MockConfigDescriptor.of(ConfigValues.InstallVds, Boolean.TRUE),
+                MockConfigDescriptor.of(ConfigValues.MaxVdsNameLength, HOST_NAME_SIZE)
+        );
+    }
 
     @Mock
     private VDS host;
@@ -68,11 +73,6 @@ public class HostValidatorTest {
 
     private void mockHostForActivation(VDSStatus status) {
         when(host.getStatus()).thenReturn(status);
-    }
-
-    private void mockHostForUniqueId(String value) {
-        mockConfigRule.mockConfigValue(ConfigValues.InstallVds, Boolean.TRUE);
-        when(host.getUniqueId()).thenReturn(value);
     }
 
     @Test
@@ -94,7 +94,6 @@ public class HostValidatorTest {
 
     @Test
     public void nameLengthIsTooLong() {
-        mockConfigRule.mockConfigValue(ConfigValues.MaxVdsNameLength, HOST_NAME_SIZE);
         when(host.getName()).thenReturn(RandomUtils.instance().nextString(HOST_NAME_SIZE * 2));
         assertThat(validator.nameLengthIsLegal(), failsWith(EngineMessage.ACTION_TYPE_FAILED_NAME_LENGTH_IS_TOO_LONG));
     }
@@ -259,13 +258,13 @@ public class HostValidatorTest {
 
     @Test
     public void testValidateNoUniqueId() {
-        mockHostForUniqueId(StringUtils.EMPTY);
+        when(host.getUniqueId()).thenReturn(StringUtils.EMPTY);
         assertThat(validator.validateUniqueId(), failsWith( EngineMessage.VDS_NO_UUID));
     }
 
     @Test
     public void testValidateUniqueId() {
-        mockHostForUniqueId(Guid.newGuid().toString());
+        when(host.getUniqueId()).thenReturn(Guid.newGuid().toString());
         assertThat(validator.validateUniqueId(), isValid());
     }
 

@@ -67,6 +67,7 @@ import org.ovirt.engine.core.dal.dbbroker.auditloghandling.AuditLogableImpl;
 import org.ovirt.engine.core.dal.dbbroker.auditloghandling.MessageBundler;
 import org.ovirt.engine.core.dao.ClusterDao;
 import org.ovirt.engine.core.dao.VdsDao;
+import org.ovirt.engine.core.dao.VmStatisticsDao;
 import org.ovirt.engine.core.dao.scheduling.ClusterPolicyDao;
 import org.ovirt.engine.core.dao.scheduling.PolicyUnitDao;
 import org.ovirt.engine.core.di.Injector;
@@ -94,6 +95,8 @@ public class SchedulingManager implements BackendService {
     @Inject
     private VdsDao vdsDao;
     @Inject
+    private VmStatisticsDao vmStatisticsDao;
+    @Inject
     private ClusterDao clusterDao;
     @Inject
     private PolicyUnitDao policyUnitDao;
@@ -105,8 +108,6 @@ public class SchedulingManager implements BackendService {
     private HostLocking hostLocking;
     @Inject
     private VmOverheadCalculator vmOverheadCalculator;
-    @Inject
-    private SlaValidator slaValidator;
     @Inject
     private ExternalSchedulerBroker externalBroker;
     @Inject
@@ -291,8 +292,7 @@ public class SchedulingManager implements BackendService {
                 final List<String> detailMessages = details.getMessages(line.getKey());
                 if (detailMessages.isEmpty()) {
                     lines.add(EngineMessage.SCHEDULING_HOST_FILTERED_REASON.name());
-                }
-                else {
+                } else {
                     lines.addAll(detailMessages);
                     lines.add(EngineMessage.SCHEDULING_HOST_FILTERED_REASON_WITH_DETAIL.name());
                 }
@@ -325,6 +325,7 @@ public class SchedulingManager implements BackendService {
             vdsList = removeBlacklistedHosts(vdsList, hostBlackList);
             vdsList = keepOnlyWhitelistedHosts(vdsList, hostWhiteList);
             refreshCachedPendingValues(vdsList);
+            subtractRunningVmResources(cluster, vm, vdsList);
             ClusterPolicy policy = policyMap.get(cluster.getClusterPolicyId());
             Map<String, String> parameters = createClusterPolicyParameters(cluster);
 
@@ -540,6 +541,7 @@ public class SchedulingManager implements BackendService {
         vdsList = removeBlacklistedHosts(vdsList, vdsBlackList);
         vdsList = keepOnlyWhitelistedHosts(vdsList, vdsWhiteList);
         refreshCachedPendingValues(vdsList);
+        subtractRunningVmResources(cluster, vm, vdsList);
         ClusterPolicy policy = policyMap.get(cluster.getClusterPolicyId());
         Map<String, String> parameters = createClusterPolicyParameters(cluster);
 
@@ -606,7 +608,7 @@ public class SchedulingManager implements BackendService {
         }
     }
 
-    private List<VDS> runFilters(ArrayList<Guid> filters,
+    private List<VDS> runFilters(List<Guid> filters,
             Cluster cluster,
             List<VDS> hostList,
             VM vm,
@@ -617,8 +619,8 @@ public class SchedulingManager implements BackendService {
             boolean shouldRunExternalFilters,
             String correlationId) {
         SchedulingResult result = new SchedulingResult();
-        ArrayList<PolicyUnitImpl> internalFilters = new ArrayList<>();
-        ArrayList<PolicyUnitImpl> externalFilters = new ArrayList<>();
+        List<PolicyUnitImpl> internalFilters = new ArrayList<>();
+        List<PolicyUnitImpl> externalFilters = new ArrayList<>();
 
         // Create a local copy so we can manipulate it
         filters = new ArrayList<>(filters);
@@ -659,7 +661,7 @@ public class SchedulingManager implements BackendService {
         return hostList;
     }
 
-    private List<VDS> runInternalFilters(ArrayList<PolicyUnitImpl> filters,
+    private List<VDS> runInternalFilters(List<PolicyUnitImpl> filters,
             Cluster cluster,
             List<VDS> hostList,
             VM vm,
@@ -707,7 +709,7 @@ public class SchedulingManager implements BackendService {
         }
     }
 
-    private List<VDS> runExternalFilters(ArrayList<PolicyUnitImpl> filters,
+    private List<VDS> runExternalFilters(List<PolicyUnitImpl> filters,
             List<VDS> hostList,
             VM vm,
             Map<String, String> parameters,
@@ -739,7 +741,7 @@ public class SchedulingManager implements BackendService {
         return hosts.stream().filter(host -> idSet.contains(host.getId())).collect(Collectors.toList());
     }
 
-    private void sortFilters(ArrayList<Guid> filters, final Map<Guid, Integer> filterPositionMap) {
+    private void sortFilters(List<Guid> filters, final Map<Guid, Integer> filterPositionMap) {
         filters.sort(Comparator.comparingInt(f -> filterPositionMap.getOrDefault(f, 0)));
     }
 
@@ -825,6 +827,32 @@ public class SchedulingManager implements BackendService {
         }
     }
 
+    private void subtractRunningVmResources(Cluster cluster, VM vm, List<VDS> hosts) {
+        // Check if VM is running
+        if (Guid.isNullOrEmpty(vm.getRunOnVds())) {
+            return;
+        }
+
+        // Find host where it runs
+        VDS host = hosts.stream()
+                 .filter(h -> h.getId().equals(vm.getRunOnVds()))
+                 .findAny().orElse(null);
+
+        if (host == null) {
+            return;
+        }
+
+        vm.setStatisticsData(vmStatisticsDao.get(vm.getId()));
+
+        // Subtract cpu load
+        int hostCpus = SlaValidator.getEffectiveCpuCores(host, cluster.getCountThreadsAsCores());
+        float cpuCoef = ((float) vm.getNumOfCpus()) / ((float) hostCpus);
+        host.setUsageCpuPercent(host.getUsageCpuPercent() - Math.round(vm.getUsageCpuPercent() * cpuCoef));
+
+        // Subtract memory
+        host.setMemCommited(host.getMemCommited() - vmOverheadCalculator.getTotalRequiredMemoryInMb(vm));
+    }
+
     public Map<String, String> getCustomPropertiesRegexMap(ClusterPolicy clusterPolicy) {
         Set<Guid> usedPolicyUnits = new HashSet<>();
         if (clusterPolicy.getFilters() != null) {
@@ -899,8 +927,7 @@ public class SchedulingManager implements BackendService {
         log.debug("HA Reservation check timer entered.");
         List<Cluster> clusters = clusterDao.getAll();
         if (clusters != null) {
-            HaReservationHandling haReservationHandling = new HaReservationHandling(getPendingResourceManager(),
-                    slaValidator);
+            HaReservationHandling haReservationHandling = new HaReservationHandling(getPendingResourceManager());
             for (Cluster cluster : clusters) {
                 if (cluster.supportsHaReservation()) {
                     List<VDS> returnedFailedHosts = new ArrayList<>();

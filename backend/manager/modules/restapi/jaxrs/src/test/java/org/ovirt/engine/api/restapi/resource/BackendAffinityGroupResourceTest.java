@@ -1,11 +1,14 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.AffinityGroup;
 import org.ovirt.engine.api.model.Cluster;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -14,6 +17,7 @@ import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.scheduling.parameters.AffinityGroupCRUDParameters;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendAffinityGroupResourceTest extends AbstractBackendSubResourceTest<AffinityGroup, org.ovirt.engine.core.common.scheduling.AffinityGroup, BackendAffinityGroupResource> {
 
     private static final Guid AFFINITY_GROUP_ID = GUIDS[0];
@@ -24,7 +28,7 @@ public class BackendAffinityGroupResourceTest extends AbstractBackendSubResource
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
 
@@ -32,19 +36,14 @@ public class BackendAffinityGroupResourceTest extends AbstractBackendSubResource
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, false);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.get()));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetEntityExpectations(2, true);
 
         setUriInfo(setUpActionExpectations(ActionType.EditAffinityGroup,
@@ -58,7 +57,7 @@ public class BackendAffinityGroupResourceTest extends AbstractBackendSubResource
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
         setUpActionExpectations(
@@ -73,20 +72,13 @@ public class BackendAffinityGroupResourceTest extends AbstractBackendSubResource
     }
 
     @Test
-    public void testRemoveNonExistant() throws Exception {
+    public void testRemoveNonExistant() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, false);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
-    private void setUpGetEntityExpectations(int times, boolean found) throws Exception {
+    private void setUpGetEntityExpectations(int times, boolean found) {
         while (times-- > 0) {
             setUpGetEntityExpectations(QueryType.GetAffinityGroupById,
                     IdQueryParameters.class,

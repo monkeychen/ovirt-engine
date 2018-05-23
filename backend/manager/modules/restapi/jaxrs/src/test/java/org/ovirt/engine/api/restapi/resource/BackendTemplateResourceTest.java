@@ -1,5 +1,8 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.api.restapi.resource.BackendTemplatesResourceTest.getModel;
@@ -14,7 +17,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Action;
 import org.ovirt.engine.api.model.CreationStatus;
 import org.ovirt.engine.api.model.StorageDomain;
@@ -36,6 +41,7 @@ import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.utils.VmDeviceType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendTemplateResourceTest
     extends AbstractBackendSubResourceTest<Template, VmTemplate, BackendTemplateResource> {
 
@@ -44,31 +50,19 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testBadGuid() throws Exception {
-        try {
-            new BackendTemplateResource("foo");
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testBadGuid() {
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> new BackendTemplateResource("foo")));
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        }
-        catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, resource::get));
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetGraphicsExpectations(1);
         setUpGetEntityExpectations(1);
@@ -77,11 +71,11 @@ public class BackendTemplateResourceTest
         verifyModel(resource.get(), 0);
     }
 
-    protected void setUpGetEntityExpectations(int times) throws Exception {
+    protected void setUpGetEntityExpectations(int times) {
         setUpGetEntityExpectations(times, false);
     }
 
-    protected void setUpGetEntityExpectations(int times, boolean notFound) throws Exception {
+    protected void setUpGetEntityExpectations(int times, boolean notFound) {
         while (times-- > 0) {
             setUpGetEntityExpectations(QueryType.GetVmTemplate,
                     GetVmTemplateParameters.class,
@@ -92,16 +86,16 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testGetWithConsoleSet() throws Exception {
+    public void testGetWithConsoleSet() {
         testGetConsoleAware(true);
     }
 
     @Test
-    public void testGetWithConsoleNotSet() throws Exception {
+    public void testGetWithConsoleNotSet() {
         testGetConsoleAware(false);
     }
 
-    public void testGetConsoleAware(boolean allContent) throws Exception {
+    public void testGetConsoleAware(boolean allContent) {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1);
         setUpGetBallooningExpectations();
@@ -125,7 +119,7 @@ public class BackendTemplateResourceTest
         assertTrue(populated ? response.isSetConsole() : !response.isSetConsole());
     }
 
-    protected void setUpGetVirtioScsiExpectations(int ... idxs) throws Exception {
+    protected void setUpGetVirtioScsiExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetVirtioScsiControllers,
                     IdQueryParameters.class,
@@ -135,7 +129,7 @@ public class BackendTemplateResourceTest
         }
     }
 
-    protected void setUpGetSoundcardExpectations(int ... idxs) throws Exception {
+    protected void setUpGetSoundcardExpectations(int ... idxs) {
         for (int i = 0; i < idxs.length; i++) {
             setUpGetEntityExpectations(QueryType.GetSoundDevices,
                     IdQueryParameters.class,
@@ -146,28 +140,23 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testUpdateNotFound() throws Exception {
+    public void testUpdateNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1, true);
-        try {
-            resource.update(getRestModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getRestModel(0))));
     }
 
     @Test
-    public void testUpdateCantDo() throws Exception {
+    public void testUpdateCantDo() {
         doTestBadUpdate(false, true, CANT_DO);
     }
 
     @Test
-    public void testUpdateFailed() throws Exception {
+    public void testUpdateFailed() {
         doTestBadUpdate(true, false, FAILURE);
     }
 
-    protected void doTestBadUpdate(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadUpdate(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(1);
         setUriInfo(setUpActionExpectations(ActionType.UpdateVmTemplate,
                 UpdateVmTemplateParameters.class,
@@ -176,30 +165,20 @@ public class BackendTemplateResourceTest
                 valid,
                 success));
 
-        try {
-            resource.update(getRestModel(0));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> resource.update(getRestModel(0))), detail);
     }
 
     @Test
-    public void testConflictedUpdate() throws Exception {
+    public void testConflictedUpdate() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations(1);
 
         Template model = getRestModel(1);
         model.setId(GUIDS[1].toString());
-        try {
-            resource.update(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyImmutabilityConstraint(wae);
-        }
+        verifyImmutabilityConstraint(assertThrows(WebApplicationException.class, () -> resource.update(model)));
     }
 
-    protected void setUpUpdateExpectations() throws Exception {
+    protected void setUpUpdateExpectations() {
         setUpGetEntityExpectations(2);
         setUpGetConsoleExpectations(0);
         setUpGetVirtioScsiExpectations(0);
@@ -207,7 +186,7 @@ public class BackendTemplateResourceTest
         setUpGetRngDeviceExpectations(0);
     }
 
-    protected void setUpGetGraphicsExpectations(int times) throws Exception {
+    protected void setUpGetGraphicsExpectations(int times) {
         for (int i = 0; i < times; i++) {
             setUpGetEntityExpectations(QueryType.GetGraphicsDevices,
                     IdQueryParameters.class,
@@ -217,7 +196,7 @@ public class BackendTemplateResourceTest
         }
     }
 
-    protected void setUpGetBallooningExpectations() throws Exception {
+    protected void setUpGetBallooningExpectations() {
         setUpGetEntityExpectations(QueryType.IsBalloonEnabled,
                 IdQueryParameters.class,
                 new String[] { "Id" },
@@ -226,7 +205,7 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         setUpGetGraphicsExpectations(0);
         setUpGetGraphicsExpectations(1);
         setUpUpdateExpectations();
@@ -243,7 +222,7 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations(1);
         setUpGetGraphicsExpectations(1);
         setUpGetBallooningExpectations();
@@ -257,32 +236,26 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testRemoveNonExistant() throws Exception {
+    public void testRemoveNonExistant() {
         setUpGetEntityExpectations(QueryType.GetVmTemplate,
                 GetVmTemplateParameters.class,
                 new String[] { "Id" },
                 new Object[] { GUIDS[0] },
                 null);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
     @Test
-    public void testRemoveCantDo() throws Exception {
+    public void testRemoveCantDo() {
         doTestBadRemove(false, true, CANT_DO);
     }
 
     @Test
-    public void testRemoveFailed() throws Exception {
+    public void testRemoveFailed() {
         doTestBadRemove(true, false, FAILURE);
     }
 
-    protected void doTestBadRemove(boolean valid, boolean success, String detail) throws Exception {
+    protected void doTestBadRemove(boolean valid, boolean success, String detail) {
         setUpGetEntityExpectations(1);
         setUpGetGraphicsExpectations(1);
         setUpGetBallooningExpectations();
@@ -292,26 +265,22 @@ public class BackendTemplateResourceTest
                 new Object[] { GUIDS[0] },
                 valid,
                 success));
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+
+        verifyFault(assertThrows(WebApplicationException.class, resource::remove), detail);
     }
 
     @Test
-    public void testExport() throws Exception {
+    public void testExport() {
         testExportWithStorageDomainId(false);
     }
 
     @Test
-    public void testExportWithParams() throws Exception {
+    public void testExportWithParams() {
         testExportWithStorageDomainId(true);
     }
 
     @Test
-    public void testExportWithStorageDomainName() throws Exception {
+    public void testExportWithStorageDomainName() {
         setUpEntityQueryExpectations(QueryType.GetStorageDomainByName,
                 NameQueryParameters.class,
                 new String[] { "Name" },
@@ -324,13 +293,13 @@ public class BackendTemplateResourceTest
         doTestExport(storageDomain, false);
     }
 
-    protected void testExportWithStorageDomainId(boolean exclusive) throws Exception {
+    protected void testExportWithStorageDomainId(boolean exclusive) {
         StorageDomain storageDomain = new StorageDomain();
         storageDomain.setId(GUIDS[2].toString());
         doTestExport(storageDomain, exclusive);
     }
 
-    protected void doTestExport(StorageDomain storageDomain, boolean exclusive) throws Exception {
+    protected void doTestExport(StorageDomain storageDomain, boolean exclusive) {
         setUriInfo(setUpActionExpectations(ActionType.ExportVmTemplate,
                 MoveOrCopyParameters.class,
                 new String[]{"ContainerId", "StorageDomainId", "ForceOverride"},
@@ -345,33 +314,22 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testIncompleteExport() throws Exception {
-        setUriInfo(setUpBasicUriExpectations());
-        try {
-            resource.export(new Action());
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-             verifyIncompleteException(wae, "Action", "export", "storageDomain.id|name");
-        }
-    }
-
-    @Test
-    public void testExportAsyncPending() throws Exception {
+    public void testExportAsyncPending() {
         doTestExportAsync(AsyncTaskStatusEnum.init, CreationStatus.PENDING);
     }
 
     @Test
-    public void testExportAsyncInProgress() throws Exception {
+    public void testExportAsyncInProgress() {
         doTestExportAsync(AsyncTaskStatusEnum.running, CreationStatus.IN_PROGRESS);
     }
 
     @Test
-    public void testExportAsyncFinished() throws Exception {
+    public void testExportAsyncFinished() {
         doTestExportAsync(AsyncTaskStatusEnum.finished, CreationStatus.COMPLETE);
     }
 
     @Test
-    public void testUpdateUploadIcon() throws Exception {
+    public void testUpdateUploadIcon() {
         setUpGetGraphicsExpectations(1);
         setUpGetBallooningExpectations();
         setUpUpdateExpectations();
@@ -389,7 +347,7 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testUpdateUseExistingIcons() throws Exception {
+    public void testUpdateUseExistingIcons() {
         setUpGetGraphicsExpectations(1);
         setUpUpdateExpectations();
         setUpGetBallooningExpectations();
@@ -408,19 +366,16 @@ public class BackendTemplateResourceTest
     }
 
     @Test
-    public void testUpdateSetAndUploadIconFailure() throws Exception {
+    public void testUpdateSetAndUploadIconFailure() {
         final Template model = getRestModel(0);
         model.setSmallIcon(IconTestHelpler.createIcon(GUIDS[2]));
         model.setLargeIcon(IconTestHelpler.createIconWithData());
-        try {
-            verifyModel(resource.update(model), 0);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BAD_REQUEST);
-        }
+
+        verifyFault(
+                assertThrows(WebApplicationException.class, () -> verifyModel(resource.update(model), 0)), BAD_REQUEST);
     }
 
-    private void doTestExportAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus actionStatus) throws Exception {
+    private void doTestExportAsync(AsyncTaskStatusEnum asyncStatus, CreationStatus actionStatus) {
         setUriInfo(setUpActionExpectations(ActionType.ExportVmTemplate,
                                            MoveOrCopyParameters.class,
                                            new String[] { "ContainerId", "StorageDomainId", "ForceOverride" },
@@ -462,7 +417,7 @@ public class BackendTemplateResourceTest
         return setUpActionExpectations(task, clz, names, values, true, true, null, asyncTasks, asyncStatuses, null, null, uri, true);
     }
 
-    private void verifyActionResponse(Response r) throws Exception {
+    private void verifyActionResponse(Response r) {
         verifyActionResponse(r, "templates/" + GUIDS[0], false);
     }
 

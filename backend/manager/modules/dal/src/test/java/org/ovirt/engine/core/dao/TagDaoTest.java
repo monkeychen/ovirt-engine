@@ -1,15 +1,15 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.Tags;
 import org.ovirt.engine.core.common.businessentities.TagsTemplateMap;
 import org.ovirt.engine.core.common.businessentities.TagsUserGroupMap;
@@ -21,7 +21,7 @@ import org.ovirt.engine.core.compat.Guid;
 /**
  * {@code TagDaoTest} provides unit tests to validate the functionality for {@link TagDao}.
  */
-public class TagDaoTest extends BaseDaoTestCase {
+public class TagDaoTest extends BaseDaoTestCase<TagDao> {
     private static final Guid EXISTING_TAG_ID = new Guid("d3ec3e01-ca89-48e1-8b43-a9b38f873b0c");
     private static final int TAG_COUNT = 3;
     private static final Guid EXISTING_GROUP_ID = new Guid("b399944a-81ab-4ec5-8266-e19ba7c3c9d1");
@@ -30,7 +30,6 @@ public class TagDaoTest extends BaseDaoTestCase {
     private static final Guid EXISTING_TEMPLATE_ID = new Guid("77296e00-0cad-4e5a-9299-008a7b6f4355");
     private static final Guid FREE_VM_ID = FixturesTool.VM_RHEL5_POOL_50;
     private static final Guid FREE_TEMPLATE_ID = new Guid("77296e00-0cad-4e5a-9299-008a7b6f4354");
-    private TagDao dao;
     private Tags newTag;
     private Tags existingTag;
     private Guid parent;
@@ -47,12 +46,10 @@ public class TagDaoTest extends BaseDaoTestCase {
     private TagsTemplateMap newTemplateTag;
     private Guid vmPool;
 
+    @BeforeEach
     @Override
-    @Before
     public void setUp() throws Exception {
         super.setUp();
-
-        dao = dbFacade.getTagDao();
 
         existingTag = dao.get(EXISTING_TAG_ID);
         existingTag = dao.get(new Guid("d3ec3e01-ca89-48e1-8b43-a9b38f873b0c"));
@@ -379,9 +376,9 @@ public class TagDaoTest extends BaseDaoTestCase {
     }
 
     private void assertEqualsTagUserGroupMap(TagsUserGroupMap existing, TagsUserGroupMap result) {
-        assertEquals("Group IDs not equal", existing.getGroupId(), result.getGroupId());
-        assertEquals("Tag IDs not equal", existing.getTagId(), result.getTagId());
-        assertEquals("Object equation", existing, result);
+        assertEquals(existing.getGroupId(), result.getGroupId(), "Group IDs not equal");
+        assertEquals(existing.getTagId(), result.getTagId(), "Tag IDs not equal");
+        assertEquals(existing, result, "Object equation");
 
     }
 
@@ -405,9 +402,9 @@ public class TagDaoTest extends BaseDaoTestCase {
     }
 
     private void assertEqualsTagUserMap(TagsUserMap existing, TagsUserMap result) {
-        assertEquals("Tag ID is not equal", existing.getTagId(), result.getTagId());
-        assertEquals("USER ID is not equal", existing.getUserId(), result.getUserId());
-        assertEquals("Object equation", existing, result);
+        assertEquals(existing.getTagId(), result.getTagId(), "Tag ID is not equal");
+        assertEquals(existing.getUserId(), result.getUserId(), "USER ID is not equal");
+        assertEquals(existing, result, "Object equation");
     }
 
     @Test
@@ -419,9 +416,9 @@ public class TagDaoTest extends BaseDaoTestCase {
     }
 
     private void assertEqualsTagsVdsMap(TagsVdsMap existing, TagsVdsMap result) {
-        assertEquals("Tag ID is not equal", existing.getTagId(), result.getTagId());
-        assertEquals("VDS ID is not equal", existing.getVdsId(), result.getVdsId());
-        assertEquals("Object equation", existing, result);
+        assertEquals(existing.getTagId(), result.getTagId(), "Tag ID is not equal");
+        assertEquals(existing.getVdsId(), result.getVdsId(), "VDS ID is not equal");
+        assertEquals(existing, result, "Object equation");
     }
 
     @Test
@@ -460,15 +457,15 @@ public class TagDaoTest extends BaseDaoTestCase {
     }
 
     private void assertEqualsTagsVmMap(TagsVmMap existing, TagsVmMap result) {
-        assertEquals("TG is not equal", existing.getTagId(), result.getTagId());
-        assertEquals("VM id not equal ", existing.getVmId(), result.getVmId());
-        assertEquals("Object equation", existing, result);
+        assertEquals(existing.getTagId(), result.getTagId(), "TG is not equal");
+        assertEquals(existing.getVmId(), result.getVmId(), "VM id not equal");
+        assertEquals(existing, result, "Object equation");
     }
 
     private void assertEqualsTagsTemplateMap(TagsTemplateMap existing, TagsTemplateMap result) {
-        assertEquals("TG is not equal", existing.getTagId(), result.getTagId());
-        assertEquals("Template id not equal ", existing.getTemplateId(), result.getTemplateId());
-        assertEquals("Object equation", existing, result);
+        assertEquals(existing.getTagId(), result.getTagId(), "TG is not equal");
+        assertEquals(existing.getTemplateId(), result.getTemplateId(), "Template id not equal");
+        assertEquals(existing, result, "Object equation");
     }
 
     @Test

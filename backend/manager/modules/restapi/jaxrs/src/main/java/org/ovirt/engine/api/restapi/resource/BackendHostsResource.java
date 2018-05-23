@@ -1,22 +1,28 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang.StringUtils;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.HostedEngine;
 import org.ovirt.engine.api.model.Hosts;
 import org.ovirt.engine.api.resource.HostResource;
 import org.ovirt.engine.api.resource.HostsResource;
+import org.ovirt.engine.api.restapi.util.ParametersHelper;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.VdsOperationActionParameters;
 import org.ovirt.engine.core.common.action.hostdeploy.AddVdsActionParameters;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.VDS;
+import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VdsStatic;
 import org.ovirt.engine.core.common.interfaces.SearchType;
 import org.ovirt.engine.core.common.mode.ApplicationMode;
+import org.ovirt.engine.core.common.queries.GetValidHostsForVmsParameters;
 import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.NameQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryParametersBase;
@@ -30,6 +36,8 @@ public class BackendHostsResource extends AbstractBackendCollectionResource<Host
 
     static final String GLUSTERONLY_MODE_COLLECTIONS_TO_HIDE = "storage";
 
+    static final String MIGRATION_TARGET_OF = "migration_target_of";
+
     public BackendHostsResource() {
         super(Host.class, VDS.class);
     }
@@ -39,8 +47,7 @@ public class BackendHostsResource extends AbstractBackendCollectionResource<Host
         ApplicationMode appMode = getCurrent().getApplicationMode();
         if (appMode == ApplicationMode.GlusterOnly) {
             return listGlusterOnly();
-        }
-        else {
+        } else {
             return listAll();
         }
     }
@@ -49,8 +56,7 @@ public class BackendHostsResource extends AbstractBackendCollectionResource<Host
         if (isFiltered()) {
             return mapGlusterOnlyCollection(getBackendCollection(QueryType.GetAllHosts,
                     new QueryParametersBase()));
-        }
-        else {
+        } else {
             return mapGlusterOnlyCollection(getBackendCollection(SearchType.VDS));
         }
     }
@@ -59,9 +65,23 @@ public class BackendHostsResource extends AbstractBackendCollectionResource<Host
         if (isFiltered()) {
             return mapCollection(getBackendCollection(QueryType.GetAllHosts,
                     new QueryParametersBase()));
-        }
-        else {
-            return mapCollection(getBackendCollection(SearchType.VDS));
+        } else {
+            String migrationTargetOf = ParametersHelper.getParameter(httpHeaders, uriInfo, MIGRATION_TARGET_OF);
+            if (StringUtils.isNotEmpty(migrationTargetOf)) {
+                String[] vmsIds = migrationTargetOf.split(",");
+                List<VM> vms = Arrays.stream(vmsIds).map(
+                        id -> getEntity(
+                                VM.class,
+                                QueryType.GetVmByVmId,
+                                new IdQueryParameters(new Guid(id)),
+                                "GetVmByVmId")
+                ).collect(Collectors.toList());
+
+                return mapCollection(getBackendCollection(QueryType.GetValidHostsForVms,
+                        new GetValidHostsForVmsParameters(vms)));
+            } else {
+                return mapCollection(getBackendCollection(SearchType.VDS));
+            }
         }
     }
 

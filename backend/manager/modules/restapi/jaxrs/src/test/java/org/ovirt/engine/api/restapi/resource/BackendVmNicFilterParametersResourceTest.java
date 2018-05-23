@@ -16,6 +16,9 @@ limitations under the License.
 
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +29,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.NetworkFilterParameter;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.VmNicFilterParameterParameters;
@@ -35,6 +40,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.compat.Guid;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendVmNicFilterParametersResourceTest
         extends AbstractBackendCollectionResourceTest<NetworkFilterParameter, VmNicFilterParameter, BackendVmNicFilterParametersResource> {
 
@@ -47,20 +53,20 @@ public class BackendVmNicFilterParametersResourceTest
     }
 
     @Override
-    protected void setUpQueryExpectations(String query) throws Exception {
+    protected void setUpQueryExpectations(String query) {
         setUpEntityQueryExpectations(1);
     }
 
     @Override
-    protected void setUpQueryExpectations(String query, Object failure) throws Exception {
+    protected void setUpQueryExpectations(String query, Object failure) {
         setUpEntityQueryExpectations(1, failure);
     }
 
-    protected void setUpEntityQueryExpectations(int times) throws Exception {
+    protected void setUpEntityQueryExpectations(int times) {
         setUpEntityQueryExpectations(times, null);
     }
 
-    protected void setUpEntityQueryExpectations(int times, Object failure) throws Exception {
+    protected void setUpEntityQueryExpectations(int times, Object failure) {
         while (times-- > 0) {
             setUpEntityQueryExpectations(
                 QueryType.GetVmInterfaceFilterParametersByVmInterfaceId,
@@ -120,7 +126,7 @@ public class BackendVmNicFilterParametersResourceTest
     }
 
     @Test
-    public void testAddParameter() throws Exception {
+    public void testAddParameter() {
         setUriInfo(setUpBasicUriExpectations());
         setUpCreationExpectations(
                 ActionType.AddVmNicFilterParameter,
@@ -146,16 +152,16 @@ public class BackendVmNicFilterParametersResourceTest
 
 
     @Test
-    public void testAddNicCantDo() throws Exception {
+    public void testAddNicCantDo() {
         doTestBadAddNic(false, true, CANT_DO);
     }
 
     @Test
-    public void testAddNicFailure() throws Exception {
+    public void testAddNicFailure() {
         doTestBadAddNic(true, false, FAILURE);
     }
 
-    private void doTestBadAddNic(boolean valid, boolean success, String detail) throws Exception {
+    private void doTestBadAddNic(boolean valid, boolean success, String detail) {
         setUriInfo(
             setUpActionExpectations(
                 ActionType.AddVmNicFilterParameter,
@@ -168,35 +174,23 @@ public class BackendVmNicFilterParametersResourceTest
         );
         NetworkFilterParameter model = getModel(0);
 
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, detail);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, () -> collection.add(model)), detail);
     }
 
     @Test
-    public void testAddIncompleteParameters() throws Exception {
+    public void testAddIncompleteParameters() {
         NetworkFilterParameter model = new NetworkFilterParameter();
 
         setUriInfo(setUpBasicUriExpectations());
-        try {
-            collection.add(model);
-            fail("expected WebApplicationException on incomplete parameters");
-        } catch (WebApplicationException wae) {
-            verifyIncompleteException(wae, "NetworkFilterParameter", "add", "value");
-        }
+        verifyIncompleteException(
+                assertThrows(WebApplicationException.class, () -> collection.add(model)),
+                "NetworkFilterParameter", "add", "value");
     }
 
     @Test
-    public void testSubResourceLocatorBadGuid() throws Exception {
-        try {
-            collection.getParameterResource("foo");
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+    public void testSubResourceLocatorBadGuid() {
+        verifyNotFoundException(
+                assertThrows(WebApplicationException.class, () -> collection.getParameterResource("foo")));
     }
 
     @Test

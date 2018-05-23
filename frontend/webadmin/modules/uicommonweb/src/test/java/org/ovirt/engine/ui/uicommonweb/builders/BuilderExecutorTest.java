@@ -1,11 +1,11 @@
 package org.ovirt.engine.ui.uicommonweb.builders;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.ui.uicommonweb.builders.BuilderExecutor.BuilderExecutionFinished;
 
 @SuppressWarnings("unchecked")
@@ -23,7 +23,7 @@ public class BuilderExecutorTest {
 
     private TestingBackendModel backendModel;
 
-    @Before
+    @BeforeEach
     public void setup() {
         frontendModel = new TestingFrontendModel(fe1, fe2);
         backendModel = new TestingBackendModel(be1, be2);
@@ -115,60 +115,60 @@ public class BuilderExecutorTest {
                 composite,
                 new Property2Builder()).build(frontendModel, backendModel);
     }
-}
 
-class Property1Builder extends BaseSyncBuilder<TestingFrontendModel, TestingBackendModel> {
+    private static class Property1Builder extends BaseSyncBuilder<TestingFrontendModel, TestingBackendModel> {
 
-    @Override
-    protected void build(TestingFrontendModel frontend, TestingBackendModel backend) {
-        backend.setProperty1(frontend.getProperty1());
+        @Override
+        protected void build(TestingFrontendModel frontend, TestingBackendModel backend) {
+            backend.setProperty1(frontend.getProperty1());
+        }
+
     }
 
-}
+    private static class FrontendAssert implements BuilderExecutionFinished<TestingFrontendModel, TestingBackendModel> {
 
-class FrontendAssert implements BuilderExecutionFinished<TestingFrontendModel, TestingBackendModel> {
+        private String prop1;
 
-    private String prop1;
+        private String prop2;
 
-    private String prop2;
+        public FrontendAssert(String prop1, String prop2) {
+            super();
+            this.prop1 = prop1;
+            this.prop2 = prop2;
+        }
 
-    public FrontendAssert(String prop1, String prop2) {
-        super();
-        this.prop1 = prop1;
-        this.prop2 = prop2;
+        @Override
+        public void finished(TestingFrontendModel frontendModel, TestingBackendModel backendModel) {
+            assertThat(frontendModel, is(equalTo(new TestingFrontendModel(prop1, prop2))));
+        }
+
     }
 
-    @Override
-    public void finished(TestingFrontendModel frontendModel, TestingBackendModel backendModel) {
-        assertThat(frontendModel, is(equalTo(new TestingFrontendModel(prop1, prop2))));
+    private static class BackendAssert implements BuilderExecutionFinished<TestingFrontendModel, TestingBackendModel> {
+
+        private String prop1;
+
+        private String prop2;
+
+        public BackendAssert(String prop1, String prop2) {
+            super();
+            this.prop1 = prop1;
+            this.prop2 = prop2;
+        }
+
+        @Override
+        public void finished(TestingFrontendModel frontendModel, TestingBackendModel backendModel) {
+            assertThat(backendModel, is(equalTo(new TestingBackendModel(prop1, prop2))));
+        }
+
     }
 
-}
+    private static class Property2Builder extends BaseSyncBuilder<TestingFrontendModel, TestingBackendModel> {
 
-class BackendAssert implements BuilderExecutionFinished<TestingFrontendModel, TestingBackendModel> {
+        @Override
+        protected void build(TestingFrontendModel frontend, TestingBackendModel backend) {
+            backend.setProperty2(frontend.getProperty2());
+        }
 
-    private String prop1;
-
-    private String prop2;
-
-    public BackendAssert(String prop1, String prop2) {
-        super();
-        this.prop1 = prop1;
-        this.prop2 = prop2;
     }
-
-    @Override
-    public void finished(TestingFrontendModel frontendModel, TestingBackendModel backendModel) {
-        assertThat(backendModel, is(equalTo(new TestingBackendModel(prop1, prop2))));
-    }
-
-}
-
-class Property2Builder extends BaseSyncBuilder<TestingFrontendModel, TestingBackendModel> {
-
-    @Override
-    protected void build(TestingFrontendModel frontend, TestingBackendModel backend) {
-        backend.setProperty2(frontend.getProperty2());
-    }
-
 }

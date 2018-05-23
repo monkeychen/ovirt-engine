@@ -1,31 +1,23 @@
 package org.ovirt.engine.core.dao.network;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.network.NetworkQoS;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.BaseDaoTestCase;
 import org.ovirt.engine.core.dao.FixturesTool;
 import org.springframework.dao.DuplicateKeyException;
 
-public class NetworkQosDaoTest extends BaseDaoTestCase {
-
-    private NetworkQoSDao dao;
-
+public class NetworkQosDaoTest extends BaseDaoTestCase<NetworkQoSDao> {
     private static final Guid qosAId = Guid.createGuidFromString("de956031-6be2-43d6-bb90-5191c9253314");
     private static final Guid qosBId = Guid.createGuidFromString("de956031-6be2-43d6-bb90-5191c9253315");
     private static final Guid qosCId = Guid.createGuidFromString("de956031-6be2-43d6-bb90-5191c9253316");
     private static final Guid qosDId = Guid.createGuidFromString("de956031-6be2-43d6-bb90-5191c9253317");
 
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        dao = getDbFacade().getNetworkQosDao();
-    }
     /**
      * Ensures that retrieving with an invalid ID returns null.
      */
@@ -131,9 +123,9 @@ public class NetworkQosDaoTest extends BaseDaoTestCase {
         checkNameUniquness(null);
     }
 
-    @Test(expected = DuplicateKeyException.class)
+    @Test
     public void testCheckNameUniquness() {
-        checkNameUniquness("SomeName");
+        assertThrows(DuplicateKeyException.class, () -> checkNameUniquness("SomeName"));
     }
 
     public void checkNameUniquness(String name) {

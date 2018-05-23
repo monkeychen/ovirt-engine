@@ -1,12 +1,16 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.Host;
 import org.ovirt.engine.api.model.StorageConnection;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -16,6 +20,7 @@ import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.StorageServerConnectionQueryParametersBase;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageServerConnectionResourceTest extends AbstractBackendSubResourceTest<StorageConnection, StorageServerConnections, BackendStorageServerConnectionResource> {
     protected static final org.ovirt.engine.api.model.StorageType[] STORAGE_TYPES = {
         org.ovirt.engine.api.model.StorageType.NFS,
@@ -46,65 +51,43 @@ public class BackendStorageServerConnectionResourceTest extends AbstractBackendS
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGet() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations();
         verifyModel(resource.get(), 3);
     }
 
     @Test
-    public void testGetNotFound() throws Exception {
+    public void testGetNotFound() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetNotExistingEntityExpectations();
-        try {
-            resource.get();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.get()));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    public void testUpdate() {
         update(true, true, 2);
     }
 
     @Test
-    public void testUpdateNotExistingConnection() throws Exception {
+    public void testUpdateNotExistingConnection() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetNotExistingEntityExpectations();
-        try {
-            resource.update(getModel(3));
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyNotFoundException(wae);
-        }
-
-
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.update(getModel(3))));
     }
 
     @Test
-    public void testUpdateCantDo() throws Exception {
-        try {
-            update(false, false, 1);
-        } catch (WebApplicationException e) {
-            assertNotNull(e.getResponse());
-            assertEquals(400, e.getResponse().getStatus());
-        }
+    public void testUpdateCantDo() {
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> update(false, false, 1)));
     }
 
     @Test
-    public void testUpdateFailed() throws Exception {
-        try {
-            update(true, false, 1);
-        } catch (WebApplicationException e) {
-            assertNotNull(e.getResponse());
-            assertEquals(400, e.getResponse().getStatus());
-        }
+    public void testUpdateFailed() {
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> update(true, false, 1)));
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         setUpGetEntityExpectations();
         Host host = new Host();
         host.setId(GUIDS[1].toString());
@@ -130,7 +113,7 @@ public class BackendStorageServerConnectionResourceTest extends AbstractBackendS
     }
 
     @Test
-    public void testRemoveNotExisting() throws Exception {
+    public void testRemoveNotExisting() {
         setUpGetNotExistingEntityExpectations();
         UriInfo uriInfo = setUpBasicUriExpectations();
         uriInfo = addMatrixParameterExpectations(
@@ -139,17 +122,11 @@ public class BackendStorageServerConnectionResourceTest extends AbstractBackendS
             GUIDS[1].toString()
         );
         setUriInfo(uriInfo);
-        try {
-            resource.remove();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(404, wae.getResponse().getStatus());
-        }
+        verifyNotFoundException(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
     @Test
-    public void testRemoveValidateFail() throws Exception {
+    public void testRemoveValidateFail() {
         setUpGetEntityExpectations();
         Host host = new Host();
         host.setId(GUIDS[1].toString());
@@ -171,15 +148,10 @@ public class BackendStorageServerConnectionResourceTest extends AbstractBackendS
                 GUIDS[1].toString()
         );
         setUriInfo(uriInfo);
-        try {
-            resource.remove();
-        } catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(400, wae.getResponse().getStatus());
-        }
+        verifyBadRequest(assertThrows(WebApplicationException.class, () ->  resource.remove()));
     }
 
-    protected void update(boolean valid, boolean executeCommandResult, int getConnectionExecTimes) throws Exception {
+    protected void update(boolean valid, boolean executeCommandResult, int getConnectionExecTimes) {
         // the below method is called several times because
         // the mocked behavior must be recorded twice
         // since the getConnectionById query is executed
@@ -199,7 +171,7 @@ public class BackendStorageServerConnectionResourceTest extends AbstractBackendS
         verifyModel(resource.update(getModel(3)), 3);
     }
 
-    private void setUpGetEntityExpectations() throws Exception {
+    private void setUpGetEntityExpectations() {
         setUpEntityQueryExpectations(QueryType.GetStorageServerConnectionById,
                 StorageServerConnectionQueryParametersBase.class,
                 new String[] { "ServerConnectionId" },
@@ -207,7 +179,7 @@ public class BackendStorageServerConnectionResourceTest extends AbstractBackendS
                 getEntity(3));
     }
 
-    private void setUpGetNotExistingEntityExpectations() throws Exception {
+    private void setUpGetNotExistingEntityExpectations() {
         setUpGetEntityExpectations(QueryType.GetStorageServerConnectionById,
                 StorageServerConnectionQueryParametersBase.class,
                 new String[] { "ServerConnectionId" },

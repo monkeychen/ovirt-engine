@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.ovirt.engine.ui.common.presenter.AddActionButtonEvent;
+import org.ovirt.engine.ui.common.presenter.AddKebabMenuListItemEvent;
 import org.ovirt.engine.ui.common.presenter.RedrawDynamicTabContainerEvent;
 import org.ovirt.engine.ui.common.presenter.SetDynamicTabAccessibleEvent;
 import org.ovirt.engine.ui.common.widget.AlertManager;
@@ -20,11 +21,13 @@ import org.ovirt.engine.ui.webadmin.section.main.presenter.DynamicUrlContentProx
 import org.ovirt.engine.ui.webadmin.section.main.presenter.DynamicUrlContentTabProxyFactory;
 import org.ovirt.engine.ui.webadmin.section.main.presenter.MenuPresenterWidget;
 import org.ovirt.engine.ui.webadmin.section.main.presenter.SetDynamicTabContentUrlEvent;
+import org.ovirt.engine.ui.webadmin.section.main.presenter.SetDynamicTabUnloadHandlerEvent;
 import org.ovirt.engine.ui.webadmin.section.main.presenter.popup.CloseDynamicPopupEvent;
 import org.ovirt.engine.ui.webadmin.section.main.presenter.popup.DynamicUrlContentPopupPresenterWidget;
 import org.ovirt.engine.ui.webadmin.section.main.presenter.popup.SetDynamicPopupContentUrlEvent;
 import org.ovirt.engine.ui.webadmin.uicommon.model.TagModelProvider;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.EventBus;
@@ -169,6 +172,15 @@ public class PluginUiFunctions implements HasHandlers {
     }
 
     /**
+     * Adds tab/place iframe unload handler. This handler is called when the user
+     * transitions away from the application place denoted by {@code historyToken}.
+     */
+    public void setPlaceUnloadHandler(final String historyToken, final JavaScriptObject unloadHandler) {
+        Scheduler.get().scheduleDeferred(() -> SetDynamicTabUnloadHandlerEvent.fire(PluginUiFunctions.this,
+                historyToken, unloadHandler));
+    }
+
+    /**
      * Adds new action button to standard table-based main tab.
      */
     public void addMenuPlaceActionButton(EntityType entityType, String label,
@@ -176,8 +188,13 @@ public class PluginUiFunctions implements HasHandlers {
         String historyToken = entityType.getMainHistoryToken();
 
         if (historyToken != null) {
-            AddActionButtonEvent.fire(this, historyToken,
-                    createButtonDefinition(label, actionButtonInterface));
+            ActionButtonDefinition<?> actionButton = createButtonDefinition(label, actionButtonInterface);
+
+            if (actionButtonInterface.isInMoreMenu()) {
+                AddKebabMenuListItemEvent.fire(this, historyToken, actionButton);
+            } else {
+                AddActionButtonEvent.fire(this, historyToken, actionButton);
+            }
         }
     }
 
@@ -189,15 +206,18 @@ public class PluginUiFunctions implements HasHandlers {
         String historyToken = mainTabEntityType.getSubTabHistoryToken(subTabEntityType);
 
         if (historyToken != null) {
-            AddActionButtonEvent.fire(this, historyToken,
-                    createButtonDefinition(label, actionButtonInterface));
+            ActionButtonDefinition<?> actionButton = createButtonDefinition(label, actionButtonInterface);
+
+            if (actionButtonInterface.isInMoreMenu()) {
+                AddKebabMenuListItemEvent.fire(this, historyToken, actionButton);
+            } else {
+                AddActionButtonEvent.fire(this, historyToken, actionButton);
+            }
         }
     }
 
-    <T> ActionButtonDefinition<T> createButtonDefinition(String label,
-            final ActionButtonInterface actionButtonInterface) {
-        return new AbstractButtonDefinition<T>(eventBus,
-                label) {
+    <T> ActionButtonDefinition<T> createButtonDefinition(String label, ActionButtonInterface actionButtonInterface) {
+        return new AbstractButtonDefinition<T>(eventBus, label) {
 
             @Override
             public void onClick(List<T> selectedItems) {
@@ -219,6 +239,11 @@ public class PluginUiFunctions implements HasHandlers {
                         actionButtonInterface.isAccessible(),
                         EntityObject.arrayFrom(selectedItems != null ? selectedItems : Collections.emptyList()),
                             null, true);
+            }
+
+            @Override
+            public int getIndex() {
+                return actionButtonInterface.getIndex();
             }
 
         };
@@ -309,4 +334,5 @@ public class PluginUiFunctions implements HasHandlers {
     public TagObject getRootTagNode() {
         return TagObject.from(tagModelProvider.getModel().getRootNode());
     }
+
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ovirt.engine.core.bll.context.CommandContext;
+import org.ovirt.engine.core.bll.interfaces.BackendInternal;
 import org.ovirt.engine.core.bll.job.ExecutionHandler;
 import org.ovirt.engine.core.common.AuditLogType;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -12,6 +13,7 @@ import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VMStatus;
 import org.ovirt.engine.core.common.businessentities.VmExitStatus;
+import org.ovirt.engine.core.common.interfaces.VDSBrokerFrontend;
 import org.ovirt.engine.core.common.vdscommands.DestroyVmVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.SetVmStatusVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
@@ -59,14 +61,9 @@ public class RestartVdsVmsOperation {
         if (vm.getStatus() == VMStatus.MigratingFrom) {
             try {
                 if (vm.getMigratingToVds() != null) {
-                    Backend.getInstance().getResourceManager().runVdsCommand(
+                    Injector.get(VDSBrokerFrontend.class).runVdsCommand(
                             VDSCommandType.DestroyVm,
-                            new DestroyVmVDSCommandParameters(
-                                    new Guid(vm.getMigratingToVds().toString()),
-                                    vm.getId(),
-                                    false,
-                                    0
-                            )
+                            new DestroyVmVDSCommandParameters(vm.getMigratingToVds(), vm.getId())
                     );
                     log.info(
                             "Stopped migrating vm '{}' on vds '{}'",
@@ -97,7 +94,7 @@ public class RestartVdsVmsOperation {
         // restart all running vms of a failed vds.
         for (VM vm : vms) {
             destroyVmOnDestination(vm);
-            VDSReturnValue returnValue = Backend.getInstance().getResourceManager().runVdsCommand(
+            VDSReturnValue returnValue = Injector.get(VDSBrokerFrontend.class).runVdsCommand(
                     VDSCommandType.SetVmStatus,
                     new SetVmStatusVDSCommandParameters(
                             vm.getId(),
@@ -117,7 +114,7 @@ public class RestartVdsVmsOperation {
                         AuditLogType.VM_WAS_SET_DOWN_DUE_TO_HOST_REBOOT_OR_MANUAL_FENCE
                 );
             }
-            Backend.getInstance().runInternalAction(
+            Injector.get(BackendInternal.class).runInternalAction(
                     ActionType.ProcessDownVm,
                     new ProcessDownVmParameters(vm.getId(), true),
                     ExecutionHandler.createDefaultContextForTasks(commandContext)

@@ -1,29 +1,26 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.UserProfile;
 import org.ovirt.engine.core.compat.Guid;
 
-public class UserProfileDaoTest extends BaseDaoTestCase {
-    private UserProfileDao dao;
+public class UserProfileDaoTest extends BaseDaoTestCase<UserProfileDao> {
     private UserProfile existingProfile;
     private UserProfile deletableProfile;
     private UserProfile newProfile;
 
+    @BeforeEach
     @Override
-    @Before
     public void setUp() throws Exception {
         super.setUp();
-
-        dao = dbFacade.getUserProfileDao();
 
         existingProfile = dao.get(new Guid("38cb5663-96bc-485c-834a-cbbc03acc820"));
         deletableProfile = dao.get(new Guid("38cb5663-96bc-485c-834a-cbbc03acc821"));

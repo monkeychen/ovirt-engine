@@ -1,6 +1,5 @@
 package org.ovirt.engine.core.bll.qos;
 
-
 import org.ovirt.engine.core.bll.context.CommandContext;
 import org.ovirt.engine.core.bll.validator.QosValidator;
 import org.ovirt.engine.core.common.AuditLogType;

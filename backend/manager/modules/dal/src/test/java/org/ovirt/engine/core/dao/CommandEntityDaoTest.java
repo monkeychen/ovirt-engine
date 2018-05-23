@@ -1,12 +1,12 @@
 package org.ovirt.engine.core.dao;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.VdcObjectType;
 import org.ovirt.engine.core.common.action.ActionParametersBase;
 import org.ovirt.engine.core.common.action.ActionType;
@@ -55,11 +55,6 @@ public class CommandEntityDaoTest extends BaseGenericDaoTestCase<Guid, CommandEn
     }
 
     @Override
-    protected CommandEntityDao prepareDao() {
-        return dbFacade.getCommandEntityDao();
-    }
-
-    @Override
     protected Guid generateNonExistingId() {
         return Guid.newGuid();
     }
@@ -71,16 +66,16 @@ public class CommandEntityDaoTest extends BaseGenericDaoTestCase<Guid, CommandEn
 
     @Test
     public void testRemove() {
-        CommandEntity cmd = dbFacade.getCommandEntityDao().get(getExistingEntityId());
+        CommandEntity cmd = dao.get(getExistingEntityId());
         assertNotNull(cmd);
-        dbFacade.getCommandEntityDao().remove(getExistingEntityId());
-        CommandEntity cmdAfterRemoval = dbFacade.getCommandEntityDao().get(getExistingEntityId());
+        dao.remove(getExistingEntityId());
+        CommandEntity cmdAfterRemoval = dao.get(getExistingEntityId());
         assertNull(cmdAfterRemoval);
     }
 
     @Test
     public void testGetAll() {
-        List<CommandEntity> cmds = dbFacade.getCommandEntityDao().getAll();
+        List<CommandEntity> cmds = dao.getAll();
         assertNotNull(cmds);
         assertTrue(cmds.size() > 0);
     }

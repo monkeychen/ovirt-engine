@@ -285,8 +285,6 @@ public interface CommonApplicationConstants extends Constants {
 
     String statistics();
 
-    String guestAgentData();
-
     String nicsLabel();
 
     String applicationsLabel();
@@ -633,6 +631,8 @@ public interface CommonApplicationConstants extends Constants {
 
     String portMirroring();
 
+    String guestInterfaceName();
+
     String plugged();
 
     String unplugged();
@@ -649,7 +649,9 @@ public interface CommonApplicationConstants extends Constants {
 
     String mb();
 
-    String gb();
+    String mib();
+
+    String gib();
 
     String severityEvent();
 
@@ -731,8 +733,6 @@ public interface CommonApplicationConstants extends Constants {
 
     String moveDisk();
 
-    String getDiskAlignment();
-
     String exportDisk();
 
     String dataCenter();
@@ -765,6 +765,8 @@ public interface CommonApplicationConstants extends Constants {
 
     String statusDisk();
 
+    String contentDisk();
+
     String creationDateDisk();
 
     String diskSnapshotIDDisk();
@@ -790,8 +792,6 @@ public interface CommonApplicationConstants extends Constants {
     String quotaDisk();
 
     String destDisk();
-
-    String diskAlignment();
 
     String attachedToDisk();
 
@@ -1744,6 +1744,8 @@ public interface CommonApplicationConstants extends Constants {
     String kernelCmdlineUnsafeInterruptsInfoIcon();
 
     String kernelCmdlinePciReallocInfoIcon();
+
+    String physMemGuarInfoIcon();
 
     String maxMemoryInfoIcon();
 

@@ -1241,6 +1241,8 @@ public class ImportVmCommand<T extends ImportVmParameters> extends ImportVmComma
         StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, memoryDiskDomainMap.get(snapshot.getMemoryDiskId()));
         DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, snapshot.getMemoryDiskId());
         if (sd == null || disk != null) {
+            snapshot.setMetadataDiskId(null);
+            snapshot.setMemoryDiskId(null);
             return null;
         }
         VM vm = snapshotVmConfigurationHelper.getVmFromConfiguration(
@@ -1364,8 +1366,7 @@ public class ImportVmCommand<T extends ImportVmParameters> extends ImportVmComma
     private void checkTrustedService() {
         if (getVm().isTrustedService() && !getCluster().supportsTrustedService()) {
             auditLogDirector.log(this, AuditLogType.IMPORTEXPORT_IMPORT_VM_FROM_TRUSTED_TO_UNTRUSTED);
-        }
-        else if (!getVm().isTrustedService() && getCluster().supportsTrustedService()) {
+        } else if (!getVm().isTrustedService() && getCluster().supportsTrustedService()) {
             auditLogDirector.log(this, AuditLogType.IMPORTEXPORT_IMPORT_VM_FROM_UNTRUSTED_TO_TRUSTED);
         }
     }

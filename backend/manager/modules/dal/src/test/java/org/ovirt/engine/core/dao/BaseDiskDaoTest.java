@@ -1,10 +1,10 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.storage.BaseDisk;
 import org.ovirt.engine.core.common.businessentities.storage.PropagateErrors;
 import org.ovirt.engine.core.common.businessentities.storage.ScsiGenericIO;
@@ -45,22 +45,17 @@ public class BaseDiskDaoTest extends BaseGenericDaoTestCase<Guid, BaseDisk, Base
     }
 
     @Override
-    protected BaseDiskDao prepareDao() {
-        return dbFacade.getBaseDiskDao();
-    }
-
-    @Override
     protected Guid getExistingEntityId() {
         return EXISTING_DISK_ID;
     }
 
     @Test
-    public void existsForExistingDisk() throws Exception {
+    public void existsForExistingDisk() {
         assertTrue(dao.exists(EXISTING_DISK_ID));
     }
 
     @Test
-    public void existsForNonExistingDisk() throws Exception {
+    public void existsForNonExistingDisk() {
         assertFalse(dao.exists(Guid.Empty));
     }
 

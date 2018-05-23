@@ -1,14 +1,15 @@
 package org.ovirt.engine.core.dao;
 
 import static org.apache.commons.collections.CollectionUtils.isEqualCollection;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.storage.DiskLunMap;
 import org.ovirt.engine.core.common.businessentities.storage.DiskLunMapId;
 import org.ovirt.engine.core.compat.Guid;
@@ -44,19 +45,14 @@ public class DiskLunMapDaoTest extends BaseGenericDaoTestCase<DiskLunMapId, Disk
     }
 
     @Override
-    protected DiskLunMapDao prepareDao() {
-        return dbFacade.getDiskLunMapDao();
-    }
-
-    @Override
     protected DiskLunMapId getExistingEntityId() {
         return EXISTING_DISK_LUN_MAP_ID;
     }
 
     @Override
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testUpdate() {
-        super.testUpdate();
+        assertThrows(UnsupportedOperationException.class, super::testUpdate);
     }
 
     @Test

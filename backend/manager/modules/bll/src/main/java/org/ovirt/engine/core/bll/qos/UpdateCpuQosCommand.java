@@ -21,7 +21,7 @@ public class UpdateCpuQosCommand extends UpdateQosCommandBase<CpuQos, QosValidat
 
     @Override
     protected QosDao<CpuQos> getQosDao() {
-        return dbFacade.getCpuQosDao();
+        return cpuQosDao;
     }
 
     @Override

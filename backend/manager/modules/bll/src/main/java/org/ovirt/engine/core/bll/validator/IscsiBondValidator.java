@@ -1,11 +1,12 @@
 package org.ovirt.engine.core.bll.validator;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -17,17 +18,28 @@ import org.ovirt.engine.core.common.businessentities.network.NetworkCluster;
 import org.ovirt.engine.core.common.businessentities.storage.StorageType;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
+import org.ovirt.engine.core.dao.IscsiBondDao;
+import org.ovirt.engine.core.dao.StorageServerConnectionDao;
+import org.ovirt.engine.core.dao.network.NetworkClusterDao;
+import org.ovirt.engine.core.dao.network.NetworkDao;
 
+@Singleton
 public class IscsiBondValidator {
+    @Inject
+    private IscsiBondDao iscsiBondDao;
+    @Inject
+    private NetworkDao networkDao;
+    @Inject
+    private NetworkClusterDao networkClusterDao;
+    @Inject
+    private StorageServerConnectionDao storageServerConnectionDao;
 
     public ValidationResult iscsiBondWithTheSameNameExistInDataCenter(IscsiBond iscsiBond) {
-        List<IscsiBond> iscsiBonds = getDBFacade().getIscsiBondDao().getAllByStoragePoolId(iscsiBond.getStoragePoolId());
+        List<IscsiBond> iscsiBonds = iscsiBondDao.getAllByStoragePoolId(iscsiBond.getStoragePoolId());
 
-        for (IscsiBond bond : iscsiBonds) {
-            if (bond.getName().equals(iscsiBond.getName()) && !bond.getId().equals(iscsiBond.getId())) {
-                return new ValidationResult(EngineMessage.ISCSI_BOND_WITH_SAME_NAME_EXIST_IN_DATA_CENTER);
-            }
+        if (iscsiBonds.stream().anyMatch(bond -> bond.getName().equals(iscsiBond.getName()) &&
+                !bond.getId().equals(iscsiBond.getId()))) {
+            return new ValidationResult(EngineMessage.ISCSI_BOND_WITH_SAME_NAME_EXIST_IN_DATA_CENTER);
         }
 
         return ValidationResult.VALID;
@@ -78,56 +90,15 @@ public class IscsiBondValidator {
     }
 
     private List<Guid> getDataCenterLogicalNetworks(Guid dataCenterId) {
-        List<Guid> res = new LinkedList<>();
-
-        List<Network> dcLogicalNetworks = getDBFacade().getNetworkDao().getAllForDataCenter(dataCenterId);
-        for (Network network : dcLogicalNetworks) {
-            res.add(network.getId());
-        }
-
-        return res;
+        return networkDao.getAllForDataCenter(dataCenterId).stream().map(Network::getId).collect(Collectors.toList());
     }
 
     private List<Guid> getRequiredNetworks(Collection<Guid> addedLogicalNetworks) {
-        List<Guid> res = new ArrayList<>();
-
-        for (Guid networkId : addedLogicalNetworks) {
-            if (isRequiredNetwork(networkId)) {
-                res.add(networkId);
-            }
-        }
-
-        return res;
+        return addedLogicalNetworks.stream().filter(this::isRequiredNetwork).collect(Collectors.toList());
     }
 
     private boolean isRequiredNetwork(Guid networkId) {
-        List<NetworkCluster> clusters = getDBFacade().getNetworkClusterDao().getAllForNetwork(networkId);
-
-        for (NetworkCluster cluster : clusters) {
-            if (cluster.isRequired()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private List<Guid> getNetworksMissingInDataCenter(Collection<Guid> networks, Guid dataCenterId) {
-        Set<Guid> existingNetworkIds = new HashSet<>();
-        List<Guid> res = new LinkedList<>();
-
-        List<Network> dcLogicalNetworks = getDBFacade().getNetworkDao().getAllForDataCenter(dataCenterId);
-        for (Network network : dcLogicalNetworks) {
-            existingNetworkIds.add(network.getId());
-        }
-
-        for (Guid id : networks) {
-            if (!existingNetworkIds.contains(id)) {
-                res.add(id);
-            }
-        }
-
-        return res;
+        return networkClusterDao.getAllForNetwork(networkId).stream().anyMatch(NetworkCluster::isRequired);
     }
 
     private ValidationResult validateAddedStorageConnections(Collection<String> addedStorageConnections, Guid dataCenterId) {
@@ -143,25 +114,12 @@ public class IscsiBondValidator {
     }
 
     private List<String> getStorageConnectionsMissingInDataCenter(Collection<String> storageConnections, Guid dataCenterId) {
-        Set<String> existingConnIds = new HashSet<>();
-        List<String> res = new LinkedList<>();
+        Set<String> existingConnIds = storageServerConnectionDao
+                .getConnectableStorageConnectionsByStorageType(dataCenterId, StorageType.ISCSI)
+                .stream()
+                .map(StorageServerConnections::getId)
+                .collect(Collectors.toSet());
 
-        List<StorageServerConnections> dcStorageConnections =
-                getDBFacade().getStorageServerConnectionDao().getConnectableStorageConnectionsByStorageType(dataCenterId, StorageType.ISCSI);
-        for (StorageServerConnections conn : dcStorageConnections) {
-            existingConnIds.add(conn.getId());
-        }
-
-        for (String id : storageConnections) {
-            if (!existingConnIds.contains(id)) {
-                res.add(id);
-            }
-        }
-
-        return res;
-    }
-
-    protected DbFacade getDBFacade() {
-        return DbFacade.getInstance();
+        return storageConnections.stream().filter(id -> !existingConnIds.contains(id)).collect(Collectors.toList());
     }
 }

@@ -83,7 +83,7 @@ public class ImportExternalNetworkCommand<P extends ImportExternalNetworkParamet
     @Override
     protected boolean validate() {
         NetworkProviderValidator providerValidator = new NetworkProviderValidator(getProvider());
-        NetworkValidator networkValidator = new NetworkValidator(null, getNetwork());
+        NetworkValidator networkValidator = new NetworkValidator(getNetwork());
 
         return validate(providerValidator.providerIsSet())
                 && validate(providerValidator.providerTypeIsNetwork())
@@ -131,7 +131,7 @@ public class ImportExternalNetworkCommand<P extends ImportExternalNetworkParamet
 
     @Override
     protected LockProperties applyLockProperties(LockProperties lockProperties) {
-        return lockProperties.withScope(LockProperties.Scope.Execution);
+        return lockProperties.withScope(LockProperties.Scope.Execution).withWait(true);
     }
 
     @Override

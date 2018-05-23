@@ -1,8 +1,11 @@
 package org.ovirt.engine.api.restapi.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.ovirt.engine.api.restapi.types.MappingTestHelper.populate;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.Disk;
 import org.ovirt.engine.api.model.DiskFormat;
 import org.ovirt.engine.api.model.DiskStatus;
@@ -36,18 +39,16 @@ public class DiskMapperTest extends AbstractInvertibleMappingTest<Disk, DiskImag
         assertEquals(model.getOpenstackVolumeType().getName(), transform.getOpenstackVolumeType().getName());
         assertNotNull(model.getSnapshot());
         assertEquals(model.getSnapshot().getId(), transform.getSnapshot().getId());
-        assertEquals("unexpected status", model.getStatus(), transform.getStatus());
-        assertEquals("unexpected sparse", model.isSparse(), transform.isSparse());
-        assertEquals("unexpected propagate errors", model.isPropagateErrors(), transform.isPropagateErrors());
-        assertEquals("unexpected wipe after delete", model.isWipeAfterDelete(), transform.isWipeAfterDelete());
-        assertEquals("unexpected shareable", model.isShareable(), transform.isShareable());
+        assertEquals(model.getStatus(), transform.getStatus(), "unexpected status");
+        assertEquals(model.isSparse(), transform.isSparse(), "unexpected sparse");
+        assertEquals(model.isPropagateErrors(), transform.isPropagateErrors(), "unexpected propagate errors");
+        assertEquals(model.isWipeAfterDelete(), transform.isWipeAfterDelete(), "unexpected wipe after delete");
+        assertEquals(model.isShareable(), transform.isShareable(), "unexpected shareable");
     }
 
     @Test
     @Override
     public void testRoundtrip() throws Exception {
-        setUpConfigExpectations();
-
         Disk model = Disk.class.cast(populate(Disk.class));
         model = postPopulate(model);
         Mapper<Disk, org.ovirt.engine.core.common.businessentities.storage.Disk> out =
@@ -68,11 +69,10 @@ public class DiskMapperTest extends AbstractInvertibleMappingTest<Disk, DiskImag
         model.setInitialSize(initalSize);
 
         DiskImage entity = (DiskImage) DiskMapper.map(model, null);
-        assertEquals("ActualSizeInBytes doesn't match the initial size as expected",
-                initalSize.longValue(),
-                entity.getActualSizeInBytes());
+        assertEquals(initalSize.longValue(), entity.getActualSizeInBytes(),
+                "ActualSizeInBytes doesn't match the initial size as expected");
 
         model = DiskMapper.map(entity, null);
-        assertNull("initial size shouldn't be mapped back to the model", model.getInitialSize());
+        assertNull(model.getInitialSize(), "initial size shouldn't be mapped back to the model");
     }
 }

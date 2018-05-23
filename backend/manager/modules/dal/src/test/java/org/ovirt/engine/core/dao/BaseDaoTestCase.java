@@ -1,6 +1,6 @@
 package org.ovirt.engine.core.dao;
 
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.InputStream;
 import java.sql.Connection;
@@ -16,17 +16,17 @@ import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.operation.DatabaseOperation;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.mock.jndi.SimpleNamingContextBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.transaction.TransactionalTestExecutionListener;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,14 +34,15 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * {@code BaseDaoTestCase} provides a foundation for creating unit tests for the persistence layer. The annotation
  * {@link Transactional}, and the listener {@link TransactionalTestExecutionListener} ensure that all test
- * cases ({@link org.junit.Test} methods) are executed inside a transaction, and the transaction is automatically rolled
- * back on completion of the test.
+ * cases ({@link org.junit.jupiter.api.Test} methods) are executed inside a transaction, and the transaction is
+ * automatically rolled back on completion of the test.
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestExecutionListeners({ TransactionalTestExecutionListener.class, DependencyInjectionTestExecutionListener.class })
 @ContextConfiguration(locations = { "classpath:/test-beans.xml" })
 @Transactional
-public abstract class BaseDaoTestCase {
+@Tag("dao")
+public abstract class BaseDaoTestCase<D extends Dao> {
     protected static final Guid PRIVILEGED_USER_ID = new Guid("9bf7c640-b620-456f-a550-0348f366544b");
     protected static final String PRIVILEGED_USER_ENGINE_SESSION_ID = "c6f975b2-6f67-11e4-8455-3c970e14c386";
     protected static final Guid UNPRIVILEGED_USER_ID = new Guid("9bf7c640-b620-456f-a550-0348f366544a");
@@ -49,14 +50,14 @@ public abstract class BaseDaoTestCase {
     private static boolean initialized = false;
 
     @Inject
-    protected DbFacade dbFacade;
+    protected D dao;
     private static Object dataFactory;
     protected static boolean needInitializationSql = false;
     protected static String initSql;
     protected static DataSource dataSource;
 
-    @BeforeClass
-    public static void initTestCase() throws Exception {
+    @BeforeAll
+    public static void initTestCase() {
         if(dataSource == null) {
             try {
                 dataSource = createDataSource();
@@ -91,10 +92,10 @@ public abstract class BaseDaoTestCase {
          * note: all tests, which reached this point when initialization failed, can be skipped, but only if first
          * executed test class stated failure. Otherwise all tests will be skipped and success pronounced.
          */
-        assumeTrue("Uninitialized TestCase, cannot proceed. Look above for causing exception.", initialized);
+        assumeTrue(initialized, "Uninitialized TestCase, cannot proceed. Look above for causing exception.");
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
     }
 
@@ -151,10 +152,6 @@ public abstract class BaseDaoTestCase {
     private static void loadDataFactory(String dataFactoryClassname) throws Exception {
         Class<?> clazz = Class.forName(dataFactoryClassname);
         dataFactory = clazz.newInstance();
-    }
-
-    public DbFacade getDbFacade() {
-        return dbFacade;
     }
 
     public static DataSource getDataSource() {

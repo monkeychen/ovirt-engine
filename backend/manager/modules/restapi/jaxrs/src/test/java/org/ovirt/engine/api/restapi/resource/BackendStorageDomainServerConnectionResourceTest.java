@@ -1,9 +1,14 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.api.model.StorageConnection;
 import org.ovirt.engine.core.common.action.ActionType;
 import org.ovirt.engine.core.common.action.AttachDetachStorageConnectionParameters;
@@ -11,6 +16,7 @@ import org.ovirt.engine.core.common.businessentities.StorageServerConnections;
 import org.ovirt.engine.core.common.queries.QueryType;
 import org.ovirt.engine.core.common.queries.StorageServerConnectionQueryParametersBase;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackendStorageDomainServerConnectionResourceTest extends AbstractBackendSubResourceTest<StorageConnection, StorageServerConnections, BackendStorageDomainServerConnectionResource> {
 
     public BackendStorageDomainServerConnectionResourceTest() {
@@ -20,7 +26,7 @@ public class BackendStorageDomainServerConnectionResourceTest extends AbstractBa
     }
 
     @Test
-    public void testDetachSuccess() throws Exception {
+    public void testDetachSuccess() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations();
         setUpActionExpectations(ActionType.DetachStorageConnectionFromStorageDomain,
@@ -34,7 +40,7 @@ public class BackendStorageDomainServerConnectionResourceTest extends AbstractBa
     }
 
     @Test
-    public void testDetachFailure() throws Exception {
+    public void testDetachFailure() {
         setUriInfo(setUpBasicUriExpectations());
         setUpGetEntityExpectations();
         setUpActionExpectations(ActionType.DetachStorageConnectionFromStorageDomain,
@@ -43,12 +49,7 @@ public class BackendStorageDomainServerConnectionResourceTest extends AbstractBa
                 new Object[] {},
                 false,
                 false);
-        try {
-            Response response = resource.remove();
-        } catch (WebApplicationException wae) {
-            assertNotNull(wae.getResponse());
-            assertEquals(400, wae.getResponse().getStatus());
-        }
+        verifyBadRequest(assertThrows(WebApplicationException.class, () -> resource.remove()));
     }
 
     @Override
@@ -58,7 +59,7 @@ public class BackendStorageDomainServerConnectionResourceTest extends AbstractBa
         return entity;
     }
 
-    private void setUpGetEntityExpectations() throws Exception {
+    private void setUpGetEntityExpectations() {
         setUpEntityQueryExpectations(QueryType.GetStorageServerConnectionById,
                 StorageServerConnectionQueryParametersBase.class,
                 new String[] { "ServerConnectionId" },

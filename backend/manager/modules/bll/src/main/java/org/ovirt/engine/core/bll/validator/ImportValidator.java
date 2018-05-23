@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.storage.disk.image.ImagesHandler;
 import org.ovirt.engine.core.bll.validator.storage.DiskImagesValidator;
@@ -21,19 +20,15 @@ import org.ovirt.engine.core.common.businessentities.StorageDomain;
 import org.ovirt.engine.core.common.businessentities.StoragePool;
 import org.ovirt.engine.core.common.businessentities.aaa.DbUser;
 import org.ovirt.engine.core.common.businessentities.storage.DiskImage;
-import org.ovirt.engine.core.common.errors.EngineException;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.common.scheduling.AffinityGroup;
-import org.ovirt.engine.core.common.vdscommands.VDSCommandType;
-import org.ovirt.engine.core.common.vdscommands.VDSParametersBase;
-import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.DbUserDao;
 import org.ovirt.engine.core.dao.DiskDao;
 import org.ovirt.engine.core.dao.DiskImageDao;
 import org.ovirt.engine.core.dao.StorageDomainDao;
 import org.ovirt.engine.core.dao.StoragePoolDao;
+import org.ovirt.engine.core.di.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +111,7 @@ public class ImportValidator {
             ValidationResult result = new StorageDomainValidator(sd).isDomainExistAndActive();
             if (!result.isValid()) {
                 log.error("Storage Domain '{}' with id '{}', could not be found for disk alias '{}' with image id '{}'",
-                        sd == null ? null : sd.getStorageName(),
+                        sd == null ? "unknown" : sd.getStorageName(),
                         image.getStorageIds().get(0),
                         image.getDiskAlias(),
                         image.getId());
@@ -137,6 +132,10 @@ public class ImportValidator {
         for (Snapshot snap : snapshots) {
             if (snap.containsMemory()) {
                 DiskImage memoryDump = (DiskImage) getDiskDao().get(snap.getMemoryDiskId());
+                // If a memory disk is not found in the DB there will be an attempt to import it from the domain
+                if (memoryDump == null) {
+                    return ValidationResult.VALID;
+                }
                 StorageDomain dumpSd = getStorageDomainDao().getForStoragePool(memoryDump.getStorageIds().get(0), params.getStoragePoolId());
                 ValidationResult dumpSdResult = new StorageDomainValidator(dumpSd).isDomainExistAndActive();
                 if (!handleStorageValidationResult(dumpSdResult, memoryDump, snap, failedDisksToImport) && !allowPartial) {
@@ -144,6 +143,10 @@ public class ImportValidator {
                 }
 
                 DiskImage memoryConf = (DiskImage) getDiskDao().get(snap.getMetadataDiskId());
+                // If a memory disk is not found in the DB there will be an attempt to import it from the domain
+                if (memoryConf == null) {
+                    return ValidationResult.VALID;
+                }
                 StorageDomain confSd = getStorageDomainDao().getForStoragePool(memoryConf.getStorageIds().get(0), params.getStoragePoolId());
                 ValidationResult confSdResult = new StorageDomainValidator(confSd).isDomainExistAndActive();
                 if (!handleStorageValidationResult(confSdResult, memoryConf, snap, failedDisksToImport) && !allowPartial) {
@@ -214,29 +217,24 @@ public class ImportValidator {
                 ImagesHandler.getAllStorageIdsForImageIds(diskImages));
     }
 
-    protected VDSReturnValue runVdsCommand(VDSCommandType commandType, VDSParametersBase parameters)
-            throws EngineException {
-        return Backend.getInstance().getResourceManager().runVdsCommand(commandType, parameters);
-    }
-
     protected StorageDomain getStorageDomain(Guid domainId) {
         return getStorageDomainDao().getForStoragePool(domainId, getStoragePool().getId());
     }
 
     public StorageDomainDao getStorageDomainDao() {
-        return DbFacade.getInstance().getStorageDomainDao();
+        return Injector.get(StorageDomainDao.class);
     }
 
     public DiskImageDao getDiskImageDao() {
-        return DbFacade.getInstance().getDiskImageDao();
+        return Injector.get(DiskImageDao.class);
     }
 
     public DiskDao getDiskDao() {
-        return DbFacade.getInstance().getDiskDao();
+        return Injector.get(DiskDao.class);
     }
 
     protected StoragePoolDao getStoragePoolDao() {
-        return DbFacade.getInstance().getStoragePoolDao();
+        return Injector.get(StoragePoolDao.class);
     }
 
     public StoragePool getStoragePool() {
@@ -307,7 +305,7 @@ public class ImportValidator {
     }
 
     private DbUserDao getDbUserDao() {
-        return DbFacade.getInstance().getDbUserDao();
+        return Injector.get(DbUserDao.class);
     }
 
 }

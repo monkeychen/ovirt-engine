@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -87,9 +88,11 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
     @Size(max = BusinessEntitiesDefinitions.VM_DESCRIPTION_SIZE)
     @ValidDescription(message = "ACTION_TYPE_FAILED_DESCRIPTION_MAY_NOT_CONTAIN_SPECIAL_CHARS",
             groups = { CreateEntity.class, UpdateEntity.class })
+    @NotNull
     private String description;
 
     @EditableVmField(onHostedEngine = true)
+    @NotNull
     private String comment;
 
     @CopyOnNewVersion
@@ -165,8 +168,15 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
     @CopyOnNewVersion
     @EditableVmField(onStatuses = VMStatus.Down)
     @EditableVmTemplateField
+    private BiosType biosType;
+
+    @CopyOnNewVersion
+    @EditableVmField(onStatuses = VMStatus.Down)
+    @EditableVmTemplateField
     @Size(max = BusinessEntitiesDefinitions.VM_CPU_NAME_SIZE)
-    @ValidI18NExtraName(message = "ACTION_TYPE_FAILED_CPU_NAME_MAY_NOT_CONTAIN_SPECIAL_CHARS",
+    @Pattern(regexp = ValidationUtils.CUSTOM_CPU_NAME,
+            flags = {Pattern.Flag.CASE_INSENSITIVE},
+            message = "ACTION_TYPE_FAILED_CPU_NAME_MAY_NOT_CONTAIN_SPECIAL_CHARS",
             groups = { CreateEntity.class, UpdateEntity.class })
     private String customCpuName; // overrides cluster cpu. (holds the actual vdsVerb)
 
@@ -395,6 +405,9 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
         customProperties = "";
         consoleDisconnectAction = ConsoleDisconnectAction.LOCK_SCREEN;
         resumeBehavior = VmResumeBehavior.AUTO_RESUME;
+        biosType = BiosType.I440FX_SEA_BIOS;
+        description = "";
+        comment = "";
     }
 
     @EditableVmField
@@ -569,6 +582,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
                 vmBase.getPredefinedProperties(),
                 vmBase.getCustomProperties(),
                 vmBase.getCustomEmulatedMachine(),
+                vmBase.getBiosType(),
                 vmBase.getCustomCpuName(),
                 vmBase.getSmallIconId(),
                 vmBase.getLargeIconId(),
@@ -638,6 +652,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
             String predefinedProperties,
             String customProperties,
             String customEmulatedMachine,
+            BiosType biosType,
             String customCpuName,
             Guid smallIconId,
             Guid largeIconId,
@@ -705,6 +720,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
         this.predefinedProperties = predefinedProperties;
         this.customProperties = customProperties;
         this.customEmulatedMachine = customEmulatedMachine;
+        this.biosType = biosType;
         this.customCpuName = customCpuName;
         this.smallIconId = smallIconId;
         this.largeIconId = largeIconId;
@@ -834,7 +850,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
     }
 
     public void setDescription(String value) {
-        this.description = value;
+        this.description = value == null ? "" : value;
     }
 
     public String getComment() {
@@ -842,7 +858,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
     }
 
     public void setComment(String value) {
-        comment = value;
+        comment = value == null ? "" : value;
     }
 
     public int getMemSizeMb() {
@@ -1121,6 +1137,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
                 predefinedProperties,
                 userDefinedProperties,
                 customEmulatedMachine,
+                biosType,
                 customCpuName,
                 smallIconId,
                 largeIconId,
@@ -1189,6 +1206,7 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
                 && Objects.equals(predefinedProperties, other.predefinedProperties)
                 && Objects.equals(userDefinedProperties, other.userDefinedProperties)
                 && Objects.equals(customEmulatedMachine, other.customEmulatedMachine)
+                && biosType == other.biosType
                 && Objects.equals(customCpuName, other.customCpuName)
                 && Objects.equals(smallIconId, other.smallIconId)
                 && Objects.equals(largeIconId, other.largeIconId)
@@ -1237,12 +1255,6 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
         this.migrationSupport = migrationSupport;
     }
 
-    public Guid fetchDedicatedVmForSingleHost(){
-        if(getDedicatedVmForVdsList().size() == 0){
-            return null;
-        }
-        return getDedicatedVmForVdsList().get(0);
-    }
     public List<Guid> getDedicatedVmForVdsList() {
         if (dedicatedVmForVdsList == null){
             dedicatedVmForVdsList = new LinkedList<>();
@@ -1474,6 +1486,14 @@ public class VmBase implements Queryable, BusinessEntity<Guid>, Nameable, Commen
 
     public void setCustomEmulatedMachine(String customEmulatedMachine) {
         this.customEmulatedMachine = customEmulatedMachine == null || customEmulatedMachine.trim().isEmpty() ? null : customEmulatedMachine;
+    }
+
+    public BiosType getBiosType() {
+        return biosType;
+    }
+
+    public void setBiosType(BiosType biosType) {
+        this.biosType = biosType;
     }
 
     public String getCustomCpuName() {

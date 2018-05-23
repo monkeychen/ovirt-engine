@@ -3,37 +3,29 @@ package org.ovirt.engine.core.bll.scheduling.policyunits;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.ovirt.engine.core.common.businessentities.Cluster;
 import org.ovirt.engine.core.common.businessentities.Label;
 import org.ovirt.engine.core.common.businessentities.LabelBuilder;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
-import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.scheduling.PerHostMessages;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.LabelDao;
-import org.ovirt.engine.core.utils.MockConfigRule;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LabelFilterPolicyUnitTest {
-
-    @ClassRule
-    public static MockConfigRule configRule = new MockConfigRule(mockConfig(ConfigValues.MaxSchedulerWeight, 1000));
-
     @Mock
     LabelDao labelDao;
 
@@ -46,8 +38,8 @@ public class LabelFilterPolicyUnitTest {
     private VDS host2;
     private List<VDS> hosts;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         cluster = new Cluster();
         cluster.setId(Guid.newGuid());
 
@@ -67,7 +59,7 @@ public class LabelFilterPolicyUnitTest {
     }
 
     @Test
-    public void testSimple() throws Exception {
+    public void testSimple() {
         Label red = new LabelBuilder()
                 .entities(vm, host1)
                 .build();
@@ -81,7 +73,7 @@ public class LabelFilterPolicyUnitTest {
     }
 
     @Test
-    public void testEmpty() throws Exception {
+    public void testEmpty() {
         Label red = new LabelBuilder()
                 .entities(vm, host1)
                 .build();
@@ -98,7 +90,7 @@ public class LabelFilterPolicyUnitTest {
     }
 
     @Test
-    public void testHostExtra() throws Exception {
+    public void testHostExtra() {
         Label red = new LabelBuilder()
                 .entities(vm, host1)
                 .build();

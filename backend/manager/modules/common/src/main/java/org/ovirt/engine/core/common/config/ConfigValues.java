@@ -182,6 +182,10 @@ public enum ConfigValues {
     @Reloadable
     @TypeConverterAttribute(List.class)
     @OptionBehaviourAttribute(behaviour = OptionBehaviour.CommaSeparatedStringArray)
+    GuestNicNamesBlacklist(ClientAccessLevel.User),
+    @Reloadable
+    @TypeConverterAttribute(List.class)
+    @OptionBehaviourAttribute(behaviour = OptionBehaviour.CommaSeparatedStringArray)
     ValidNumOfMonitors(ClientAccessLevel.User),
     @Reloadable
     @TypeConverterAttribute(Integer.class)
@@ -712,9 +716,6 @@ public enum ConfigValues {
     @TypeConverterAttribute(Boolean.class)
     GetImageTicketSupported,
 
-    @TypeConverterAttribute(Boolean.class)
-    TestImageIOProxyConnectionSupported,
-
     @Reloadable
     @TypeConverterAttribute(Long.class)
     SetupNetworksPollingTimeout,
@@ -1219,6 +1220,12 @@ public enum ConfigValues {
     DefaultMTU(ClientAccessLevel.Admin),
 
     /**
+     * The default MTU (in Bytes) for tunnelled networks.
+     */
+    @TypeConverterAttribute(Integer.class)
+    TunnelledDefaultMTU(ClientAccessLevel.Admin),
+
+    /**
      * Defines the hostname(s) or IP address(es) to send fence_kdump messages to. If empty, engine FQDN is used.
      */
     @TypeConverterAttribute(String.class)
@@ -1583,6 +1590,13 @@ public enum ConfigValues {
 
     @TypeConverterAttribute(Boolean.class)
     ResetBrickSupported,
+
+    @Reloadable
+    @TypeConverterAttribute(Boolean.class)
+    EnableKASLRDump,
+
+    @TypeConverterAttribute(Boolean.class)
+    BiosTypeSupported,
 
     Invalid;
 

@@ -1,10 +1,10 @@
 package org.ovirt.engine.core.bll.validator;
 
-import static org.junit.Assert.assertThat;
+import static java.util.stream.Collectors.joining;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.failsWith;
 import static org.ovirt.engine.core.bll.validator.ValidationResultMatchers.isValid;
@@ -15,87 +15,91 @@ import java.util.Collections;
 import java.util.List;
 
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.ValidationResult;
 import org.ovirt.engine.core.bll.network.cluster.ManagementNetworkUtil;
 import org.ovirt.engine.core.common.businessentities.IscsiBond;
-import org.ovirt.engine.core.common.businessentities.StoragePool;
 import org.ovirt.engine.core.common.businessentities.VDS;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.businessentities.VmTemplate;
 import org.ovirt.engine.core.common.businessentities.network.Network;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
 import org.ovirt.engine.core.dao.IscsiBondDao;
-import org.ovirt.engine.core.dao.StoragePoolDao;
 import org.ovirt.engine.core.dao.VdsDao;
 import org.ovirt.engine.core.dao.VmDao;
 import org.ovirt.engine.core.dao.VmTemplateDao;
 import org.ovirt.engine.core.dao.network.NetworkDao;
+import org.ovirt.engine.core.utils.InjectedMock;
+import org.ovirt.engine.core.utils.InjectorExtension;
 import org.ovirt.engine.core.utils.RandomUtils;
+import org.ovirt.engine.core.utils.ReplacementUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith({MockitoExtension.class, InjectorExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NetworkValidatorTest {
 
     private static final String NAMEABLE_NAME = "nameable";
     private static final String DEFAULT_NETWORK_NAME = "mynetwork";
     private static final String OTHER_NETWORK_NAME = "myothernetwork";
+    private static final String EXTERNAL_NETWORK_NAME = "external_network";
     private static final Guid DEFAULT_GUID = Guid.newGuid();
     private static final Guid OTHER_GUID = Guid.newGuid();
 
     @Mock
-    private DbFacade dbFacade;
-
-    @Mock
-    private StoragePoolDao dataCenterDao;
-
-    @Mock
-    private NetworkDao networkDao;
+    @InjectedMock
+    public NetworkDao networkDao;
 
     @Mock
     private Network network;
 
     @Mock
-    private StoragePool dataCenter;
+    @InjectedMock
+    public ManagementNetworkUtil managementNetworkUtil;
 
     @Mock
-    private ManagementNetworkUtil managementNetworkUtil;
+    @InjectedMock
+    public VmDao vmDao;
 
     @Mock
-    private VmDao vmDao;
+    @InjectedMock
+    public VmTemplateDao templateDao;
+
+    @Mock
+    @InjectedMock
+    public IscsiBondDao iscsiBondDao;
+
+    @Mock
+    @InjectedMock
+    public VdsDao hostDao;
 
     private List<Network> networks = new ArrayList<>();
     private NetworkValidator validator;
 
-    @Before
+    @BeforeEach
     public void setup() {
 
         // spy on attempts to access the database
-        validator = spy(new NetworkValidator(vmDao, network));
-        doReturn(dbFacade).when(validator).getDbFacade();
-        doReturn(managementNetworkUtil).when(validator).getManagementNetworkUtil();
-        doReturn(networkDao).when(validator).getNetworkDao();
-
-        // mock some commonly used Daos
-        when(dbFacade.getNetworkDao()).thenReturn(networkDao);
+        validator = new NetworkValidator(network);
 
         // mock their getters
         when(networkDao.getAllForDataCenter(any())).thenReturn(networks);
     }
 
     @Test
-    public void networkSet() throws Exception {
+    public void networkSet() {
         assertThat(validator.networkIsSet(Guid.newGuid()), isValid());
     }
 
     @Test
-    public void networkNull() throws Exception {
-        validator = new NetworkValidator(vmDao, null);
+    public void networkNull() {
+        validator = new NetworkValidator(null);
         assertThat(validator.networkIsSet(Guid.newGuid()), failsWith(EngineMessage.NETWORK_HAVING_ID_NOT_EXISTS));
     }
 
@@ -107,28 +111,23 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void stpWhenVmNetwork() throws Exception {
+    public void stpWhenVmNetwork() {
         stpTest(isValid(), true, true);
     }
 
     @Test
-    public void noStpWhenVmNetwork() throws Exception {
+    public void noStpWhenVmNetwork() {
         stpTest(isValid(), true, false);
     }
 
     @Test
-    public void stpWhenNonVmNetwork() throws Exception {
+    public void stpWhenNonVmNetwork() {
         stpTest(failsWith(EngineMessage.NON_VM_NETWORK_CANNOT_SUPPORT_STP), false, true);
     }
 
     @Test
-    public void noStpWhenNonVmNetwork() throws Exception {
+    public void noStpWhenNonVmNetwork() {
         stpTest(isValid(), false, false);
-    }
-
-    @Test
-    public void mtuValid() {
-        assertThat(validator.mtuValid(), isValid());
     }
 
     private void networkPrefixValidTest(Matcher<ValidationResult> matcher, String networkName) {
@@ -138,21 +137,13 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkPrefixBond() throws Exception {
+    public void networkPrefixBond() {
         networkPrefixValidTest(failsWith(EngineMessage.NETWORK_CANNOT_CONTAIN_BOND_NAME), "bond0");
     }
 
     @Test
-    public void networkPrefixInnocent() throws Exception {
+    public void networkPrefixInnocent() {
         networkPrefixValidTest(isValid(), DEFAULT_NETWORK_NAME);
-    }
-
-
-    private static List<Network> getSingletonVlanNetworkList(int vlanId, Guid networkId) {
-        Network network = new Network();
-        network.setVlanId(vlanId);
-        network.setId(networkId);
-        return Collections.singletonList(network);
     }
 
     private void networkNameAvailableTest(Matcher<ValidationResult> matcher, List<Network> networks) {
@@ -164,9 +155,7 @@ public class NetworkValidatorTest {
     }
 
     private void notIscsiBondNetworkTest(Matcher<ValidationResult> matcher, List<IscsiBond> iscsiBonds) {
-        IscsiBondDao iscsiBondDao = mock(IscsiBondDao.class);
         when(iscsiBondDao.getIscsiBondsByNetworkId(any())).thenReturn(iscsiBonds);
-        when(dbFacade.getIscsiBondDao()).thenReturn(iscsiBondDao);
         assertThat(validator.notIscsiBondNetwork(), matcher);
     }
 
@@ -187,22 +176,22 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void noIscsiBondsForNetowrkTest() throws Exception {
+    public void noIscsiBondsForNetowrkTest() {
         notIscsiBondNetworkTest(isValid(), Collections.emptyList());
     }
 
     @Test
-    public void existingIscsiBondsForNetowrkTest() throws Exception {
+    public void existingIscsiBondsForNetowrkTest() {
         notIscsiBondNetworkTest(failsWith(EngineMessage.NETWORK_CANNOT_REMOVE_ISCSI_BOND_NETWORK), getIscsiBondList());
     }
 
     @Test
-    public void networkNameNoNetworks() throws Exception {
+    public void networkNameNoNetworks() {
         networkNameAvailableTest(isValid(), Collections.emptyList());
     }
 
     @Test
-    public void networkNameAvailable() throws Exception {
+    public void networkNameAvailable() {
         networkNameAvailableTest(isValid(), getSingletonNamedNetworkList(OTHER_NETWORK_NAME, OTHER_GUID));
     }
 
@@ -234,19 +223,19 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkNameTakenByDifferentNetwork() throws Exception {
+    public void networkNameTakenByDifferentNetwork() {
         networkNameAvailableTest(failsWith(EngineMessage.ACTION_TYPE_FAILED_NETWORK_NAME_IN_USE),
                 getSingletonNamedNetworkList(DEFAULT_NETWORK_NAME, OTHER_GUID));
     }
 
     @Test
-    public void networkNameTakenCaseSensitivelyByDifferentNetwork() throws Exception {
+    public void networkNameTakenCaseSensitivelyByDifferentNetwork() {
         networkNameAvailableTest(isValid(),
                 getSingletonNamedNetworkList(DEFAULT_NETWORK_NAME.toUpperCase(), OTHER_GUID));
     }
 
     @Test
-    public void networkNameTakenBySameNetwork() throws Exception {
+    public void networkNameTakenBySameNetwork() {
         networkNameAvailableTest(isValid(),
                 getSingletonNamedNetworkList(DEFAULT_NETWORK_NAME, DEFAULT_GUID));
     }
@@ -265,12 +254,12 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkNotInUseByVms() throws Exception {
+    public void networkNotInUseByVms() {
         networkNotUsedByVmsTest(isValid(), Collections.emptyList());
     }
 
     @Test
-    public void networkInUseByOneVm() throws Exception {
+    public void networkInUseByOneVm() {
         VM vm = mock(VM.class);
         when(vm.getName()).thenReturn(NAMEABLE_NAME);
 
@@ -278,7 +267,7 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkInUseByManyVms() throws Exception {
+    public void networkInUseByManyVms() {
         VM vm1 = mock(VM.class);
         when(vm1.getName()).thenReturn(NAMEABLE_NAME+1);
 
@@ -289,19 +278,17 @@ public class NetworkValidatorTest {
     }
 
     private void networkNotUsedByHostsTest(Matcher<ValidationResult> matcher, List<VDS> hosts) {
-        VdsDao hostDao = mock(VdsDao.class);
         when(hostDao.getAllForNetwork(any())).thenReturn(hosts);
-        when(dbFacade.getVdsDao()).thenReturn(hostDao);
         assertThat(validator.networkNotUsedByHosts(), matcher);
     }
 
     @Test
-    public void networkNotInUseByHosts() throws Exception {
+    public void networkNotInUseByHosts() {
         networkNotUsedByHostsTest(isValid(), Collections.emptyList());
     }
 
     @Test
-    public void networkInUseByOneHost() throws Exception {
+    public void networkInUseByOneHost() {
         VDS host = mock(VDS.class);
         when(host.getName()).thenReturn(NAMEABLE_NAME);
 
@@ -309,7 +296,7 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkInUseByManyHosts() throws Exception {
+    public void networkInUseByManyHosts() {
         VDS host1 = mock(VDS.class);
         when(host1.getName()).thenReturn(NAMEABLE_NAME+1);
 
@@ -320,19 +307,17 @@ public class NetworkValidatorTest {
     }
 
     private void networkNotUsedByTemplatesTest(Matcher<ValidationResult> matcher, List<VmTemplate> templates) {
-        VmTemplateDao templateDao = mock(VmTemplateDao.class);
         when(templateDao.getAllForNetwork(any())).thenReturn(templates);
-        when(dbFacade.getVmTemplateDao()).thenReturn(templateDao);
         assertThat(validator.networkNotUsedByTemplates(), matcher);
     }
 
     @Test
-    public void networkNotInUseByTemplates() throws Exception {
+    public void networkNotInUseByTemplates() {
         networkNotUsedByTemplatesTest(isValid(), Collections.emptyList());
     }
 
     @Test
-    public void networkInUseByOneTemplate() throws Exception {
+    public void networkInUseByOneTemplate() {
         VmTemplate template = mock(VmTemplate.class);
         when(template.getName()).thenReturn(NAMEABLE_NAME);
 
@@ -340,7 +325,7 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkInUseByManyTemplates() throws Exception {
+    public void networkInUseByManyTemplates() {
         VmTemplate template1 = mock(VmTemplate.class);
         when(template1.getName()).thenReturn(NAMEABLE_NAME+1);
 
@@ -351,24 +336,24 @@ public class NetworkValidatorTest {
     }
 
     @Test
-    public void networkNotLabeled() throws Exception {
+    public void networkNotLabeled() {
         assertThat(validator.notLabeled(), isValid());
     }
 
     @Test
-    public void networkLabeled() throws Exception {
+    public void networkLabeled() {
         when(network.getLabel()).thenReturn(RandomUtils.instance().nextPropertyString(10));
         assertThat(validator.notLabeled(), failsWith(EngineMessage.ACTION_TYPE_FAILED_NETWORK_ALREADY_LABELED));
     }
 
     @Test
-    public void testNotExternalNetworkFailsForExternalNetwork() throws Exception {
+    public void testNotExternalNetworkFailsForExternalNetwork() {
         when(network.isExternal()).thenReturn(true);
         assertThat(validator.notExternalNetwork(), failsWith(EngineMessage.ACTION_TYPE_FAILED_NOT_SUPPORTED_FOR_EXTERNAL_NETWORK));
     }
 
     @Test
-    public void testNotExternalNetworkSucceedsForNonExternalNetwork() throws Exception {
+    public void testNotExternalNetworkSucceedsForNonExternalNetwork() {
         when(network.isExternal()).thenReturn(false);
         assertThat(validator.notExternalNetwork(), isValid());
     }
@@ -387,4 +372,27 @@ public class NetworkValidatorTest {
         assertThat(validator.notManagementNetwork(), isValid());
     }
 
+    @Test
+    public void testNotLinkedToExternalNetworkPositive() {
+        when(network.getId()).thenReturn(DEFAULT_GUID);
+        when(networkDao.getAllExternalNetworksLinkedToPhysicalNetwork(eq(DEFAULT_GUID))).thenReturn(Collections.emptyList());
+        assertThat(validator.notLinkedToExternalNetwork(), isValid());
+    }
+
+    @Test
+    public void testNotLinkedToExternalNetworkNegative() {
+        Network externalNetwork = new Network();
+        externalNetwork.setName(EXTERNAL_NETWORK_NAME);
+        List<Network> externalNetworkList = Collections.singletonList(externalNetwork);
+        String linkedExternalNetworkNames = externalNetworkList.stream()
+                .map(Network::getName)
+                .collect(joining(", "));
+
+        when(network.getId()).thenReturn(DEFAULT_GUID);
+        when(networkDao.getAllExternalNetworksLinkedToPhysicalNetwork(eq(DEFAULT_GUID))).thenReturn(externalNetworkList);
+        assertThat(validator.notLinkedToExternalNetwork(),
+                failsWith(EngineMessage.ACTION_TYPE_FAILED_CANNOT_REMOVE_PHYSICAL_NETWORK_LINKED_TO_EXTERNAL_NETWORK,
+                        ReplacementUtils.createSetVariableString(NetworkValidator.NETWORK_LIST_REPLACEMENT,
+                                linkedExternalNetworkNames)));
+    }
 }

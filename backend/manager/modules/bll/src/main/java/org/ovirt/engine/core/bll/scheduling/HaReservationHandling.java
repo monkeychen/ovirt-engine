@@ -15,7 +15,9 @@ import org.ovirt.engine.core.common.businessentities.VDSStatus;
 import org.ovirt.engine.core.common.businessentities.VM;
 import org.ovirt.engine.core.common.utils.Pair;
 import org.ovirt.engine.core.compat.Guid;
-import org.ovirt.engine.core.dal.dbbroker.DbFacade;
+import org.ovirt.engine.core.dao.VdsDao;
+import org.ovirt.engine.core.dao.VmDao;
+import org.ovirt.engine.core.di.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +29,9 @@ public class HaReservationHandling {
     private static final Logger log = LoggerFactory.getLogger(HaReservationHandling.class);
 
     private final PendingResourceManager pendingResourceManager;
-    private final SlaValidator slaValidator;
 
-    public HaReservationHandling(PendingResourceManager pendingResourceManager, SlaValidator slaValidator) {
+    public HaReservationHandling(PendingResourceManager pendingResourceManager) {
         this.pendingResourceManager = pendingResourceManager;
-        this.slaValidator = slaValidator;
     }
 
     /**
@@ -43,7 +43,7 @@ public class HaReservationHandling {
      *         impacting performance.
      */
     public boolean checkHaReservationStatusForCluster(Cluster cluster, List<VDS> failedHosts) {
-        List<VDS> hosts = DbFacade.getInstance().getVdsDao().getAllForClusterWithStatus(cluster.getId(), VDSStatus.Up);
+        List<VDS> hosts = Injector.get(VdsDao.class).getAllForClusterWithStatus(cluster.getId(), VDSStatus.Up);
 
         // No hosts, return true
         if (hosts == null || hosts.isEmpty()) {
@@ -102,7 +102,7 @@ public class HaReservationHandling {
             if (vm.getUsageCpuPercent() != null) {
                 curVmCpuPercent =
                         vm.getUsageCpuPercent() * vm.getNumOfCpus()
-                                / slaValidator.getEffectiveCpuCores(host, cluster.getCountThreadsAsCores());
+                                / SlaValidator.getEffectiveCpuCores(host, cluster.getCountThreadsAsCores());
             }
             log.debug("VM '{}'. CPU usage: {}%, RAM required: {}MB", vm.getName(), curVmCpuPercent, curVmMemSize);
 
@@ -200,7 +200,7 @@ public class HaReservationHandling {
 
     public static Map<Guid, List<VM>> mapHaVmToHostByCluster(Guid clusterId) {
 
-        List<VM> vms = DbFacade.getInstance().getVmDao().getAllForCluster(clusterId);
+        List<VM> vms = Injector.get(VmDao.class).getAllForCluster(clusterId);
         if (vms == null || vms.isEmpty()) {
             log.debug("No VMs available for this cluster with id '{}'", clusterId);
             // return empty map

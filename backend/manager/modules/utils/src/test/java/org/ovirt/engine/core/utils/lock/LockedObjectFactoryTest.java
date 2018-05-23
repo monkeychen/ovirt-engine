@@ -1,7 +1,8 @@
 package org.ovirt.engine.core.utils.lock;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,9 +10,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 /**
  * In this test, we need to test, that MacPoolLockingProxy actually works. Assuming write lock, we must setup scenario,
@@ -29,10 +28,6 @@ import org.junit.rules.ExpectedException;
  * org.ovirt.engine.core.bll.network.macpool.MacPoolLockingProxyTest#threadMarks using thread ID as a key.
  */
 public class LockedObjectFactoryTest {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     //be careful with making this delays smaller or removing them entirely, as surprising result may occur.
     /**
      * number of millis for which is each decorated method delayed.
@@ -59,13 +54,13 @@ public class LockedObjectFactoryTest {
     }
 
     @Test
-    public void testMethodWithReadLockWhenBlockedByWriteMethod() throws Exception {
+    public void testMethodWithReadLockWhenBlockedByWriteMethod() {
         Runnable action = () -> lockedTestInstanceA.methodWithReadLock();
         performOperation(action, () -> lockedTestInstanceB.methodWithWriteLock(), false);
     }
 
     @Test
-    public void testMethodWithReadLockWhenAccessedTwice() throws Exception {
+    public void testMethodWithReadLockWhenAccessedTwice() {
         performOperation(() -> lockedTestInstanceA.methodWithReadLock(),
                 () -> lockedTestInstanceB.methodWithReadLock(), true);
     }
@@ -76,6 +71,7 @@ public class LockedObjectFactoryTest {
                 () -> lockedTestInstanceB.methodWithWriteLock(), false);
     }
 
+    @Test
     public void testAllocateNewMacWhenBlockedByReadMethod() {
         Runnable action = () -> lockedTestInstanceA.methodWithWriteLock();
         performOperation(() -> lockedTestInstanceB.methodWithReadLock(), action, false);
@@ -150,8 +146,7 @@ public class LockedObjectFactoryTest {
     @Test
     public void testThatNoControlledExceptionIsThrown() {
         NullPointerException runtimeException = new NullPointerException();
-        expectedException.expect(runtimeException.getClass());
-        lockedTestInstanceA.failingMethod(runtimeException);
+        assertThrows(runtimeException.getClass(), () -> lockedTestInstanceA.failingMethod(runtimeException));
     }
 
     private static void sleep(int millis) {

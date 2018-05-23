@@ -70,6 +70,7 @@ import org.ovirt.engine.ui.uicommonweb.models.hosts.numa.VmNumaSupportModel;
 import org.ovirt.engine.ui.uicommonweb.models.storage.DisksAllocationModel;
 import org.ovirt.engine.ui.uicommonweb.models.templates.TemplateWithVersion;
 import org.ovirt.engine.ui.uicommonweb.models.vms.key_value.KeyValueModel;
+import org.ovirt.engine.ui.uicommonweb.validation.CpuNameValidation;
 import org.ovirt.engine.ui.uicommonweb.validation.GuidValidation;
 import org.ovirt.engine.ui.uicommonweb.validation.I18NExtraNameOrNoneValidation;
 import org.ovirt.engine.ui.uicommonweb.validation.IValidation;
@@ -253,6 +254,7 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
             getInstanceTypes().setIsChangeable(false);
             getMemSize().setIsChangeable(false);
             getMaxMemorySize().setIsChangeable(false);
+            getMinAllocatedMemory().setIsChangeable(false);
             getTotalCPUCores().setIsChangeable(false);
 
             getCustomCpu().setIsChangeable(false);
@@ -298,7 +300,6 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
             getCustomCompatibilityVersion().setIsChangeable(false);
 
             // ==Resource Allocation Tab==
-            getMinAllocatedMemory().setIsChangeable(false);
             getProvisioning().setIsChangeable(false);
             getProvisioningThin_IsSelected().setIsChangeable(false);
             getProvisioningClone_IsSelected().setIsChangeable(false);
@@ -1923,20 +1924,16 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
         if (ev.matchesDefinition(ListModel.selectedItemChangedEventDefinition)) {
             if (sender == getVmType()) {
                 vmTypeChanged();
-            }
-            else if (sender == getDataCenterWithClustersList()) {
+            } else if (sender == getDataCenterWithClustersList()) {
                 behavior.updateCompatibilityVersion(); // needs to be first because it affects compatibility version
                 compatibilityVersionChanged(sender, args);
                 behavior.updateEmulatedMachines();
                 behavior.updateCustomCpu();
-            }
-            else if (sender == getTemplateWithVersion()) {
+            } else if (sender == getTemplateWithVersion()) {
                 templateWithVersion_SelectedItemChanged(sender, args);
-            }
-            else if (sender == getTimeZone()) {
+            } else if (sender == getTimeZone()) {
                 timeZone_SelectedItemChanged(sender, args);
-            }
-            else if (sender == getOSType()) {
+            } else if (sender == getOSType()) {
                 getBehavior().deactivateInstanceTypeManager(() -> {
                     if (getBehavior().getInstanceTypeManager() != null && !getBehavior().basedOnCustomInstanceType()) {
                         getBehavior().getInstanceTypeManager().updateFildsAfterOsChanged();
@@ -1951,45 +1948,34 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
 
                 headlessModeChanged();
                 getBehavior().activateInstanceTypeManager();
-            }
-            else if (sender == getFirstBootDevice()) {
+            } else if (sender == getFirstBootDevice()) {
                 firstBootDevice_SelectedItemChanged(sender, args);
-            }
-            else if (sender == getDisplayType()) {
+            } else if (sender == getDisplayType()) {
                 initGraphicsConsoles();
                 initUsbPolicy();
-            }
-            else if (sender == getGraphicsType()) {
+            } else if (sender == getGraphicsType()) {
                 upgradeGraphicsRelatedModels();
                 initUsbPolicy();
-            }
-            else if (sender == getNumOfSockets()) {
+            } else if (sender == getNumOfSockets()) {
                 numOfSockets_EntityChanged(sender, args);
-            }
-            else if (sender == getCoresPerSocket()) {
+            } else if (sender == getCoresPerSocket()) {
                 coresPerSocket_EntityChanged(sender, args);
-            }
-            else if (sender == getThreadsPerCore()) {
+            } else if (sender == getThreadsPerCore()) {
                 threadsPerCore_EntityChanged(sender, args);
-            }
-            else if (sender == getMigrationMode()) {
+            } else if (sender == getMigrationMode()) {
                 behavior.updateUseHostCpuAvailability();
                 behavior.updateCpuPinningVisibility();
                 behavior.updateHaAvailability();
                 behavior.updateNumaEnabled();
             } else if (sender == getMigrationPolicies()) {
                 updateMigrationRelatedFields();
-            }
-            else if (sender == getCpuSharesAmountSelection()) {
+            } else if (sender == getCpuSharesAmountSelection()) {
                 behavior.updateCpuSharesAmountChangeability();
-            }
-            else if (sender == getBaseTemplate()) {
+            } else if (sender == getBaseTemplate()) {
                 behavior.baseTemplateSelectedItemChanged();
-            }
-            else if (sender == getWatchdogModel()) {
+            } else if (sender == getWatchdogModel()) {
                 watchdogModelSelectedItemChanged(sender, args);
-            }
-            else if (sender == getCustomCompatibilityVersion()) {
+            } else if (sender == getCustomCompatibilityVersion()) {
                 // window must be updated as if a cluster change occurred because feature availability should be reconsidered
                 if (behavior.isCustomCompatibilityVersionChangeInProgress()) {
                     return;
@@ -2004,8 +1990,7 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
                 compatibilityVersionChanged(sender, args);
                 headlessModeChanged();
                 updateResumeBehavior();
-            }
-            else if (sender == getLease()) {
+            } else if (sender == getLease()) {
                 updateResumeBehavior();
             }
         } else if (ev.matchesDefinition(ListModel.selectedItemsChangedEventDefinition)) {
@@ -2021,26 +2006,21 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
                 vmInitEnabledChanged();
             } else if (sender == getMemSize()) {
                 memSize_EntityChanged(sender, args);
-            }
-            else if (sender == getTotalCPUCores()) {
+            } else if (sender == getTotalCPUCores()) {
                 totalCPUCores_EntityChanged(sender, args);
-            }
-            else if (sender == getIsAutoAssign()) {
+            } else if (sender == getIsAutoAssign()) {
                 behavior.updateUseHostCpuAvailability();
                 behavior.updateCpuPinningVisibility();
                 behavior.updateHaAvailability();
                 behavior.updateNumaEnabled();
                 behavior.updateMigrationAvailability();
-            }
-            else if (sender == getProvisioning()) {
+            } else if (sender == getProvisioning()) {
                 provisioning_SelectedItemChanged(sender, args);
-            }
-            else if (sender == getProvisioningThin_IsSelected()) {
+            } else if (sender == getProvisioningThin_IsSelected()) {
                 if (getProvisioningThin_IsSelected().getEntity()) {
                     getProvisioning().setEntity(false);
                 }
-            }
-            else if (sender == getProvisioningClone_IsSelected()) {
+            } else if (sender == getProvisioningClone_IsSelected()) {
                 if (getProvisioningClone_IsSelected().getEntity()) {
                     getProvisioning().setEntity(true);
                 }
@@ -2051,11 +2031,9 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
                 overrideMigrationDowntimeChanged();
             } else if (sender == getOverrideMigrationPolicy()) {
                 overrideMigrationPolicyChanged();
-            }
-            else if (sender == getIsSubTemplate()) {
+            } else if (sender == getIsSubTemplate()) {
                 behavior.isSubTemplateEntityChanged();
-            }
-            else if (sender == getHostCpu()) {
+            } else if (sender == getHostCpu()) {
                 if(getHostCpu().getEntity() != null && getHostCpu().getEntity()) {
                     getCustomCpu().setIsChangeable(false);
                     getCustomCpu().setSelectedItem(""); //$NON-NLS-1$
@@ -2064,8 +2042,7 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
                 }
             } else if (sender == getName()) {
                 autoSetHostname();
-            }
-            else if (sender == getIsHeadlessModeEnabled()) {
+            } else if (sender == getIsHeadlessModeEnabled()) {
                 headlessModeChanged();
             }
         }
@@ -2686,8 +2663,7 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
                     break;
                 }
             }
-        }
-        else {
+        } else {
             for (EntityModel<BootSequence> a : secondDeviceOptions) {
                 if (a.getEntity() == null) {
                     getSecondBootDevice().setSelectedItem(a);
@@ -2944,7 +2920,7 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
 
         getEmulatedMachine().validateSelectedItem(new IValidation[] { new I18NExtraNameOrNoneValidation(), new LengthValidation(
                 BusinessEntitiesDefinitions.VM_EMULATED_MACHINE_SIZE)});
-        getCustomCpu().validateSelectedItem(new IValidation[] { new I18NExtraNameOrNoneValidation() , new LengthValidation(BusinessEntitiesDefinitions.VM_CPU_NAME_SIZE)});
+        getCustomCpu().validateSelectedItem(new IValidation[] { new CpuNameValidation(), new LengthValidation(BusinessEntitiesDefinitions.VM_CPU_NAME_SIZE)});
 
         setValidTab(TabName.CONSOLE_TAB, getUsbPolicy().getIsValid() && getNumOfMonitors().getIsValid()
                 && getSpiceProxy().getIsValid());
@@ -2963,11 +2939,10 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
         validateMaxMemorySize();
         validateMemoryAlignment(getMemSize());
 
-        setValidTab(TabName.RESOURCE_ALLOCATION_TAB, getMinAllocatedMemory().getIsValid());
-
         setValidTab(TabName.SYSTEM_TAB,
                 getMemSize().getIsValid() &&
                 getMaxMemorySize().getIsValid() &&
+                getMinAllocatedMemory().getIsValid() &&
                 getTotalCPUCores().getIsValid() &&
                 getSerialNumberPolicy().getCustomSerialNumber().getIsValid() &&
                 getEmulatedMachine().getIsValid() &&
@@ -3062,18 +3037,15 @@ public class UnitVmModel extends Model implements HasValidatedTabs {
             model.getInvalidityReasons().add(ConstantsManager.getInstance()
                     .getMessages()
                     .memSizeBetween(minMemSize, maxMemSize));
-        }
-        else if (memSize > maxMemSize) {
+        } else if (memSize > maxMemSize) {
             model.getInvalidityReasons().add(ConstantsManager.getInstance()
                     .getMessages()
                     .maxMemSizeIs(maxMemSize));
-        }
-        else if (memSize < minMemSize) {
+        } else if (memSize < minMemSize) {
             model.getInvalidityReasons().add(ConstantsManager.getInstance()
                     .getMessages()
                     .minMemSizeIs(minMemSize));
-        }
-        else {
+        } else {
             isValid = true;
         }
 

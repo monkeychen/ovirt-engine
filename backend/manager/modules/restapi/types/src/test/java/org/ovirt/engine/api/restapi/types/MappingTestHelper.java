@@ -17,6 +17,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.ovirt.engine.api.model.BaseResource;
 import org.ovirt.engine.api.restapi.utils.GuidUtils;
+import org.ovirt.engine.core.utils.RandomUtils;
 
 public class MappingTestHelper {
 
@@ -68,13 +69,11 @@ public class MappingTestHelper {
                     random(method, model);
                 } else if (takesEnum(method)) {
                     shuffle(method, model);
-                }
-                else if(takesBigDecimal(method)) {
+                } else if(takesBigDecimal(method)) {
                     populateBigDecimal(method, model);
                 } else if (takesXmlGregorianCalendar(method)) {
                     populateXmlGregorianCalendar(method, model);
-                }
-                else {
+                } else {
                     descend(method, model, scope(seen), level);
                 }
             } else if (isGetter(method) && returnsList(method)) {
@@ -113,21 +112,16 @@ public class MappingTestHelper {
         Object value = null;
         if (takesString(m)) {
             value = garble(m);
-        }
-        else if (takesShort(m)) {
+        } else if (takesShort(m)) {
             value = (short) rand(100);
-        }
-        else if (takesInteger(m)) {
+        } else if (takesInteger(m)) {
             value = rand(100);
-        }
-        else if (takesLong(m)) {
+        } else if (takesLong(m)) {
             value = (long) rand(1000000000);
-        }
-        else if (takesBoolean(m)) {
-            value = Math.random() < 0.5D;
-        }
-        else if (takesDouble(m)) {
-            value = Math.random();
+        } else if (takesBoolean(m)) {
+            value = RandomUtils.instance().nextBoolean();
+        } else if (takesDouble(m)) {
+            value = RandomUtils.instance().nextDouble();
         }
         if (value != null) {
             m.invoke(model, value);
@@ -248,7 +242,7 @@ public class MappingTestHelper {
     }
 
     public static int rand(int ceiling) {
-        return (int) Math.floor(Math.random() * 0.9999 * ceiling);
+        return RandomUtils.instance().nextInt(ceiling);
     }
 
     private static Object garble(Method m) {

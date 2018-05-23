@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.ovirt.engine.core.common.action.ActionParametersBase;
 import org.ovirt.engine.core.common.action.ActionReturnValue;
@@ -696,14 +697,11 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
         if (model.getCurrentStorageItem() instanceof NfsStorageModel) {
             saveNfsStorage();
-        }
-        else if (model.getCurrentStorageItem() instanceof LocalStorageModel) {
+        } else if (model.getCurrentStorageItem() instanceof LocalStorageModel) {
             saveLocalStorage();
-        }
-        else if (model.getCurrentStorageItem() instanceof PosixStorageModel) {
+        } else if (model.getCurrentStorageItem() instanceof PosixStorageModel) {
             savePosixStorage();
-        }
-        else {
+        } else {
             saveSanStorage();
         }
     }
@@ -748,10 +746,9 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
             onSaveSanStorage();
             return;
         }
-        Set<String> unkownStatusLuns = new HashSet<>();
-        for (LunModel lunModel : sanStorageModelBase.getAddedLuns()) {
-            unkownStatusLuns.add(lunModel.getLunId());
-        }
+        Set<String> unkownStatusLuns =
+                sanStorageModelBase.getAddedLuns().stream().map(LunModel::getLunId).collect(Collectors.toSet());
+
         Frontend.getInstance()
                 .runQuery(QueryType.GetDeviceList,
                         new GetDeviceListQueryParameters(hostId,
@@ -776,8 +773,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
         if (usedLunsMessages.isEmpty()) {
             onSaveSanStorage();
-        }
-        else {
+        } else {
             forceCreationWarning(usedLunsMessages);
         }
     }
@@ -963,61 +959,45 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
         if (command == getNewDomainCommand()) {
             newDomain();
-        }
-        else if (command == getImportDomainCommand()) {
+        } else if (command == getImportDomainCommand()) {
             importDomain();
-        }
-        else if (command == getEditCommand()) {
+        } else if (command == getEditCommand()) {
             edit();
-        }
-        else if (command == getRemoveCommand()) {
+        } else if (command == getRemoveCommand()) {
             remove();
-        }
-        else if (command == getUpdateOvfsCommand()) {
+        } else if (command == getUpdateOvfsCommand()) {
             updateOvfs();
-        }
-        else if (command == getDestroyCommand()) {
+        } else if (command == getDestroyCommand()) {
             destroy();
-        }
-        else if (command == getScanDisksCommand()) {
+        } else if (command == getScanDisksCommand()) {
             scanDisks();
-        }
-        else if ("OnSave".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnSave".equals(command.getName())) { //$NON-NLS-1$
             onSave();
-        }
-        else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("Cancel".equals(command.getName())) { //$NON-NLS-1$
             cancel();
-        }
-        else if ("CancelConfirm".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("CancelConfirm".equals(command.getName())) { //$NON-NLS-1$
             cancelConfirm();
-        }
-        else if ("CancelImportConfirm".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("CancelImportConfirm".equals(command.getName())) { //$NON-NLS-1$
             cancelImportConfirm();
-        }
-        else if ("OnImport".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnImport".equals(command.getName())) { //$NON-NLS-1$
             onImport();
-        }
-        else if ("OnImportFile".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnImportFile".equals(command.getName())) { //$NON-NLS-1$
             if (getConfirmWindow() != null && !((ConfirmationModel) getConfirmWindow()).validate()) {
                 return;
             }
             cancelConfirm();
             getExistingStorageDomainList();
-        }
-        else if ("OnImportSan".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnImportSan".equals(command.getName())) { //$NON-NLS-1$
             if (getConfirmWindow() != null && !((ConfirmationModel) getConfirmWindow()).validate()) {
                 return;
             }
             cancelConfirm();
             onImportSanDomainApprove();
-        }
-        else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnRemove".equals(command.getName())) { //$NON-NLS-1$
             onRemove();
-        }
-        else if ("OnDestroy".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnDestroy".equals(command.getName())) { //$NON-NLS-1$
             onDestroy();
-        }
-        else if ("OnSaveSanStorage".equals(command.getName())) { //$NON-NLS-1$
+        } else if ("OnSaveSanStorage".equals(command.getName())) { //$NON-NLS-1$
             onSaveSanStorage();
         }
     }
@@ -1189,8 +1169,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                     saveNewNfsStorage();
                 }
             }), null, path);
-        }
-        else {
+        } else {
             StorageDomain storageDomain = getSelectedItem();
             if (isPathEditable(storageDomain)) {
                 updatePath();
@@ -1216,8 +1195,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
         if (storageModel.getType().equals(StorageType.NFS)) {
             updateNFSProperties(storageModel);
-        }
-        else if (storageModel instanceof PosixStorageModel) {
+        } else if (storageModel instanceof PosixStorageModel) {
             updatePosixProperties(storageModel);
         }
 
@@ -1336,10 +1314,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
         VDS host = model.getHost().getSelectedItem();
         boolean force = sanModel.isForce();
 
-        HashSet<String> lunIds = new HashSet<>();
-        for (LunModel lun : sanModel.getAddedLuns()) {
-            lunIds.add(lun.getLunId());
-        }
+        Set<String> lunIds = sanModel.getAddedLuns().stream().map(LunModel::getLunId).collect(Collectors.toSet());
 
         AddSANStorageDomainParameters params = new AddSANStorageDomainParameters(storageDomain);
         params.setVdsId(host.getId());
@@ -1393,8 +1368,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                 }
 
             }), host.getStoragePoolId(), path);
-        }
-        else {
+        } else {
             StorageDomain storageDomain = getSelectedItem();
             if (isPathEditable(storageDomain)) {
                 updatePath();
@@ -1508,8 +1482,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
         if (isNew) {
             saveNewSanStorage();
-        }
-        else {
+        } else {
             Frontend.getInstance().runAction(ActionType.UpdateStorageDomain, new StorageDomainManagementParameter(storageDomain), new IFrontendActionAsyncCallback() {
                 @Override
                 public void executed(FrontendActionAsyncResult result) {
@@ -1519,11 +1492,9 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                     SanStorageModelBase sanStorageModelBase = (SanStorageModelBase) storageModel.getCurrentStorageItem();
                     boolean force = sanStorageModelBase.isForce();
                     StorageDomain storageDomain1 = storageListModel.getSelectedItem();
-                    HashSet<String> lunIds = new HashSet<>();
 
-                    for (LunModel lun : sanStorageModelBase.getAddedLuns()) {
-                        lunIds.add(lun.getLunId());
-                    }
+                    Set<String> lunIds =
+                            sanStorageModelBase.getAddedLuns().stream().map(LunModel::getLunId).collect(Collectors.toSet());
 
                     if (lunIds.size() > 0) {
                         Frontend.getInstance().runAction(ActionType.ExtendSANStorageDomain,
@@ -1619,8 +1590,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                     if (isLastDomain) {
                         onFinish(context, true, storageModel);
                     }
-                }
-                else {
+                } else {
                     onFinish(context, false, storageModel);
                 }
             });
@@ -1646,8 +1616,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
                     },
                 this);
-        }
-        else {
+        } else {
             importFileStoragePostInit();
         }
     }
@@ -1705,8 +1674,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                         } else {
                             getExistingStorageDomainList();
                         }
-                    }
-                    else {
+                    } else {
                         postImportFileStorage(storageListModel.context,
                             false,
                             storageListModel.storageModel,
@@ -1724,8 +1692,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                             if (domains != null && !domains.isEmpty()) {
                                 storageDomainsToAdd = domains;
                                 addExistingFileStorageDomain();
-                            }
-                            else {
+                            } else {
                                 String errorMessage = domains == null ?
                                         ConstantsManager.getInstance().getConstants()
                                                 .failedToRetrieveExistingStorageDomainInformationMsg() :
@@ -1833,10 +1800,11 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
                         model.setHelpTag(HelpTag.import_storage_domain_confirmation);
                         model.setHashName("import_storage_domain_confirmation"); //$NON-NLS-1$
 
-                        List<String> stoageDomainNames = new ArrayList<>();
-                        for (StorageDomainStatic domain : attachedStorageDomains) {
-                            stoageDomainNames.add(domain.getStorageName());
-                        }
+                        List<String> stoageDomainNames = attachedStorageDomains
+                                .stream()
+                                .map(StorageDomainStatic::getStorageName)
+                                .collect(Collectors.toList());
+
                         model.setItems(stoageDomainNames);
 
                         UICommand cancelCommand = createCancelCommand("CancelImportConfirm"); //$NON-NLS-1$
@@ -1855,23 +1823,17 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
         if ("SaveNfs".equals(key)) { //$NON-NLS-1$
             saveNfsStorage(context);
-        }
-        else if ("SaveLocal".equals(key)) { //$NON-NLS-1$
+        } else if ("SaveLocal".equals(key)) { //$NON-NLS-1$
             saveLocalStorage(context);
-        }
-        else if ("SavePosix".equals(key)) { //$NON-NLS-1$
+        } else if ("SavePosix".equals(key)) { //$NON-NLS-1$
             savePosixStorage(context);
-        }
-        else if ("SaveSan".equals(key)) { //$NON-NLS-1$
+        } else if ("SaveSan".equals(key)) { //$NON-NLS-1$
             saveSanStorage(context);
-        }
-        else if ("ImportFile".equals(key)) { //$NON-NLS-1$
+        } else if ("ImportFile".equals(key)) { //$NON-NLS-1$
             importFileStorage(context);
-        }
-        else if ("ImportSan".equals(key)) { //$NON-NLS-1$
+        } else if ("ImportSan".equals(key)) { //$NON-NLS-1$
             importSanStorage(context);
-        }
-        else if ("Finish".equals(key)) { //$NON-NLS-1$
+        } else if ("Finish".equals(key)) { //$NON-NLS-1$
             if (getWindow() == null) {
                 return;
             }
@@ -1880,8 +1842,7 @@ public class StorageListModel extends ListWithSimpleDetailsModel<Void, StorageDo
 
             if ((Boolean) data.get(1)) {
                 cancel();
-            }
-            else {
+            } else {
                 ((Model) data.get(2)).setMessage((String) data.get(3));
             }
         }

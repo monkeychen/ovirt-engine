@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.bll;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -10,43 +10,49 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.ovirt.engine.core.utils.MockConfigRule.mockConfig;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner.Strict;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.common.action.AddVmParameters;
 import org.ovirt.engine.core.common.businessentities.StorageDomain;
 import org.ovirt.engine.core.common.businessentities.StorageDomainStatus;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.errors.EngineMessage;
 import org.ovirt.engine.core.compat.Version;
-import org.ovirt.engine.core.utils.MockConfigRule;
+import org.ovirt.engine.core.utils.MockConfigDescriptor;
+import org.ovirt.engine.core.utils.MockConfigExtension;
 
-@RunWith(Strict.class)
+@ExtendWith(MockConfigExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AddVmFromTemplateCommandTest extends AddVmCommandTestBase<AddVmFromTemplateCommand<AddVmParameters>> {
 
     private static final int MAX_PCI_SLOTS = 26;
     private List<StorageDomain> storageDomains;
 
-    @Rule
-    public MockConfigRule mcr = new MockConfigRule(
-        mockConfig(ConfigValues.MaxVmNameLength, 64),
-        mockConfig(ConfigValues.ResumeBehaviorSupported, Version.v4_0, false),
-        mockConfig(ConfigValues.SupportedClusterLevels, new HashSet<>(Collections.singletonList(new Version(3, 0))))
-    );
+    public static Stream<MockConfigDescriptor<?>> mockConfiguration() {
+        return Stream.of(
+                MockConfigDescriptor.of(ConfigValues.MaxVmNameLength, 64),
+                MockConfigDescriptor.of(ConfigValues.ResumeBehaviorSupported, Version.v4_0, false),
+                MockConfigDescriptor.of(ConfigValues.SupportedClusterLevels,
+                        new HashSet<>(Collections.singletonList(new Version(3, 0))))
+        );
+    }
 
     @Override
     protected AddVmFromTemplateCommand<AddVmParameters> createCommand() {
         return new AddVmFromTemplateCommand<>(new AddVmParameters(vm), null);
     }
 
+    @BeforeEach
     @Override
     public void setUp() {
         super.setUp();
@@ -74,7 +80,7 @@ public class AddVmFromTemplateCommandTest extends AddVmCommandTestBase<AddVmFrom
     }
 
     @Test
-    public void validateSpaceNotEnough() throws Exception {
+    public void validateSpaceNotEnough() {
         doReturn(new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPACE_LOW_ON_STORAGE_DOMAIN)).
                 when(storageDomainValidator).hasSpaceForClonedDisks(any());
         mockGetAllSnapshots();
@@ -85,14 +91,14 @@ public class AddVmFromTemplateCommandTest extends AddVmCommandTestBase<AddVmFrom
     }
 
     @Test
-    public void validateSpaceNotWithinThreshold() throws Exception {
+    public void validateSpaceNotWithinThreshold() {
         doReturn(new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPACE_LOW_ON_STORAGE_DOMAIN)).
                 when(storageDomainValidator).isDomainWithinThresholds();
         assertFalse(cmd.validateSpaceRequirements());
     }
 
     @Test
-    public void create10GBVmWith11GbAvailableAndA5GbBuffer() throws Exception {
+    public void create10GBVmWith11GbAvailableAndA5GbBuffer() {
         doReturn(true).when(cmd).areParametersLegal();
         doReturn(Collections.emptyList()).when(cmd).getVmInterfaces();
         doReturn(Collections.emptyList()).when(cmd).getDiskVmElements();

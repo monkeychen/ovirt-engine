@@ -2,14 +2,14 @@ package org.ovirt.engine.core.dao;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.core.common.businessentities.VmBlockJob;
 import org.ovirt.engine.core.common.businessentities.VmBlockJobType;
 import org.ovirt.engine.core.common.businessentities.VmJob;
@@ -17,20 +17,11 @@ import org.ovirt.engine.core.common.businessentities.VmJobState;
 import org.ovirt.engine.core.common.businessentities.VmJobType;
 import org.ovirt.engine.core.compat.Guid;
 
-public class VmJobDaoTest extends BaseDaoTestCase {
-    private VmJobDao dao;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
-        dao = dbFacade.getVmJobDao();
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
+public class VmJobDaoTest extends BaseDaoTestCase<VmJobDao> {
+    @Test
     public void testGetForwardCompatibility() {
-        dao.get(Guid.newGuid());
-        fail("VmJobDao.get(Guid) isn't implemented yet. If you implement it, don't forget to implement this test too");
+        assertThrows(UnsupportedOperationException.class, () -> dao.get(Guid.newGuid()),
+                "VmJobDao.get(Guid) isn't implemented yet. If you implement it, don't forget to implement this test too");
     }
 
     @Test

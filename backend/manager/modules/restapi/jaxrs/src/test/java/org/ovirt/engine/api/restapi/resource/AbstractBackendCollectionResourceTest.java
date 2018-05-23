@@ -1,5 +1,9 @@
 package org.ovirt.engine.api.restapi.resource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -18,7 +22,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ovirt.engine.api.model.BaseResource;
 import org.ovirt.engine.api.model.Fault;
 import org.ovirt.engine.api.model.Link;
@@ -83,13 +87,7 @@ public abstract class AbstractBackendCollectionResourceTest<R extends BaseResour
 
         setUpQueryExpectations("", FAILURE);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            assertTrue(wae.getResponse().getEntity() instanceof Fault);
-            assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection));
     }
 
     @Test
@@ -99,12 +97,7 @@ public abstract class AbstractBackendCollectionResourceTest<R extends BaseResour
         Throwable t = new RuntimeException(FAILURE);
         setUpQueryExpectations("", t);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_SERVER_LOCALE, t);
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_SERVER_LOCALE, t);
     }
 
     @Test
@@ -115,14 +108,7 @@ public abstract class AbstractBackendCollectionResourceTest<R extends BaseResour
         Throwable t = new RuntimeException(FAILURE);
         setUpQueryExpectations("", t);
         collection.setUriInfo(uriInfo);
-        try {
-            getCollection();
-            fail("expected WebApplicationException");
-        } catch (WebApplicationException wae) {
-            verifyFault(wae, BACKEND_FAILED_CLIENT_LOCALE, t);
-        } finally {
-            locales.clear();
-        }
+        verifyFault(assertThrows(WebApplicationException.class, this::getCollection), BACKEND_FAILED_CLIENT_LOCALE, t);
     }
 
     @SuppressWarnings("unchecked")
@@ -304,6 +290,11 @@ public abstract class AbstractBackendCollectionResourceTest<R extends BaseResour
     protected void verifyRemove(Response response) {
         assertNotNull(response);
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+    }
+
+    protected void verifyFault(WebApplicationException wae) {
+        assertTrue(wae.getResponse().getEntity() instanceof Fault);
+        assertEquals(mockl10n(FAILURE), ((Fault) wae.getResponse().getEntity()).getDetail());
     }
 
     protected static Link getLinkByName(BaseResource model, String name) {

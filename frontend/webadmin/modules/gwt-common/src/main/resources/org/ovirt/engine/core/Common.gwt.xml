@@ -74,6 +74,7 @@
         <include name="common/businessentities/VmWithStatusForExclusiveLock.java" />
         <include name="common/businessentities/HugePage.java" />
         <include name="common/businessentities/ConsoleTargetType.java" />
+        <include name="common/businessentities/BiosType.java" />
 
         <!-- Network business entities -->
         <include name="common/businessentities/network/VdsNetworkInterface.java" />
@@ -272,7 +273,6 @@
         <include name="common/businessentities/storage/DiskVmElement.java" />
         <include name="common/businessentities/storage/UnregisteredDisk.java" />
         <include name="common/businessentities/storage/UnregisteredDiskId.java" />
-        <include name="common/businessentities/storage/DiskAlignment.java" />
         <include name="common/businessentities/storage/DiskContentType.java" />
         <include name="common/businessentities/storage/DiskImage.java" />
         <include name="common/businessentities/storage/DiskImageBase.java" />
@@ -335,7 +335,7 @@
         <include name="common/businessentities/Entities.java"/>
         <include name="common/utils/ToStringBuilder.java"/>
         <include name="common/utils/NetworkCommonUtils.java"/>
-        <include name="common/utils/CommonCompatibilityVersionUtils.java"/>
+        <include name="common/utils/CompatibilityVersionUtils.java"/>
         <include name="common/utils/MathUtils.java"/>
 
         <!-- TODO: Remove when UI will be refactored to use FenceProxySourceType -->
@@ -380,7 +380,6 @@
         <include name="common/asynctasks/AsyncTaskType.java" />
 
         <!-- SearchBackend -->
-        <include name="common/VdcEventNotificationUtils.java" />
         <include name="common/EventNotificationEntity.java" />
         <include name="common/mode/ApplicationMode.java" />
         <include name="common/interfaces/ITagsHandler.java" />

@@ -1,7 +1,7 @@
 package org.ovirt.engine.core.bll.storage.disk;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -10,10 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.ovirt.engine.core.bll.AbstractUserQueryTest;
 import org.ovirt.engine.core.bll.storage.disk.image.ImagesHandler;
 import org.ovirt.engine.core.common.businessentities.VM;
@@ -23,7 +23,7 @@ import org.ovirt.engine.core.common.queries.IdQueryParameters;
 import org.ovirt.engine.core.compat.Guid;
 import org.ovirt.engine.core.dao.VmDao;
 
-@RunWith(MockitoJUnitRunner.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class GetNextAvailableDiskAliasNameByVMIdQueryTest extends AbstractUserQueryTest<IdQueryParameters, GetNextAvailableDiskAliasNameByVMIdQuery<IdQueryParameters>> {
     @Mock
     private VmDao vmDao;
@@ -39,7 +39,7 @@ public class GetNextAvailableDiskAliasNameByVMIdQueryTest extends AbstractUserQu
     }
 
     @Test
-    public void testExecuteQueryVmWithNoDisks() throws Exception {
+    public void testExecuteQueryVmWithNoDisks() {
         mockParameters();
         vm = mockVmAndReturnFromDao();
         String diskAliasName = ImagesHandler.getDefaultDiskAlias(vm.getName(), "1");
@@ -50,7 +50,7 @@ public class GetNextAvailableDiskAliasNameByVMIdQueryTest extends AbstractUserQu
     }
 
     @Test
-    public void testExecuteQueryWithInValidVmIdOrMissingPermissions() throws Exception {
+    public void testExecuteQueryWithInValidVmIdOrMissingPermissions() {
         mockParameters();
         vm = mockVm();
 
@@ -60,7 +60,7 @@ public class GetNextAvailableDiskAliasNameByVMIdQueryTest extends AbstractUserQu
     }
 
     @Test
-    public void testExecuteQueryVmWithMultipleDisks() throws Exception {
+    public void testExecuteQueryVmWithMultipleDisks() {
         mockParameters();
         vm = mockVmAndReturnFromDao();
         populateVmDiskMap(vm, 5);
@@ -75,7 +75,7 @@ public class GetNextAvailableDiskAliasNameByVMIdQueryTest extends AbstractUserQu
      * disk alias of the disk we removed
      */
     @Test
-    public void testExecuteQueryRecycling() throws Exception {
+    public void testExecuteQueryRecycling() {
         mockParameters();
         vm = mockVmAndReturnFromDao();
         populateVmDiskMap(vm, 5);
@@ -106,7 +106,7 @@ public class GetNextAvailableDiskAliasNameByVMIdQueryTest extends AbstractUserQu
         }
     }
 
-    private void mockParameters() throws Exception {
+    private void mockParameters() {
         when(getQueryParameters().getId()).thenReturn(vmId);
     }
 

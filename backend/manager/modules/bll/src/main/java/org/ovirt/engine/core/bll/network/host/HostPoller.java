@@ -4,13 +4,14 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.ovirt.engine.core.bll.Backend;
 import org.ovirt.engine.core.common.config.Config;
 import org.ovirt.engine.core.common.config.ConfigValues;
 import org.ovirt.engine.core.common.interfaces.FutureVDSCall;
+import org.ovirt.engine.core.common.interfaces.VDSBrokerFrontend;
 import org.ovirt.engine.core.common.vdscommands.FutureVDSCommandType;
 import org.ovirt.engine.core.common.vdscommands.TimeBoundPollVDSCommandParameters;
 import org.ovirt.engine.core.common.vdscommands.VDSReturnValue;
+import org.ovirt.engine.core.di.Injector;
 import org.ovirt.engine.core.vdsbroker.vdsbroker.PollVDSCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +43,7 @@ public class HostPoller {
 
         LOGGER.trace("Request to do poll for host {}.", parameters.getVdsId());
         FutureVDSCall<VDSReturnValue> task =
-                Backend.getInstance()
-                        .getResourceManager()
-                        .runFutureVdsCommand(FutureVDSCommandType.Poll, parameters);
+                Injector.get(VDSBrokerFrontend.class).runFutureVdsCommand(FutureVDSCommandType.Poll, parameters);
         LOGGER.trace("FutureVDSCommandType.Poll executed for host{}.", parameters.getVdsId());
 
         boolean succeeded = getValue(task);

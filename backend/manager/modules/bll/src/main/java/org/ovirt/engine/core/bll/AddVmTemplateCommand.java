@@ -411,9 +411,14 @@ public class AddVmTemplateCommand<T extends AddVmTemplateParameters> extends VmT
         return returnValue.getActionReturnValue();
     }
 
-    private CreateAllTemplateDisksParameters buildCreateAllTemplateDisksParameters() {
+    protected CreateAllTemplateDisksParameters buildCreateAllTemplateDisksParameters() {
         CreateAllTemplateDisksParameters parameters =
                 new CreateAllTemplateDisksParameters(getVm() != null ? getVmId() : Guid.Empty);
+        fillCreateAllTemplateDisksParameters(parameters);
+        return parameters;
+    }
+
+    protected void fillCreateAllTemplateDisksParameters(CreateAllTemplateDisksParameters parameters) {
         parameters.setVmTemplateId(getVmTemplateId());
         parameters.setVmTemplateName(getVmTemplateName());
         parameters.setDiskInfoDestinationMap(diskInfoDestinationMap);
@@ -424,7 +429,6 @@ public class AddVmTemplateCommand<T extends AddVmTemplateParameters> extends VmT
         parameters.setParentCommand(getActionType());
         parameters.setParentParameters(getParameters());
         parameters.setEndProcedure(EndProcedure.COMMAND_MANAGED);
-        return parameters;
     }
 
     protected ActionType getAddAllTemplateDisksActionType() {
@@ -928,6 +932,7 @@ public class AddVmTemplateCommand<T extends AddVmTemplateParameters> extends VmT
                         getParameters().getMasterVm().getPredefinedProperties(),
                         getParameters().getMasterVm().getCustomProperties(),
                         getParameters().getMasterVm().getCustomEmulatedMachine(),
+                        getParameters().getMasterVm().getBiosType(),
                         getParameters().getMasterVm().getCustomCpuName(),
                         getParameters().getMasterVm().getSmallIconId(),
                         getParameters().getMasterVm().getLargeIconId(),
@@ -1005,8 +1010,7 @@ public class AddVmTemplateCommand<T extends AddVmTemplateParameters> extends VmT
         }
         if (getVm().isTrustedService() && !getVmTemplate().isTrustedService()) {
             auditLogDirector.log(this, AuditLogType.USER_ADD_VM_TEMPLATE_FROM_TRUSTED_TO_UNTRUSTED);
-        }
-        else if (!getVm().isTrustedService() && getVmTemplate().isTrustedService()) {
+        } else if (!getVm().isTrustedService() && getVmTemplate().isTrustedService()) {
             auditLogDirector.log(this, AuditLogType.USER_ADD_VM_TEMPLATE_FROM_UNTRUSTED_TO_TRUSTED);
         }
     }
